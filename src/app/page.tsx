@@ -566,7 +566,7 @@ export default function EditorPage() {
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
               onClick={() => setPreviewUrl('/preview?' + Date.now())}
             >
-              ↺ Refresh
+              ↺ Reload from server
             </button>
           </div>
           <iframe
