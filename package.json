@@ -1,0 +1,29 @@
+{
+  "name": "siena-menu-editor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hello-pangea/dnd": "^16.6.0",
+    "@netlify/blobs": "^10.7.6",
+    "@netlify/plugin-nextjs": "^5.15.11",
+    "jsdom": "^24.1.3",
+    "next": "^14.2.29",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.5.3",
+    "vitest": "^1.6.0"
+  }
+}

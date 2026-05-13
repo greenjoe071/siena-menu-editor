@@ -1,0 +1,347 @@
+{
+  "header": {
+    "restaurant_name": "Siena Ristorante Toscana",
+    "sub_page_1": "La Cucina Toscana &nbsp;·&nbsp; Austin, Texas &nbsp;·&nbsp; Since 2000",
+    "sub_other_pages": "Spring / Summer Menu 2026"
+  },
+  "about_blurb": "The cuisine of the Tuscan region can best be described as refined simplicity. At Siena, we utilize ingredients of the highest quality — techniques and classical skills that have weathered the test of time, enhancing the natural flavors already present.",
+  "bread_note": {
+    "title": "Fresh Baked Bread",
+    "body": "Each day at Siena we bake all of our bread from scratch. Fifteen minutes before guests arrive, we bake just enough to ensure each table gets the hottest, freshest bread possible. Bread is complimentary and served upon request — to prevent waste and to respect our gluten-free guests."
+  },
+  "raw_warning_full": "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.",
+  "raw_warning_short": "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness.",
+  "policy_line": "<strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong>",
+  "sections": {
+    "antipasti": {
+      "title": "Antipasti",
+      "items": [
+        {
+          "id": "d-47b8",
+          "name": "Whipped Ricotta",
+          "desc": "Warm Spicy Honey, Calabrian Chili, Crispy Garlic, Basil, Toasted Bread",
+          "price_format": "single",
+          "price": "12"
+        },
+        {
+          "id": "d-b86d",
+          "name": "Fichi Ripieni",
+          "desc": "Black Mission Figs, Prosciutto di Parma, Goat Cheese, Balsamic Reduction",
+          "price_format": "single",
+          "price": "10"
+        },
+        {
+          "id": "d-876a",
+          "name": "Calamari Fritti",
+          "desc": "Flash Fried Squid, Tomatoes, Capers, Pepperoncini",
+          "price_format": "single",
+          "price": "19"
+        },
+        {
+          "id": "d-8461",
+          "name": "Polpette alla Toscana",
+          "desc": "Meatballs, Pomodoro, Whipped Ricotta, Italian Salsa Verde",
+          "price_format": "single",
+          "price": "13"
+        },
+        {
+          "id": "d-ce8a",
+          "name": "Bruschetta",
+          "desc": "Grilled Siena Bread, Braised Texas Wild Boar Ragù",
+          "price_format": "single",
+          "price": "18"
+        },
+        {
+          "id": "d-95b2",
+          "name": "Arancini",
+          "desc": "Breaded Fried Risotto Balls, Stuffed with Buffalo Mozzarella, Marinara Aioli",
+          "price_format": "single",
+          "price": "10"
+        },
+        {
+          "id": "d-e336",
+          "name": "Antipasto Misto",
+          "desc": "Cured Meats, Assorted Cheeses, Fig Marmellata, Pepperoncini, Crostini",
+          "price_format": "single",
+          "price": "32"
+        },
+        {
+          "id": "d-6e6e",
+          "name": "Schiacciata",
+          "desc": "Flatbread, Gorgonzola, Prosciutto, Roasted Pears, Walnuts, Spicy Honey",
+          "price_format": "single",
+          "price": "11"
+        },
+        {
+          "id": "d-35cb",
+          "name": "Carpaccio",
+          "desc": "Raw Wagyu Beef, Capers, Parmesan Frico, Truffle Aioli, Arugula, Roasted Mushrooms",
+          "price_format": "single",
+          "price": "15",
+          "raw": true
+        },
+        {
+          "id": "d-1926",
+          "name": "Cozze",
+          "desc": "Mussels, White Wine, Butter, Garlic, Shallots, Grilled Bruschetta",
+          "price_format": "single",
+          "price": "18"
+        }
+      ]
+    },
+    "zuppa-insalate": {
+      "title": "Zuppa e Insalate",
+      "items": [
+        {
+          "id": "d-04d2",
+          "name": "Tomato Bisque",
+          "desc": "Tomato Basil Soup, Parmesan Croutons, Basil Pesto",
+          "price_format": "dual",
+          "bowl_price": "10",
+          "cup_price": "5"
+        },
+        {
+          "id": "d-153d",
+          "name": "Mele",
+          "desc": "Granny Smith Apples, Young Greens, Gorgonzola, Bacon, Walnuts, Honey Apple Cider Vinaigrette",
+          "price_format": "single",
+          "price": "14"
+        },
+        {
+          "id": "d-d841",
+          "name": "Campo",
+          "desc": "Young Mixed Greens, Truffle Balsamic Vinaigrette",
+          "price_format": "single",
+          "price": "9"
+        },
+        {
+          "id": "d-4f86",
+          "name": "Caesar Salad",
+          "desc": "Romaine Hearts, Parmesan, White Anchovy Dressing, Croutons",
+          "price_format": "single",
+          "price": "15"
+        }
+      ]
+    },
+    "pasta": {
+      "title": "Pasta",
+      "items": [
+        {
+          "id": "d-2260",
+          "name": "Pappardelle al Cinghiale",
+          "desc": "Homemade Pasta, Red Wine Braised Texas Wild Boar Ragù",
+          "price_format": "single",
+          "price": "28"
+        },
+        {
+          "id": "d-756c",
+          "name": "Linguine con Polpette e Salsiccia",
+          "desc": "Homemade Sweet Italian Pork Sausage, Meatballs, Spicy Pomodoro, Parmesan",
+          "price_format": "single",
+          "price": "29"
+        },
+        {
+          "id": "d-1292",
+          "name": "Fettuccine ai Funghi",
+          "desc": "Homemade Pasta, Wild Mushrooms, White Truffle Oil, Grana Padano, Cream",
+          "price_format": "single",
+          "price": "26"
+        },
+        {
+          "id": "d-4b10",
+          "name": "Tagliatelle alla Bolognese",
+          "desc": "Homemade Pasta, Traditional Meat Sauce of Bologna, Grana Padano",
+          "price_format": "single",
+          "price": "28"
+        },
+        {
+          "id": "d-11da",
+          "name": "Casarecce Della Nonna",
+          "desc": "Twisted Pasta, Grilled Chicken, Gorgonzola, Caramelized Onions, Rosemary, Cream",
+          "price_format": "single",
+          "price": "27"
+        },
+        {
+          "id": "d-66b8",
+          "name": "Penne alla Vodka",
+          "desc": "House Made Vodka Pomodoro Sauce, Grana Padano, Pepperoncini, Basil",
+          "price_format": "single",
+          "price": "24"
+        },
+        {
+          "id": "d-342d",
+          "name": "Capellini con Gamberi",
+          "desc": "Angel Hair Pasta, Shrimp, Tomatoes, Capers, Garlic, Olive Oil, Oregano, Basil, Red Chili",
+          "price_format": "single",
+          "price": "34"
+        }
+      ]
+    },
+    "contorni": {
+      "title": "Contorni",
+      "items": [
+        {
+          "id": "d-3346",
+          "name": "Verdure Miste",
+          "desc": "Grilled Brussels, Eggplant, Asparagus, Potatoes, Mushrooms",
+          "price_format": "single",
+          "price": "11"
+        },
+        {
+          "id": "d-3d81",
+          "name": "Spinach",
+          "desc": "Sautéed with Garlic and Olive Oil",
+          "price_format": "single",
+          "price": "6"
+        },
+        {
+          "id": "d-5f2a",
+          "name": "Brussel Sprouts",
+          "desc": "Flash Fried, Calabrian Chili Agrodolce, Sliced Almonds",
+          "price_format": "single",
+          "price": "9"
+        },
+        {
+          "id": "d-028f",
+          "name": "Asparagus",
+          "desc": "Wood Grilled, Extra Virgin Olive Oil",
+          "price_format": "single",
+          "price": "8"
+        },
+        {
+          "id": "d-0450",
+          "name": "Truffle Fries",
+          "desc": "Flash Fried, Parmesan, Truffle Oil, Truffle Aioli",
+          "price_format": "single",
+          "price": "8"
+        },
+        {
+          "id": "d-129c",
+          "name": "Mashed Potatoes",
+          "desc": "Whipped Russet Potatoes, Cream and Butter",
+          "price_format": "single",
+          "price": "7"
+        }
+      ]
+    },
+    "secondi": {
+      "title": "Secondi Piatti",
+      "items": [
+        {
+          "id": "d-1a53",
+          "name": "Cacciucco alla Livornese",
+          "desc": "Shrimp, Mussels, Calamari, Fresh Fish, Scallops, Red Chili, Oregano, Garlic, Crushed Tomatoes, Pomodoro, Grilled Bruschetta",
+          "price_format": "single",
+          "price": "41"
+        },
+        {
+          "id": "d-becc",
+          "name": "Bistecca di Manzo alla Griglia",
+          "desc": "16oz Ribeye Steak, Calabrian Chili Butter, Mashed Potatoes, Grilled Asparagus",
+          "price_format": "single",
+          "price": "62",
+          "raw": true
+        },
+        {
+          "id": "d-26ab",
+          "name": "Pollo al Marsala",
+          "desc": "Seared Chicken Breast, Wild Mushrooms, Marsala Wine, Buttered Mash Potatoes",
+          "price_format": "single",
+          "price": "29"
+        },
+        {
+          "id": "d-6a30",
+          "name": "Trota in Crosta di Noci",
+          "desc": "Walnut Crusted Trout, Shrimp, Sautéed Spinach, Lemon Butter Sauce",
+          "price_format": "single",
+          "price": "35"
+        },
+        {
+          "id": "d-07aa",
+          "name": "Salmone Toscano",
+          "desc": "Grilled Salmon, Potato Mash, Grilled Shrimp, Crabmeat, Lemon Butter Sauce",
+          "price_format": "single",
+          "price": "48",
+          "raw": true
+        },
+        {
+          "id": "d-f015",
+          "name": "Costata di Maiale",
+          "desc": "Wood Grilled 16oz Pork Chop, Truffle Whole Grain Honey Mustard Glaze, Mashed Potatoes, Sautéed Baby Spinach",
+          "price_format": "single",
+          "price": "38",
+          "raw": true
+        },
+        {
+          "id": "d-e2a6",
+          "name": "Pollo Parmigiano",
+          "desc": "Breaded Chicken Cutlet, Fresh Buffalo Mozzarella, Parmigiano, Pomodoro, Linguine",
+          "price_format": "single",
+          "price": "29"
+        },
+        {
+          "id": "d-3f05",
+          "name": "Filetto di Manzo",
+          "desc": "6oz Wood Grilled Beef Filet, Red Wine Demi, Mashed Potatoes, Grilled Asparagus",
+          "price_format": "single",
+          "price": "52",
+          "raw": true
+        }
+      ]
+    },
+    "non-alcoholic": {
+      "title": "Non-Alcoholic Beverages",
+      "items": [
+        {
+          "id": "d-6a0e",
+          "name": "Lychee Mocktail",
+          "desc": "Lychee Nectar, Lime Juice, Tonic Water with a hint of Grenadine, shaken and served up",
+          "price_format": "single",
+          "price": "12"
+        },
+        {
+          "id": "d-371a",
+          "name": "The Siena Mocktail",
+          "desc": "Agave Nectar, Lime Juice, Orange Juice, Tonic Water over ice, Tajín rim",
+          "price_format": "single",
+          "price": "12"
+        },
+        {
+          "id": "d-62c2",
+          "name": "Fruit Smash",
+          "desc": "Refreshing blend of Orange Juice, Pineapple Juice, Cranberry Juice and Sprite, over ice",
+          "price_format": "single",
+          "price": "8"
+        },
+        {
+          "id": "d-d9c5",
+          "name": "Ranch Water Mocktail",
+          "desc": "Agave Nectar, Lime Juice and Club Soda",
+          "price_format": "single",
+          "price": "8"
+        },
+        {
+          "id": "d-7256",
+          "name": "A’ Siciliana Natural Soda",
+          "desc": "Sicily Blood Orange  ·  Sicily Lemon",
+          "price_format": "single",
+          "price": "6.50"
+        },
+        {
+          "id": "d-714d",
+          "name": "Heineken 0.0",
+          "desc": "Zero-Alcohol Beer",
+          "price_format": "single",
+          "price": "7"
+        },
+        {
+          "id": "d-a7da",
+          "name": "Soft Drinks",
+          "desc": "Coca-Cola, Diet Coke, Sprite",
+          "price_format": "single",
+          "price": "4.50"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Spring / Summer Menu 2026</title>
+<style>
+/* ── Self-hosted fonts ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+/* ── Reset & base ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── Page setup ── */
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ── Page shell ── */
+.page {
+  width: 8.5in;
+  height: 11in;
+  padding: 0.55in 0.65in 0.45in;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  page-break-after: always;
+  overflow: hidden;
+  position: relative;
+}
+.page:last-child { page-break-after: auto; }
+
+/* ── Screen preview: show pages stacked ── */
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  .page {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    background: #fff;
+  }
+}
+
+/* ── Print overrides ── */
+@media print {
+  body { background: #fff; padding: 0; display: block; }
+  .page { box-shadow: none; overflow: visible; }
+}
+
+/* ── Page header (pages 1–3) ── */
+.page-header {
+  text-align: center;
+  padding-bottom: 10pt;
+  margin-bottom: 10pt;
+  border-bottom: 1pt solid #b8821e;
+}
+.page-header .restaurant-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 28pt;
+  color: #111;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.page-header .restaurant-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 7.5pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-top: 4pt;
+}
+/* Pages 2 & 3 get a smaller continuation header */
+.page-header.small .restaurant-name { font-size: 16pt; }
+.page-header.small .restaurant-sub  { font-size: 6.5pt; margin-top: 2pt; }
+.page-header.small { padding-bottom: 7pt; margin-bottom: 8pt; }
+
+/* ── Section header ── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 9pt;
+  margin: 8pt 0 6pt;
+}
+.section-head .section-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 9pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
+  white-space: nowrap;
+}
+.section-head .section-rule {
+  flex: 1;
+  height: 0.75pt;
+  background: #b8821e;
+  opacity: 0.45;
+}
+
+/* ── Two-column layout ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 28pt;
+}
+/* Independent-column variant: each column packs tightly regardless
+   of the other. Use this when descriptions vary in length so a long
+   row in column 1 doesn't force a gap in column 2. */
+.two-col-flow {
+  column-count: 2;
+  column-gap: 28pt;
+  column-fill: balance;
+}
+.two-col-flow .dish {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* ── Dish row ── */
+.dish {
+  display: flex;
+  align-items: baseline;
+  gap: 6pt;
+  margin-bottom: 7pt;
+  break-inside: avoid;
+}
+.dish-left { flex: 1; min-width: 0; }
+.dish-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 12.5pt;
+  color: #111;
+  line-height: 1.15;
+  display: block;
+  margin-bottom: 1.5pt;
+}
+.dish-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 10.5pt;
+  color: #333;
+  line-height: 1.45;
+}
+.dish-price {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 11pt;
+  color: #111;
+  white-space: nowrap;
+  align-self: flex-start;
+  padding-top: 1pt;
+  min-width: 28pt;
+  text-align: right;
+}
+
+/* Dual price (bowl/cup) */
+.dish-price-dual {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 10.5pt;
+  color: #111;
+  white-space: nowrap;
+  align-self: flex-start;
+  padding-top: 2pt;
+  text-align: right;
+  line-height: 1.4;
+  min-width: 28pt;
+}
+
+/* ── Footnotes ── */
+.footnotes {
+  margin-top: auto;
+  padding-top: 6pt;
+  border-top: 0.75pt solid #ccc;
+}
+
+/* ── Drinks section special treatment ── */
+.drinks-panel {
+  background: #f4f7fb;
+  border: 0.75pt solid #b8c8e0;
+  border-radius: 3pt;
+  padding: 10pt 14pt 6pt;
+  margin: auto 0 0;
+}
+.drinks-panel .section-head {
+  margin: 0 0 6pt;
+}
+.drinks-panel .section-head .section-title {
+  color: #2a4a7a;
+  letter-spacing: 0.18em;
+}
+.drinks-panel .section-head .section-rule {
+  background: #2a4a7a;
+  opacity: 0.25;
+}
+.drinks-panel .dish-name {
+  font-size: 11.5pt;
+  color: #1a3060;
+}
+.drinks-panel .dish-desc {
+  color: #3a5080;
+}
+.drinks-panel .dish-price {
+  color: #1a3060;
+}
+.footnote {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9pt;
+  color: #555;
+  line-height: 1.4;
+  margin-bottom: 0;
+}
+.footnote strong { color: #111; }
+
+/* ── About blurb ── */
+.about-blurb {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 10pt;
+  color: #555;
+  line-height: 1.5;
+  text-align: center;
+  padding: 5pt 24pt;
+  margin: 4pt 0 4pt;
+}
+
+/* ── Gratuity banner ── */
+.gratuity-banner {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 10pt;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: #111;
+  border-top: 1pt solid #b8821e;
+  border-bottom: 1pt solid #b8821e;
+  padding: 4pt 0;
+  margin: 6pt 0 4pt;
+}
+
+/* ── Bread note ── */
+.bread-note {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9pt;
+  color: #444;
+  line-height: 1.4;
+  text-align: center;
+  padding: 5pt 16pt;
+  border: 0.75pt solid rgba(184,130,30,0.4);
+  margin: auto 0 0;
+}
+.bread-note strong {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 10pt;
+  color: #111;
+  display: block;
+  margin-bottom: 3pt;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 — Antipasti · Zuppa e Insalate
+     ═══════════════════════════════════════════ -->
+<div class="page">
+
+  <div class="page-header">
+    <div class="restaurant-name" data-text-id="restaurant-name">Siena Ristorante Toscana</div>
+    <div class="restaurant-sub" data-text-id="sub-page-1">La Cucina Toscana &nbsp;·&nbsp; Austin, Texas &nbsp;·&nbsp; Since 2000</div>
+  </div>
+
+  <!-- About -->
+  <div class="about-blurb" data-text-id="about-blurb">The cuisine of the Tuscan region can best be described as refined simplicity. At Siena, we utilize ingredients of the highest quality — techniques and classical skills that have weathered the test of time, enhancing the natural flavors already present.</div>
+
+  <!-- Antipasti -->
+  <div class="section-head" data-section-id="antipasti">
+    <span class="section-title" data-section-title-for="antipasti">Antipasti</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="two-col" data-section-id="antipasti">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  <div class="dish" data-dish-id="d-47b8">
+      <div class="dish-left">
+        <span class="dish-name">Whipped Ricotta</span>
+        <span class="dish-desc">Warm Spicy Honey, Calabrian Chili, Crispy Garlic, Basil, Toasted Bread</span>
+      </div>
+      <div class="dish-price">12</div>
+    </div><div class="dish" data-dish-id="d-b86d">
+      <div class="dish-left">
+        <span class="dish-name">Fichi Ripieni</span>
+        <span class="dish-desc">Black Mission Figs, Prosciutto di Parma, Goat Cheese, Balsamic Reduction</span>
+      </div>
+      <div class="dish-price">10</div>
+    </div><div class="dish" data-dish-id="d-876a">
+      <div class="dish-left">
+        <span class="dish-name">Calamari Fritti</span>
+        <span class="dish-desc">Flash Fried Squid, Tomatoes, Capers, Pepperoncini</span>
+      </div>
+      <div class="dish-price">19</div>
+    </div><div class="dish" data-dish-id="d-8461">
+      <div class="dish-left">
+        <span class="dish-name">Polpette alla Toscana</span>
+        <span class="dish-desc">Meatballs, Pomodoro, Whipped Ricotta, Italian Salsa Verde</span>
+      </div>
+      <div class="dish-price">13</div>
+    </div><div class="dish" data-dish-id="d-ce8a">
+      <div class="dish-left">
+        <span class="dish-name">Bruschetta</span>
+        <span class="dish-desc">Grilled Siena Bread, Braised Texas Wild Boar Ragù</span>
+      </div>
+      <div class="dish-price">18</div>
+    </div><div class="dish" data-dish-id="d-95b2">
+      <div class="dish-left">
+        <span class="dish-name">Arancini</span>
+        <span class="dish-desc">Breaded Fried Risotto Balls, Stuffed with Buffalo Mozzarella, Marinara Aioli</span>
+      </div>
+      <div class="dish-price">10</div>
+    </div><div class="dish" data-dish-id="d-e336">
+      <div class="dish-left">
+        <span class="dish-name">Antipasto Misto</span>
+        <span class="dish-desc">Cured Meats, Assorted Cheeses, Fig Marmellata, Pepperoncini, Crostini</span>
+      </div>
+      <div class="dish-price">32</div>
+    </div><div class="dish" data-dish-id="d-6e6e">
+      <div class="dish-left">
+        <span class="dish-name">Schiacciata</span>
+        <span class="dish-desc">Flatbread, Gorgonzola, Prosciutto, Roasted Pears, Walnuts, Spicy Honey</span>
+      </div>
+      <div class="dish-price">11</div>
+    </div><div class="dish" data-dish-id="d-35cb">
+      <div class="dish-left">
+        <span class="dish-name">Carpaccio <span style="font-size:9pt;font-weight:400;font-style:normal;">*</span></span>
+        <span class="dish-desc">Raw Wagyu Beef, Capers, Parmesan Frico, Truffle Aioli, Arugula, Roasted Mushrooms</span>
+      </div>
+      <div class="dish-price">15</div>
+    </div><div class="dish" data-dish-id="d-1926">
+      <div class="dish-left">
+        <span class="dish-name">Cozze</span>
+        <span class="dish-desc">Mussels, White Wine, Butter, Garlic, Shallots, Grilled Bruschetta</span>
+      </div>
+      <div class="dish-price">18</div>
+    </div></div><!-- /two-col -->
+
+  <!-- Zuppa e Insalate -->
+  <div class="section-head" data-section-id="zuppa-insalate">
+    <span class="section-title" data-section-title-for="zuppa-insalate">Zuppa e Insalate</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="two-col" data-section-id="zuppa-insalate">
+
+    
+
+    
+
+    
+
+    
+
+  <div class="dish" data-dish-id="d-04d2">
+      <div class="dish-left">
+        <span class="dish-name">Tomato Bisque</span>
+        <span class="dish-desc">Tomato Basil Soup, Parmesan Croutons, Basil Pesto</span>
+      </div>
+      <div class="dish-price-dual">Bowl 10<br>Cup 5</div>
+    </div><div class="dish" data-dish-id="d-153d">
+      <div class="dish-left">
+        <span class="dish-name">Mele</span>
+        <span class="dish-desc">Granny Smith Apples, Young Greens, Gorgonzola, Bacon, Walnuts, Honey Apple Cider Vinaigrette</span>
+      </div>
+      <div class="dish-price">14</div>
+    </div><div class="dish" data-dish-id="d-d841">
+      <div class="dish-left">
+        <span class="dish-name">Campo</span>
+        <span class="dish-desc">Young Mixed Greens, Truffle Balsamic Vinaigrette</span>
+      </div>
+      <div class="dish-price">9</div>
+    </div><div class="dish" data-dish-id="d-4f86">
+      <div class="dish-left">
+        <span class="dish-name">Caesar Salad</span>
+        <span class="dish-desc">Romaine Hearts, Parmesan, White Anchovy Dressing, Croutons</span>
+      </div>
+      <div class="dish-price">15</div>
+    </div></div><!-- /two-col -->
+
+  <!-- Bread note -->
+  <div class="bread-note" data-text-id="bread-note-body"><strong data-text-id="bread-note-title">Fresh Baked Bread</strong>
+    Each day at Siena we bake all of our bread from scratch. Fifteen minutes before guests arrive, we bake just enough to ensure each table gets the hottest, freshest bread possible. Bread is complimentary and served upon request — to prevent waste and to respect our gluten-free guests.</div>
+
+  <div class="footnotes">
+    <div class="footnote" data-text-id="raw-warning-full">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.</div>
+    <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
+  </div>
+
+</div><!-- /page 1 -->
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 2 — Pasta · Contorni
+     ═══════════════════════════════════════════ -->
+<div class="page">
+
+  <div class="page-header small">
+    <div class="restaurant-name" data-text-id="restaurant-name">Siena Ristorante Toscana</div>
+    <div class="restaurant-sub" data-text-id="sub-other-pages">Spring / Summer Menu 2026</div>
+  </div>
+
+  <!-- Pasta -->
+  <div class="section-head" data-section-id="pasta">
+    <span class="section-title" data-section-title-for="pasta">Pasta</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="two-col" data-section-id="pasta">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  <div class="dish" data-dish-id="d-2260">
+      <div class="dish-left">
+        <span class="dish-name">Pappardelle al Cinghiale</span>
+        <span class="dish-desc">Homemade Pasta, Red Wine Braised Texas Wild Boar Ragù</span>
+      </div>
+      <div class="dish-price">28</div>
+    </div><div class="dish" data-dish-id="d-756c">
+      <div class="dish-left">
+        <span class="dish-name">Linguine con Polpette e Salsiccia</span>
+        <span class="dish-desc">Homemade Sweet Italian Pork Sausage, Meatballs, Spicy Pomodoro, Parmesan</span>
+      </div>
+      <div class="dish-price">29</div>
+    </div><div class="dish" data-dish-id="d-1292">
+      <div class="dish-left">
+        <span class="dish-name">Fettuccine ai Funghi</span>
+        <span class="dish-desc">Homemade Pasta, Wild Mushrooms, White Truffle Oil, Grana Padano, Cream</span>
+      </div>
+      <div class="dish-price">26</div>
+    </div><div class="dish" data-dish-id="d-4b10">
+      <div class="dish-left">
+        <span class="dish-name">Tagliatelle alla Bolognese</span>
+        <span class="dish-desc">Homemade Pasta, Traditional Meat Sauce of Bologna, Grana Padano</span>
+      </div>
+      <div class="dish-price">28</div>
+    </div><div class="dish" data-dish-id="d-11da">
+      <div class="dish-left">
+        <span class="dish-name">Casarecce Della Nonna</span>
+        <span class="dish-desc">Twisted Pasta, Grilled Chicken, Gorgonzola, Caramelized Onions, Rosemary, Cream</span>
+      </div>
+      <div class="dish-price">27</div>
+    </div><div class="dish" data-dish-id="d-66b8">
+      <div class="dish-left">
+        <span class="dish-name">Penne alla Vodka</span>
+        <span class="dish-desc">House Made Vodka Pomodoro Sauce, Grana Padano, Pepperoncini, Basil</span>
+      </div>
+      <div class="dish-price">24</div>
+    </div><div class="dish" data-dish-id="d-342d">
+      <div class="dish-left">
+        <span class="dish-name">Capellini con Gamberi</span>
+        <span class="dish-desc">Angel Hair Pasta, Shrimp, Tomatoes, Capers, Garlic, Olive Oil, Oregano, Basil, Red Chili</span>
+      </div>
+      <div class="dish-price">34</div>
+    </div></div><!-- /two-col pasta -->
+
+  <!-- Contorni -->
+  <div class="section-head" data-section-id="contorni">
+    <span class="section-title" data-section-title-for="contorni">Contorni</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="two-col" data-section-id="contorni">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  <div class="dish" data-dish-id="d-3346">
+      <div class="dish-left">
+        <span class="dish-name">Verdure Miste</span>
+        <span class="dish-desc">Grilled Brussels, Eggplant, Asparagus, Potatoes, Mushrooms</span>
+      </div>
+      <div class="dish-price">11</div>
+    </div><div class="dish" data-dish-id="d-3d81">
+      <div class="dish-left">
+        <span class="dish-name">Spinach</span>
+        <span class="dish-desc">Sautéed with Garlic and Olive Oil</span>
+      </div>
+      <div class="dish-price">6</div>
+    </div><div class="dish" data-dish-id="d-5f2a">
+      <div class="dish-left">
+        <span class="dish-name">Brussel Sprouts</span>
+        <span class="dish-desc">Flash Fried, Calabrian Chili Agrodolce, Sliced Almonds</span>
+      </div>
+      <div class="dish-price">9</div>
+    </div><div class="dish" data-dish-id="d-028f">
+      <div class="dish-left">
+        <span class="dish-name">Asparagus</span>
+        <span class="dish-desc">Wood Grilled, Extra Virgin Olive Oil</span>
+      </div>
+      <div class="dish-price">8</div>
+    </div><div class="dish" data-dish-id="d-0450">
+      <div class="dish-left">
+        <span class="dish-name">Truffle Fries</span>
+        <span class="dish-desc">Flash Fried, Parmesan, Truffle Oil, Truffle Aioli</span>
+      </div>
+      <div class="dish-price">8</div>
+    </div><div class="dish" data-dish-id="d-129c">
+      <div class="dish-left">
+        <span class="dish-name">Mashed Potatoes</span>
+        <span class="dish-desc">Whipped Russet Potatoes, Cream and Butter</span>
+      </div>
+      <div class="dish-price">7</div>
+    </div></div><!-- /two-col contorni -->
+
+  <div class="footnotes">
+    <div class="footnote" data-text-id="raw-warning-short">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness.</div>
+    <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
+  </div>
+
+</div><!-- /page 2 -->
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 3 — Secondi Piatti
+     ═══════════════════════════════════════════ -->
+<div class="page">
+
+  <div class="page-header small">
+    <div class="restaurant-name" data-text-id="restaurant-name">Siena Ristorante Toscana</div>
+    <div class="restaurant-sub" data-text-id="sub-other-pages">Spring / Summer Menu 2026</div>
+  </div>
+
+  <!-- Secondi -->
+  <div class="section-head" data-section-id="secondi">
+    <span class="section-title" data-section-title-for="secondi">Secondi Piatti</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="two-col-flow" data-section-id="secondi">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  <div class="dish" data-dish-id="d-1a53">
+      <div class="dish-left">
+        <span class="dish-name">Cacciucco alla Livornese</span>
+        <span class="dish-desc">Shrimp, Mussels, Calamari, Fresh Fish, Scallops, Red Chili, Oregano, Garlic, Crushed Tomatoes, Pomodoro, Grilled Bruschetta</span>
+      </div>
+      <div class="dish-price">41</div>
+    </div><div class="dish" data-dish-id="d-becc">
+      <div class="dish-left">
+        <span class="dish-name">Bistecca di Manzo alla Griglia <span style="font-size:9pt;font-weight:400;font-style:normal;">*</span></span>
+        <span class="dish-desc">16oz Ribeye Steak, Calabrian Chili Butter, Mashed Potatoes, Grilled Asparagus</span>
+      </div>
+      <div class="dish-price">62</div>
+    </div><div class="dish" data-dish-id="d-26ab">
+      <div class="dish-left">
+        <span class="dish-name">Pollo al Marsala</span>
+        <span class="dish-desc">Seared Chicken Breast, Wild Mushrooms, Marsala Wine, Buttered Mash Potatoes</span>
+      </div>
+      <div class="dish-price">29</div>
+    </div><div class="dish" data-dish-id="d-6a30">
+      <div class="dish-left">
+        <span class="dish-name">Trota in Crosta di Noci</span>
+        <span class="dish-desc">Walnut Crusted Trout, Shrimp, Sautéed Spinach, Lemon Butter Sauce</span>
+      </div>
+      <div class="dish-price">35</div>
+    </div><div class="dish" data-dish-id="d-07aa">
+      <div class="dish-left">
+        <span class="dish-name">Salmone Toscano <span style="font-size:9pt;font-weight:400;font-style:normal;">*</span></span>
+        <span class="dish-desc">Grilled Salmon, Potato Mash, Grilled Shrimp, Crabmeat, Lemon Butter Sauce</span>
+      </div>
+      <div class="dish-price">48</div>
+    </div><div class="dish" data-dish-id="d-f015">
+      <div class="dish-left">
+        <span class="dish-name">Costata di Maiale <span style="font-size:9pt;font-weight:400;font-style:normal;">*</span></span>
+        <span class="dish-desc">Wood Grilled 16oz Pork Chop, Truffle Whole Grain Honey Mustard Glaze, Mashed Potatoes, Sautéed Baby Spinach</span>
+      </div>
+      <div class="dish-price">38</div>
+    </div><div class="dish" data-dish-id="d-e2a6">
+      <div class="dish-left">
+        <span class="dish-name">Pollo Parmigiano</span>
+        <span class="dish-desc">Breaded Chicken Cutlet, Fresh Buffalo Mozzarella, Parmigiano, Pomodoro, Linguine</span>
+      </div>
+      <div class="dish-price">29</div>
+    </div><div class="dish" data-dish-id="d-3f05">
+      <div class="dish-left">
+        <span class="dish-name">Filetto di Manzo <span style="font-size:9pt;font-weight:400;font-style:normal;">*</span></span>
+        <span class="dish-desc">6oz Wood Grilled Beef Filet, Red Wine Demi, Mashed Potatoes, Grilled Asparagus</span>
+      </div>
+      <div class="dish-price">52</div>
+    </div></div><!-- /two-col secondi -->
+
+  <!-- Drinks -->
+  <div class="drinks-panel">
+    <div class="section-head" data-section-id="non-alcoholic">
+      <span class="section-title" data-section-title-for="non-alcoholic">Non-Alcoholic Beverages</span>
+      <div class="section-rule"></div>
+    </div>
+    <div class="two-col-flow" data-section-id="non-alcoholic">
+      
+      
+      
+      
+      
+      
+      
+    <div class="dish" data-dish-id="d-6a0e"><div class="dish-left"><span class="dish-name">Lychee Mocktail</span><span class="dish-desc">Lychee Nectar, Lime Juice, Tonic Water with a hint of Grenadine, shaken and served up</span></div><div class="dish-price">12</div></div><div class="dish" data-dish-id="d-371a"><div class="dish-left"><span class="dish-name">The Siena Mocktail</span><span class="dish-desc">Agave Nectar, Lime Juice, Orange Juice, Tonic Water over ice, Tajín rim</span></div><div class="dish-price">12</div></div><div class="dish" data-dish-id="d-62c2"><div class="dish-left"><span class="dish-name">Fruit Smash</span><span class="dish-desc">Refreshing blend of Orange Juice, Pineapple Juice, Cranberry Juice and Sprite, over ice</span></div><div class="dish-price">8</div></div><div class="dish" data-dish-id="d-d9c5"><div class="dish-left"><span class="dish-name">Ranch Water Mocktail</span><span class="dish-desc">Agave Nectar, Lime Juice and Club Soda</span></div><div class="dish-price">8</div></div><div class="dish" data-dish-id="d-7256"><div class="dish-left"><span class="dish-name">A’ Siciliana Natural Soda</span><span class="dish-desc">Sicily Blood Orange &nbsp;·&nbsp; Sicily Lemon</span></div><div class="dish-price">6.50</div></div><div class="dish" data-dish-id="d-714d"><div class="dish-left"><span class="dish-name">Heineken 0.0</span><span class="dish-desc">Zero-Alcohol Beer</span></div><div class="dish-price">7</div></div><div class="dish" data-dish-id="d-a7da"><div class="dish-left"><span class="dish-name">Soft Drinks</span><span class="dish-desc">Coca-Cola, Diet Coke, Sprite</span></div><div class="dish-price">4.50</div></div></div>
+  </div>
+
+  <div class="footnotes">
+    <div class="footnote" data-text-id="raw-warning-full">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.</div>
+    <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
+  </div>
+
+</div><!-- /page 3 -->
+
+
+
+
+</body></html>

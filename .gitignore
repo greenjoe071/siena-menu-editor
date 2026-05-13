@@ -1,0 +1,7 @@
+.next/
+node_modules/
+backups/
+dev-server.log
+*.local
+.env*
+!.env.example
