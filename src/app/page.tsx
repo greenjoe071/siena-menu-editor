@@ -373,8 +373,10 @@ export default function EditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey((k) => k + 1);
-      // Small delay lets Netlify Blobs propagate before we re-read in /preview
-      setTimeout(() => setPreviewUrl('/preview?' + Date.now()), 400);
+      // Push data directly into the iframe — no reload, no scroll jump
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: 'SIENA_MENU_UPDATE', payload: data }, '*'
+      );
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
@@ -537,7 +539,9 @@ export default function EditorPage() {
               prevJsonRef.current = JSON.stringify(data);
               setSaveStatus('saved');
               setSaveMsg('Restored');
-              setTimeout(() => setPreviewUrl('/preview?' + Date.now()), 400);
+              iframeRef.current?.contentWindow?.postMessage(
+                { type: 'SIENA_MENU_UPDATE', payload: data }, '*'
+              );
               setTimeout(() => setSaveStatus('idle'), 3000);
             }}
           />
