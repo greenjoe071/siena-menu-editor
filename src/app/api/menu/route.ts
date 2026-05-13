@@ -22,6 +22,7 @@ export async function PUT(request: Request) {
     if (err instanceof ZodError) {
       return NextResponse.json({ error: 'Validation failed', issues: err.issues }, { status: 422 });
     }
-    return NextResponse.json({ error: 'Failed to save menu data' }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

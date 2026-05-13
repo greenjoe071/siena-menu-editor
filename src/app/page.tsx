@@ -364,7 +364,7 @@ export default function EditorPage() {
         const body = await res.json().catch(() => ({}));
         const msg = body.issues
           ? body.issues.map((i: { message: string }) => i.message).join('; ')
-          : 'Save failed';
+          : (body.error || 'Save failed');
         setSaveStatus('error');
         setSaveMsg(msg);
         return;
