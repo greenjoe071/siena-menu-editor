@@ -356,7 +356,7 @@ export default function EditorPage() {
     setSaveMsg('Saving…');
     try {
       const res = await fetch('/api/menu', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: json,
       });

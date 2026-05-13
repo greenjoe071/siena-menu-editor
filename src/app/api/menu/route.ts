@@ -12,7 +12,7 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: Request) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data = MenuSchema.parse(body);
