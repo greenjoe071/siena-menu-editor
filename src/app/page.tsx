@@ -329,7 +329,8 @@ export default function EditorPage() {
   const [menu, setMenu] = useState<MenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
-  const [historyKey, setHistoryKey] = useState(0); // bump to force history reload
+  const [historyKey, setHistoryKey] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState('/preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
 
@@ -371,11 +372,9 @@ export default function EditorPage() {
       }
       setSaveStatus('saved');
       setSaveMsg('Saved');
-      setHistoryKey((k) => k + 1); // refresh history list
-      // Refresh the preview iframe
-      if (iframeRef.current) {
-        iframeRef.current.src = '/preview?' + Date.now();
-      }
+      setHistoryKey((k) => k + 1);
+      // Small delay lets Netlify Blobs propagate before we re-read in /preview
+      setTimeout(() => setPreviewUrl('/preview?' + Date.now()), 400);
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
@@ -538,7 +537,7 @@ export default function EditorPage() {
               prevJsonRef.current = JSON.stringify(data);
               setSaveStatus('saved');
               setSaveMsg('Restored');
-              if (iframeRef.current) iframeRef.current.src = '/preview?' + Date.now();
+              setTimeout(() => setPreviewUrl('/preview?' + Date.now()), 400);
               setTimeout(() => setSaveStatus('idle'), 3000);
             }}
           />
@@ -561,16 +560,14 @@ export default function EditorPage() {
             <button
               className="btn-ghost"
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-              onClick={() => {
-                if (iframeRef.current) iframeRef.current.src = '/preview?' + Date.now();
-              }}
+              onClick={() => setPreviewUrl('/preview?' + Date.now())}
             >
               ↺ Refresh
             </button>
           </div>
           <iframe
             ref={iframeRef}
-            src="/preview"
+            src={previewUrl}
             className="preview-iframe"
             title="Menu preview"
           />
