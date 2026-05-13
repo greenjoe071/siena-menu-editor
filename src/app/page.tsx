@@ -550,7 +550,10 @@ export default function EditorPage() {
             <span className={saveStatusClass}>{saveMsg || 'Auto-saves as you type'}</span>
             <button
               className="btn-print"
-              onClick={() => window.open('/print', '_blank')}
+              onClick={() => {
+                if (menu) localStorage.setItem('siena-print-data', JSON.stringify(menu));
+                window.open('/print', '_blank');
+              }}
             >
               Print Menu
             </button>
