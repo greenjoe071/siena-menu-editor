@@ -18,6 +18,12 @@ interface Dish {
   raw?: boolean;
   price_format?: 'single' | 'dual';
   price?: string;
+  // New dual-price fields
+  price_a_label?: string;
+  price_a?: string;
+  price_b_label?: string;
+  price_b?: string;
+  // Legacy dual-price fields (backward compat with existing Blobs data)
   bowl_price?: string;
   cup_price?: string;
 }
@@ -150,18 +156,18 @@ function DishRow({
             {isDual ? (
               <div className="dish-field-row">
                 <div className="field-group price-field">
-                  <label>Bowl $</label>
+                  <label>{dish.price_a_label ?? dish.bowl_price !== undefined ? (dish.price_a_label || 'Bowl') : 'A'} $</label>
                   <input
-                    value={dish.bowl_price ?? ''}
-                    onChange={(e) => set('bowl_price', e.target.value)}
+                    value={dish.price_a ?? dish.bowl_price ?? ''}
+                    onChange={(e) => set('price_a', e.target.value)}
                     placeholder="0"
                   />
                 </div>
                 <div className="field-group price-field">
-                  <label>Cup $</label>
+                  <label>{dish.price_b_label ?? dish.cup_price !== undefined ? (dish.price_b_label || 'Cup') : 'B'} $</label>
                   <input
-                    value={dish.cup_price ?? ''}
-                    onChange={(e) => set('cup_price', e.target.value)}
+                    value={dish.price_b ?? dish.cup_price ?? ''}
+                    onChange={(e) => set('price_b', e.target.value)}
                     placeholder="0"
                   />
                 </div>

@@ -32,12 +32,22 @@ export const AnyDishSchema = z.object({
   raw: z.boolean().optional(),
   price_format: z.enum(['single', 'dual']).optional(),
   price: z.string().optional(),
+  // New dual-price fields (price_a_label / price_a / price_b_label / price_b)
+  price_a_label: z.string().optional(),
+  price_a: z.string().optional(),
+  price_b_label: z.string().optional(),
+  price_b: z.string().optional(),
+  // Legacy dual-price fields — kept for backward compatibility with existing Blobs data
   bowl_price: z.string().optional(),
   cup_price: z.string().optional(),
 }).superRefine((d, ctx) => {
   if (d.price_format === 'dual') {
-    if (!d.bowl_price) ctx.addIssue({ code: 'custom', message: 'bowl_price required', path: ['bowl_price'] });
-    if (!d.cup_price) ctx.addIssue({ code: 'custom', message: 'cup_price required', path: ['cup_price'] });
+    const hasNew = d.price_a && d.price_b;
+    const hasLegacy = d.bowl_price && d.cup_price;
+    if (!hasNew && !hasLegacy) {
+      if (!d.price_a && !d.bowl_price) ctx.addIssue({ code: 'custom', message: 'price_a (or bowl_price) required for dual-price dish', path: ['price_a'] });
+      if (!d.price_b && !d.cup_price) ctx.addIssue({ code: 'custom', message: 'price_b (or cup_price) required for dual-price dish', path: ['price_b'] });
+    }
   } else {
     if (!d.price) ctx.addIssue({ code: 'custom', message: 'price required', path: ['price'] });
   }
@@ -64,7 +74,7 @@ export const SECTION_COUNTS: Record<string, number> = {
   pasta: 7,
   contorni: 6,
   secondi: 8,
-  'non-alcoholic': 7,
+  'non-alcoholic': 9,
 };
 
 export const MenuSchema = z.object({

@@ -13,6 +13,16 @@
  *   const { JSDOM } = require('jsdom');
  *   const dom = new JSDOM(templateHtml);
  *   render(dom.window.document, menuData);
+ *
+ * Note on subsections:
+ *   The Non-Alcoholic Beverages section is split visually into two groups
+ *   ("waters/sodas" and "Mocktails") via a static subhead in the template.
+ *   Each dish element lives in exactly one of two `.two-col-flow` containers,
+ *   and that group membership is FIXED at template load time. The renderer
+ *   never moves a dish across containers; it only re-orders items within
+ *   each container according to the JSON. This matches the design rule
+ *   that subsection membership, like section membership, is not editable
+ *   from the manager-facing app.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -31,7 +41,6 @@
   function renderBreadNote(doc, breadNote) {
     const el = doc.querySelector('.bread-note[data-text-id="bread-note-body"]');
     if (!el) return;
-    // Rebuild: <strong data-text-id="bread-note-title">TITLE</strong>BODY
     el.innerHTML = '';
     const strong = doc.createElement('strong');
     strong.setAttribute('data-text-id', 'bread-note-title');
@@ -41,7 +50,6 @@
   }
 
   function renderDishName(doc, dish) {
-    // <span class="dish-name">NAME<sup-style span>*</sup-style></span> when raw
     const frag = doc.createDocumentFragment();
     frag.appendChild(doc.createTextNode(dish.name));
     if (dish.raw) {
@@ -62,12 +70,18 @@
     const descEl = dishEl.querySelector('.dish-desc');
     descEl.textContent = dish.desc;
 
-    // Price: single or dual
     const oldPrice = dishEl.querySelector('.dish-price, .dish-price-dual');
     const newPrice = doc.createElement('div');
     if (dish.price_format === 'dual') {
       newPrice.className = 'dish-price-dual';
-      newPrice.innerHTML = 'Bowl ' + dish.bowl_price + '<br>Cup ' + dish.cup_price;
+      // Labels are stored in the data so San Pellegrino can use "Sm/Lg"
+      // and Tomato Bisque can use "Bowl/Cup". Fall back to legacy fields
+      // if labels are absent.
+      const a_label = dish.price_a_label || 'Bowl';
+      const a_value = dish.price_a != null ? dish.price_a : dish.bowl_price;
+      const b_label = dish.price_b_label || 'Cup';
+      const b_value = dish.price_b != null ? dish.price_b : dish.cup_price;
+      newPrice.innerHTML = a_label + ' ' + a_value + '<br>' + b_label + ' ' + b_value;
     } else {
       newPrice.className = 'dish-price';
       newPrice.textContent = dish.price;
@@ -76,43 +90,55 @@
   }
 
   function renderSection(doc, sectionId, sectionData) {
-    // Title
+    // Title (single section header — subsection heads are static)
     const titleEl = doc.querySelector('[data-section-title-for="' + sectionId + '"]');
     if (titleEl) titleEl.textContent = sectionData.title;
 
-    // Container with the dishes
-    const container = doc.querySelector(
+    // Find ALL containers belonging to this section. Most sections have one;
+    // non-alcoholic has two (split by the Mocktails subhead).
+    const containers = [].slice.call(doc.querySelectorAll(
       '[data-section-id="' + sectionId + '"].two-col, ' +
       '[data-section-id="' + sectionId + '"].two-col-flow'
-    );
-    if (!container) return;
+    ));
+    if (containers.length === 0) return;
 
-    // Map current children by ID
-    const dishMap = {};
-    for (const el of container.querySelectorAll(':scope > [data-dish-id]')) {
-      dishMap[el.getAttribute('data-dish-id')] = el;
+    // Capture each dish's owning container from the initial template state.
+    // This is the subsection-membership "constant" — we never move a dish
+    // out of the container the template assigned it to.
+    const dishEl = {};
+    const dishContainer = {};
+    for (const c of containers) {
+      for (const el of c.querySelectorAll(':scope > [data-dish-id]')) {
+        const id = el.getAttribute('data-dish-id');
+        dishEl[id] = el;
+        dishContainer[id] = c;
+      }
     }
 
-    // Walk JSON order, update content, re-append in order
+    // Walk the JSON order; update each dish's content; re-append it to its
+    // assigned container. Within each container, append-order matches the
+    // relative order in the JSON. Items destined for different containers
+    // never interleave.
     for (const dish of sectionData.items) {
-      const el = dishMap[dish.id];
-      if (!el) continue;
+      const el = dishEl[dish.id];
+      const container = dishContainer[dish.id];
+      if (!el || !container) continue;
       renderDish(doc, el, dish);
-      container.appendChild(el); // re-appending reorders
+      container.appendChild(el);
     }
   }
 
   function render(doc, data) {
-    // Header text
+    // Header
     setText(doc, 'restaurant-name', data.header.restaurant_name);
     setText(doc, 'sub-page-1', data.header.sub_page_1, true);
     setText(doc, 'sub-other-pages', data.header.sub_other_pages);
 
-    // Body text
+    // Body
     setText(doc, 'about-blurb', data.about_blurb);
     renderBreadNote(doc, data.bread_note);
 
-    // Footer text
+    // Footer
     setText(doc, 'raw-warning-full', data.raw_warning_full);
     setText(doc, 'raw-warning-short', data.raw_warning_short);
     setText(doc, 'policy-line', data.policy_line, true);

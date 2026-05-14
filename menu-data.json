@@ -76,9 +76,9 @@
           "id": "d-35cb",
           "name": "Carpaccio",
           "desc": "Raw Wagyu Beef, Capers, Parmesan Frico, Truffle Aioli, Arugula, Roasted Mushrooms",
-          "raw": true,
           "price_format": "single",
-          "price": "15"
+          "price": "15",
+          "raw": true
         },
         {
           "id": "d-1926",
@@ -97,8 +97,10 @@
           "name": "Tomato Bisque",
           "desc": "Tomato Basil Soup, Parmesan Croutons, Basil Pesto",
           "price_format": "dual",
-          "bowl_price": "10",
-          "cup_price": "5"
+          "price_a_label": "Bowl",
+          "price_a": "10",
+          "price_b_label": "Cup",
+          "price_b": "5"
         },
         {
           "id": "d-153d",
@@ -238,9 +240,9 @@
           "id": "d-becc",
           "name": "Bistecca di Manzo alla Griglia",
           "desc": "16oz Ribeye Steak, Calabrian Chili Butter, Mashed Potatoes, Grilled Asparagus",
-          "raw": true,
           "price_format": "single",
-          "price": "62"
+          "price": "62",
+          "raw": true
         },
         {
           "id": "d-26ab",
@@ -260,17 +262,17 @@
           "id": "d-07aa",
           "name": "Salmone Toscano",
           "desc": "Grilled Salmon, Potato Mash, Grilled Shrimp, Crabmeat, Lemon Butter Sauce",
-          "raw": true,
           "price_format": "single",
-          "price": "48"
+          "price": "48",
+          "raw": true
         },
         {
           "id": "d-f015",
           "name": "Costata di Maiale",
           "desc": "Wood Grilled 16oz Pork Chop, Truffle Whole Grain Honey Mustard Glaze, Mashed Potatoes, Sautéed Baby Spinach",
-          "raw": true,
           "price_format": "single",
-          "price": "38"
+          "price": "38",
+          "raw": true
         },
         {
           "id": "d-e2a6",
@@ -283,9 +285,9 @@
           "id": "d-3f05",
           "name": "Filetto di Manzo",
           "desc": "6oz Wood Grilled Beef Filet, Red Wine Demi, Mashed Potatoes, Grilled Asparagus",
-          "raw": true,
           "price_format": "single",
-          "price": "52"
+          "price": "52",
+          "raw": true
         }
       ]
     },
@@ -293,53 +295,73 @@
       "title": "Non-Alcoholic Beverages",
       "items": [
         {
-          "id": "d-6a0e",
-          "name": "Lychee Mocktail",
-          "desc": "Lychee Nectar, Lime Juice, Tonic Water with a hint of Grenadine, shaken and served up",
-          "price_format": "single",
-          "price": "12"
+          "id": "d-be29",
+          "name": "San Pellegrino",
+          "desc": "Sparkling Mineral Water",
+          "price_format": "dual",
+          "price_a_label": "Sm",
+          "price_a": "4",
+          "price_b_label": "Lg",
+          "price_b": "8"
         },
         {
-          "id": "d-371a",
-          "name": "The Siena Mocktail",
-          "desc": "Agave Nectar, Lime Juice, Orange Juice, Tonic Water over ice, Tajín rim",
-          "price_format": "single",
-          "price": "12"
+          "id": "d-a7c2",
+          "name": "Acqua Panna",
+          "desc": "Still Mineral Water",
+          "price_format": "dual",
+          "price_a_label": "Sm",
+          "price_a": "4",
+          "price_b_label": "Lg",
+          "price_b": "8"
         },
         {
-          "id": "d-62c2",
-          "name": "Fruit Smash",
-          "desc": "Refreshing blend of Orange Juice, Pineapple Juice, Cranberry Juice and Sprite, over ice",
-          "price_format": "single",
-          "price": "8"
-        },
-        {
-          "id": "d-d9c5",
-          "name": "Ranch Water Mocktail",
-          "desc": "Agave Nectar, Lime Juice and Club Soda",
-          "price_format": "single",
-          "price": "8"
-        },
-        {
-          "id": "d-7256",
+          "id": "d-723d",
           "name": "A’ Siciliana Natural Soda",
           "desc": "Sicily Blood Orange  ·  Sicily Lemon",
           "price_format": "single",
           "price": "6.50"
         },
         {
-          "id": "d-714d",
-          "name": "Heineken 0.0",
-          "desc": "Zero-Alcohol Beer",
-          "price_format": "single",
-          "price": "7"
-        },
-        {
-          "id": "d-a7da",
+          "id": "d-a7f4",
           "name": "Soft Drinks",
           "desc": "Coca-Cola, Diet Coke, Sprite",
           "price_format": "single",
           "price": "4.50"
+        },
+        {
+          "id": "d-6a29",
+          "name": "Lychee Mocktail",
+          "desc": "Lychee Nectar, Lime Juice, Tonic Water with a hint of Grenadine, shaken and served up",
+          "price_format": "single",
+          "price": "12"
+        },
+        {
+          "id": "d-3735",
+          "name": "The Siena Mocktail",
+          "desc": "Agave Nectar, Lime Juice, Orange Juice, Tonic Water over ice, Tajín rim",
+          "price_format": "single",
+          "price": "12"
+        },
+        {
+          "id": "d-62a7",
+          "name": "Fruit Smash",
+          "desc": "Refreshing blend of Orange Juice, Pineapple Juice, Cranberry Juice and Sprite, over ice",
+          "price_format": "single",
+          "price": "8"
+        },
+        {
+          "id": "d-d9e0",
+          "name": "Ranch Water Mocktail",
+          "desc": "Agave Nectar, Lime Juice and Club Soda",
+          "price_format": "single",
+          "price": "8"
+        },
+        {
+          "id": "d-714a",
+          "name": "Heineken 0.0",
+          "desc": "Zero-Alcohol Beer",
+          "price_format": "single",
+          "price": "7"
         }
       ]
     }
