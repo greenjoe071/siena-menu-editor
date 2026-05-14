@@ -1,0 +1,89 @@
+{
+  "hero": {
+    "eyebrow": "Monday Nights at Siena",
+    "price": "26",
+    "tagline": "for 26 Years in Austin",
+    "meta_left": "Two Courses",
+    "meta_right": "Mondays Only"
+  },
+  "sections": {
+    "course-1": {
+      "title": "Insalata o Zuppa",
+      "subtitle": "Choose One",
+      "items": [
+        {
+          "id": "d-c1a1",
+          "name": "Caesar Salad",
+          "desc": "Romaine hearts, Parmesan, white anchovy dressing, croutons",
+          "price": ""
+        },
+        {
+          "id": "d-c1b2",
+          "name": "Soup of the Day",
+          "desc": "Prepared fresh each evening by the kitchen",
+          "price": ""
+        }
+      ]
+    },
+    "course-2": {
+      "title": "Pasta",
+      "subtitle": "Choose One",
+      "items": [
+        {
+          "id": "d-c2a1",
+          "name": "Cacio e Pepe",
+          "desc": "Fresh tagliatelle, Pecorino Romano, toasted cracked pepper",
+          "price": ""
+        },
+        {
+          "id": "d-c2b2",
+          "name": "Carbonara",
+          "desc": "Fresh tagliatelle, Pecorino Romano, egg yolk, guanciale, cracked pepper",
+          "price": ""
+        },
+        {
+          "id": "d-c2c3",
+          "name": "Amatriciana",
+          "desc": "Penne, guanciale, red onion, tomato sauce, Pecorino Romano, cracked pepper",
+          "price": ""
+        },
+        {
+          "id": "d-c2d4",
+          "name": "Pasta alla Gricia",
+          "desc": "Penne, guanciale, Pecorino Romano, fresh cracked pepper",
+          "price": ""
+        }
+      ]
+    }
+  },
+  "weekly": {
+    "title": "Throughout the Week at Siena",
+    "rows": [
+      {
+        "id": "w-tue",
+        "day_label": "Tuesdays",
+        "headline": "Tuesday at the Bar",
+        "detail": "$5 house wines and $10 premium wines. 4:30–6:30, bar, patio and cocktail areas only."
+      },
+      {
+        "id": "w-wed",
+        "day_label": "Wednesdays",
+        "headline": "Wine Lovers Wednesday",
+        "detail": "25% off all bottles of wine — and we mean all of them."
+      },
+      {
+        "id": "w-thu",
+        "day_label": "Thursdays",
+        "headline": "Thirsty Thursday",
+        "detail": "$10 signature cocktails, all night long."
+      },
+      {
+        "id": "w-wknd",
+        "day_label": "Thu – Sat",
+        "headline": "Weekend Specials",
+        "detail": "A new set of specials every week. This is where Chef gets creative."
+      }
+    ]
+  },
+  "policy_line": "<strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong>"
+}

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Siena Ristorante — $26 for 26 Years · Monday Pasta</title>
+<style>
+/* ── Self-hosted fonts ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 8.5in;
+  height: 11in;
+  padding: 0.6in 0.65in 0.55in;
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+  overflow: hidden;
+  position: relative;
+}
+.page:last-child { page-break-after: auto; }
+
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; justify-content: center; }
+  .page { box-shadow: 0 4px 24px rgba(0,0,0,0.18); background: #fff; }
+}
+@media print {
+  body { background: #fff; padding: 0; display: block; }
+  .page { box-shadow: none; overflow: visible; }
+}
+
+/* ── HERO: $26 for 26 Years ── */
+.hero {
+  text-align: center;
+  padding: 0 0 16pt;
+  position: relative;
+}
+.hero .eyebrow {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13pt;
+  color: #6b4c2a;
+  letter-spacing: 0.02em;
+  margin-bottom: 6pt;
+}
+.hero .price-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18pt;
+}
+.hero .price-rule {
+  height: 0.75pt;
+  width: 0.9in;
+  background: #b8821e;
+  opacity: 0.55;
+}
+.hero .price {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 84pt;
+  color: #b8821e;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+.hero .price .dollar {
+  font-size: 48pt;
+  vertical-align: top;
+  position: relative;
+  top: 12pt;
+  margin-right: -2pt;
+  font-weight: 600;
+}
+.hero .for-26 {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 22pt;
+  color: #111;
+  margin-top: 4pt;
+  line-height: 1.1;
+}
+.hero .meta {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 10pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-top: 10pt;
+}
+.hero .meta .dot {
+  margin: 0 8pt;
+  color: #c9a87a;
+}
+
+/* ── Two-course block ── */
+.course-block {
+  padding: 20pt 0 14pt;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 40pt;
+  align-items: stretch;
+  flex: 1;
+  position: relative;
+}
+
+.course {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.course-head {
+  margin-bottom: 14pt;
+}
+.course-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12pt;
+  padding-bottom: 6pt;
+  border-bottom: 0.75pt solid #b8821e;
+}
+.course-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22pt;
+  color: #111;
+  line-height: 1;
+}
+.course-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
+  white-space: nowrap;
+}
+
+/* dishes within course */
+.dish {
+  display: flex;
+  align-items: baseline;
+  gap: 8pt;
+  margin-bottom: 12pt;
+  break-inside: avoid;
+  padding-top: 4pt;
+}
+.dish:last-child { margin-bottom: 0; }
+.dish-left { flex: 1; min-width: 0; }
+.dish-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 14pt;
+  color: #111;
+  line-height: 1.15;
+  display: block;
+  margin-bottom: 3pt;
+}
+.dish-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 10pt;
+  color: #333;
+  line-height: 1.45;
+}
+.dish-price {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 11pt;
+  color: #111;
+  white-space: nowrap;
+  align-self: flex-start;
+  padding-top: 1pt;
+  min-width: 28pt;
+  text-align: right;
+}
+
+/* ── Weekly specials footer ── */
+/* Inset further from page edges — the bottom corners of this menu
+   slide into a hard cover, so this card is pulled inward to stay
+   fully visible. */
+.weekly-wrap {
+  margin: 16pt 0.55in 0;
+  border: 1.25pt solid #b8821e;
+  background: #faf6ef;
+  padding: 14pt 18pt 13pt;
+  position: relative;
+}
+.weekly-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 16pt;
+  color: #5a2e0e;
+  text-align: center;
+  line-height: 1;
+  margin-bottom: 12pt;
+}
+.weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 14pt;
+  align-items: start;
+}
+.weekly-cell {
+  padding: 0 4pt;
+  border-left: 0.5pt solid #c9a87a;
+}
+.weekly-cell:first-child { border-left: none; }
+.weekly-day {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 10pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-bottom: 5pt;
+}
+.weekly-headline {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 13pt;
+  color: #111;
+  line-height: 1.1;
+  margin-bottom: 5pt;
+}
+.weekly-detail {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 10pt;
+  color: #4a3a26;
+  line-height: 1.4;
+}
+
+/* ── Footnote ── */
+.footnotes {
+  margin-top: 10pt;
+  text-align: center;
+}
+.footnote {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 10pt;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+.footnote strong { color: #111; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="eyebrow" data-text-id="hero-eyebrow">Monday Nights at Siena</div>
+    <div class="price-row">
+      <div class="price-rule"></div>
+      <div class="price"><span class="dollar">$</span><span data-text-id="hero-price">26</span></div>
+      <div class="price-rule"></div>
+    </div>
+    <div class="for-26" data-text-id="hero-tagline">for 26 Years in Austin</div>
+    <div class="meta">
+      <span data-text-id="hero-meta-left">Two Courses</span>
+      <span class="dot">◆</span>
+      <span data-text-id="hero-meta-right">Mondays Only</span>
+    </div>
+  </div>
+
+  <!-- TWO COURSE BLOCK -->
+  <div class="course-block">
+
+    <div class="course-row">
+
+      <!-- FIRST COURSE -->
+      <div class="course" data-section-id="course-1">
+        <div class="course-head">
+          <div class="course-title-row">
+            <div class="course-name" data-section-title-for="course-1">Insalata o Zuppa</div>
+            <div class="course-sub" data-section-subtitle-for="course-1">Choose One</div>
+          </div>
+        </div>
+
+        <div class="dish" data-dish-id="d-c1a1" data-section-id="course-1">
+          <div class="dish-left">
+            <span class="dish-name">Caesar Salad</span>
+            <span class="dish-desc">Romaine hearts, Parmesan, white anchovy dressing, croutons</span>
+          </div>
+        </div>
+
+        <div class="dish" data-dish-id="d-c1b2" data-section-id="course-1">
+          <div class="dish-left">
+            <span class="dish-name">Soup of the Day</span>
+            <span class="dish-desc">Prepared fresh each evening by the kitchen</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECOND COURSE -->
+      <div class="course" data-section-id="course-2">
+        <div class="course-head">
+          <div class="course-title-row">
+            <div class="course-name" data-section-title-for="course-2">Pasta</div>
+            <div class="course-sub" data-section-subtitle-for="course-2">Choose One</div>
+          </div>
+        </div>
+
+        <div class="dish" data-dish-id="d-c2a1" data-section-id="course-2">
+          <div class="dish-left">
+            <span class="dish-name">Cacio e Pepe</span>
+            <span class="dish-desc">Fresh tagliatelle, Pecorino Romano, toasted cracked pepper</span>
+          </div>
+        </div>
+
+        <div class="dish" data-dish-id="d-c2b2" data-section-id="course-2">
+          <div class="dish-left">
+            <span class="dish-name">Carbonara</span>
+            <span class="dish-desc">Fresh tagliatelle, Pecorino Romano, egg yolk, guanciale, cracked pepper</span>
+          </div>
+        </div>
+
+        <div class="dish" data-dish-id="d-c2c3" data-section-id="course-2">
+          <div class="dish-left">
+            <span class="dish-name">Amatriciana</span>
+            <span class="dish-desc">Penne, guanciale, red onion, tomato sauce, Pecorino Romano, cracked pepper</span>
+          </div>
+        </div>
+
+        <div class="dish" data-dish-id="d-c2d4" data-section-id="course-2">
+          <div class="dish-left">
+            <span class="dish-name">Pasta alla Gricia</span>
+            <span class="dish-desc">Penne, guanciale, Pecorino Romano, fresh cracked pepper</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /course-row -->
+
+  </div><!-- /course-block -->
+
+  <!-- WEEKLY SPECIALS CARD -->
+  <div class="weekly-wrap">
+    <div class="weekly-title" data-text-id="weekly-title">Throughout the Week at Siena</div>
+
+    <div class="weekly-grid">
+
+      <div class="weekly-cell" data-week-row-id="w-tue">
+        <div class="weekly-day">Tuesdays</div>
+        <div class="weekly-headline">Tuesday at the Bar</div>
+        <div class="weekly-detail">$5 house wines and $10 premium wines. 4:30–6:30, bar, patio and cocktail areas only.</div>
+      </div>
+
+      <div class="weekly-cell" data-week-row-id="w-wed">
+        <div class="weekly-day">Wednesdays</div>
+        <div class="weekly-headline">Wine Lovers Wednesday</div>
+        <div class="weekly-detail">25% off all bottles of wine — and we mean all of them.</div>
+      </div>
+
+      <div class="weekly-cell" data-week-row-id="w-thu">
+        <div class="weekly-day">Thursdays</div>
+        <div class="weekly-headline">Thirsty Thursday</div>
+        <div class="weekly-detail">$10 signature cocktails, all night long.</div>
+      </div>
+
+      <div class="weekly-cell" data-week-row-id="w-wknd">
+        <div class="weekly-day">Thu – Sat</div>
+        <div class="weekly-headline">Weekend Specials</div>
+        <div class="weekly-detail">A new set of specials every week. This is where Chef gets creative.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footnote -->
+  <div class="footnotes">
+    <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
+  </div>
+
+</div><!-- /page -->
+
+</body>
+</html>

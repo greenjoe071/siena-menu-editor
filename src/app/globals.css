@@ -370,6 +370,23 @@ button {
   margin-bottom: 10px;
 }
 
+/* ── Field label row (label + char counter side by side) */
+.field-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.field-label-row label { margin-bottom: 0; }
+
+.char-count {
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.char-count.warn { color: var(--warn); }
+.char-count.over { color: var(--danger); font-weight: 600; }
+
 /* ── Back button (editor → home) ─────────────────────── */
 .btn-back {
   color: rgba(255, 255, 255, 0.8);
