@@ -369,3 +369,181 @@ button {
   border-bottom: 1px solid var(--border);
   margin-bottom: 10px;
 }
+
+/* ── Back button (editor → home) ─────────────────────── */
+.btn-back {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* ── Home page ───────────────────────────────────────── */
+.home-page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-header {
+  background: var(--navy);
+  color: #fff;
+  padding: 36px 48px 30px;
+}
+
+.home-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+
+.home-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+.home-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.home-subtitle {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-top: 3px;
+}
+
+.home-tagline {
+  font-size: 16px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+/* ── Menu card grid ──────────────────────────────────── */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 28px;
+  padding: 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.menu-card {
+  border-radius: 14px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-decoration: none;
+}
+
+/* ── Active card (ready to use) ─────────────────────── */
+.menu-card--active {
+  background: var(--navy);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(26, 58, 92, 0.22);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.menu-card--active:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(26, 58, 92, 0.32);
+}
+
+/* ── Coming soon card ───────────────────────────────── */
+.menu-card--soon {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  cursor: default;
+}
+
+/* ── Card contents ──────────────────────────────────── */
+.menu-card-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.menu-card-body {
+  flex: 1;
+}
+
+.menu-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.menu-card--soon .menu-card-title {
+  color: var(--text);
+}
+
+.menu-card-desc {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.menu-card--active .menu-card-desc {
+  opacity: 0.75;
+}
+
+.menu-card--soon .menu-card-desc {
+  opacity: 0.55;
+}
+
+/* ── Card CTA button ────────────────────────────────── */
+.menu-card-action {
+  background: var(--gold);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.menu-card--active:hover .menu-card-action {
+  background: #9a7a20;
+}
+
+/* ── Coming soon badge ──────────────────────────────── */
+.menu-card-badge {
+  background: #ede9df;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: inline-block;
+  align-self: flex-start;
+}
