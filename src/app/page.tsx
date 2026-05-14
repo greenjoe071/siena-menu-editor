@@ -20,7 +20,7 @@ const MENUS = [
     id: 'monday',
     label: 'Monday $26 Specials',
     description: 'Weekly Monday night specials',
-    icon: '🌙',
+    icon: '🥂',
     ready: true,
     href: '/monday',
   },
@@ -32,10 +32,10 @@ const MENUS = [
     ready: false,
   },
   {
-    id: 'misc1',
-    label: 'Coming Soon',
-    description: 'New menu — in progress',
-    icon: '📋',
+    id: 'weekend',
+    label: 'Weekend Specials',
+    description: 'Friday and Saturday evening specials',
+    icon: '🌅',
     ready: false,
   },
   {
@@ -58,7 +58,7 @@ export default function HomePage() {
             <p className="home-subtitle">Menu Editor</p>
           </div>
         </div>
-        <p className="home-tagline">Choose a menu below to make changes</p>
+        <p className="home-tagline">Choose a menu below to make changes and print</p>
       </header>
 
       <main className="home-grid">
