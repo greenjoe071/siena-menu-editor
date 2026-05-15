@@ -470,7 +470,8 @@ export default function WeekendEditorPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]       = useState('');
   const [historyKey, setHistoryKey] = useState(0);
-  const prevJsonRef = useRef<string>('');
+  const prevJsonRef      = useRef<string>('');
+  const previewWindowRef = useRef<Window | null>(null);
 
   useEffect(() => {
     fetch('/api/weekend')
@@ -515,6 +516,7 @@ export default function WeekendEditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey(k => k + 1);
+      previewWindowRef.current?.postMessage({ type: 'SIENA_WEEKEND_UPDATE', payload: data }, '*');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
@@ -652,7 +654,7 @@ export default function WeekendEditorPage() {
           <button
             className="btn-ghost"
             style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '5px 12px' }}
-            onClick={() => window.open('/weekend-preview', '_blank')}
+            onClick={() => { previewWindowRef.current = window.open('/weekend-preview', 'siena-weekend-preview'); }}
           >
             Preview
           </button>
