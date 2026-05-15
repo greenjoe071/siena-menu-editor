@@ -1,0 +1,94 @@
+{
+  "sections": {
+    "starters": {
+      "title": "Antipasti",
+      "subtitle": "Starters",
+      "items": [
+        {
+          "id": "d-s1",
+          "name": "Burrata e Pèsca",
+          "desc": "Peach burrata salad, fresh basil, extra virgin olive oil, fresh cracked pepper, baby heirloom tomato salad.",
+          "price": "$17"
+        },
+        {
+          "id": "d-s2",
+          "name": "Gamberoni all’Aglio",
+          "desc": "Jumbo garlic shrimp, Calabrian chili, toasted garlic, white wine, butter and grilled bread.",
+          "price": "$21"
+        },
+        {
+          "id": "d-s3",
+          "name": "Carpaccio di Manzo",
+          "desc": "Thinly sliced raw beef tenderloin, arugula, shaved Parmesan, capers, lemon, extra virgin olive oil.",
+          "price": "$19"
+        },
+        {
+          "id": "d-s4",
+          "name": "Vongole in Bianco",
+          "desc": "Manila clams steamed with white wine, garlic, parsley, Calabrian chili, grilled bread.",
+          "price": "$18"
+        }
+      ]
+    },
+    "entrees": {
+      "title": "Secondi",
+      "subtitle": "Entrees",
+      "items": [
+        {
+          "id": "d-e1",
+          "name": "Dentice",
+          "desc": "Pan-seared Hawaiian blue snapper (uku), sweet corn and crab risotto, lemon butter sauce.",
+          "price": "$48"
+        },
+        {
+          "id": "d-e2",
+          "name": "Linguine al Limone",
+          "desc": "Homemade linguine tossed with fresh lemon juice, butter, Parmesan cheese and basil.",
+          "price": "$26"
+        },
+        {
+          "id": "d-e3",
+          "name": "Bistecca alla Fiorentina",
+          "desc": "Grilled bone-in ribeye, rosemary, lemon, olive oil, roasted potatoes, charred broccolini.",
+          "price": "$62"
+        },
+        {
+          "id": "d-e4",
+          "name": "Osso Buco",
+          "desc": "Slow-braised veal shank, saffron risotto Milanese, gremolata.",
+          "price": "$44"
+        }
+      ]
+    }
+  },
+  "weekly": {
+    "title": "Throughout the Week at Siena",
+    "rows": [
+      {
+        "id": "w-mon",
+        "day_label": "Mondays",
+        "headline": "$26 for 26 Years",
+        "detail": "Two courses for $26 — salad or soup, then a fresh pasta of your choice."
+      },
+      {
+        "id": "w-tue",
+        "day_label": "Tuesdays",
+        "headline": "Tuesday at the Bar",
+        "detail": "$5 house wines and $10 premium wines, 4:30–6:30 in the bar and patio."
+      },
+      {
+        "id": "w-wed",
+        "day_label": "Wednesdays",
+        "headline": "Wine Lovers Wednesday",
+        "detail": "25% off all bottles of wine — and we mean all of them."
+      },
+      {
+        "id": "w-thu",
+        "day_label": "Thursdays",
+        "headline": "Thirsty Thursday",
+        "detail": "$10 signature cocktails, all night long."
+      }
+    ]
+  },
+  "policy_line": "<strong>Sorry, no split orders.</strong> &nbsp;·&nbsp; <strong>Standard gratuity 22% for parties of 6 or more.</strong>"
+}

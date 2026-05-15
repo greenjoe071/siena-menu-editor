@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Specialità del Capo Cuoco</title>
+<style>
+/* ── Self-hosted fonts ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 8.5in;
+  height: 11in;
+  padding: 0.6in 0.65in 0.55in;
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+  overflow: hidden;
+  position: relative;
+}
+.page:last-child { page-break-after: auto; }
+
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; justify-content: center; }
+  .page { box-shadow: 0 4px 24px rgba(0,0,0,0.18); background: #fff; }
+}
+@media print {
+  body { background: #fff; padding: 0; display: block; }
+  .page { box-shadow: none; overflow: visible; }
+}
+
+/* ── HERO (static — not in data model) ── */
+.hero {
+  text-align: center;
+  padding: 0 0 6pt;
+  position: relative;
+}
+.hero .eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 9pt;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-bottom: 14pt;
+}
+.hero .title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18pt;
+}
+.hero .title-rule {
+  height: 0.75pt;
+  width: 0.6in;
+  background: #b8821e;
+  opacity: 0.55;
+}
+.hero .title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 40pt;
+  color: #3a1a06;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+.hero .meta {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 9pt;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-top: 14pt;
+}
+.hero .meta .dot {
+  margin: 0 9pt;
+  color: #c9a87a;
+}
+
+/* ── Course sections ── */
+.menu-body {
+  padding: 22pt 0 14pt;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22pt;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section-head {
+  margin-bottom: 16pt;
+  padding-bottom: 6pt;
+  border-bottom: 0.75pt solid #b8821e;
+  display: flex;
+  align-items: last baseline;
+  justify-content: space-between;
+  gap: 12pt;
+}
+.section-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22pt;
+  color: #111;
+  line-height: 1;
+}
+.section-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
+  white-space: nowrap;
+}
+
+.dish-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16pt 36pt;
+  align-items: start;
+}
+
+.dish {
+  padding-top: 2pt;
+  break-inside: avoid;
+}
+.dish-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 16pt;
+  color: #111;
+  line-height: 1.15;
+  display: block;
+  margin-bottom: 4pt;
+}
+.dish-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 10pt;
+  color: #333;
+  line-height: 1.45;
+  text-wrap: pretty;
+  margin-bottom: 5pt;
+}
+.dish-price {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 11pt;
+  color: #b8821e;
+  letter-spacing: 0.01em;
+}
+
+/* ── Weekly footer — same pattern as Monday menu ── */
+.weekly-wrap {
+  margin: 8pt 0 0;
+  position: relative;
+}
+.weekly-head {
+  text-align: center;
+  margin-bottom: 14pt;
+  padding-bottom: 6pt;
+  border-bottom: 0.75pt solid #b8821e;
+}
+.weekly-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 15pt;
+  color: #5a2e0e;
+  line-height: 1;
+}
+.weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 18pt;
+  align-items: start;
+  /* Inset from page edges — hard-cover safe zone, same as Monday menu. */
+  margin: 0 0.45in;
+}
+.weekly-cell {
+  text-align: center;
+}
+.weekly-day {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 8.5pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-bottom: 6pt;
+}
+.weekly-headline {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 13.5pt;
+  color: #111;
+  line-height: 1.15;
+  margin-bottom: 5pt;
+}
+.weekly-detail {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 9.5pt;
+  color: #4a3a26;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+/* ── Footnote ── */
+.footnotes {
+  margin-top: 24pt;
+  text-align: center;
+}
+.footnote {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 10pt;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+.footnote strong { color: #111; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO — STATIC. Not in the data model. The renderer never touches it. -->
+  <div class="hero">
+    <div class="eyebrow">Chef&rsquo;s Suggestions</div>
+    <div class="title-row">
+      <div class="title-rule"></div>
+      <div class="title">Specialit&agrave; del Capo Cuoco</div>
+      <div class="title-rule"></div>
+    </div>
+    <div class="meta">Thursday <span class="dot">&#9670;</span> Friday <span class="dot">&#9670;</span> Saturday</div>
+  </div>
+
+  <!-- MENU BODY — sections are populated by the renderer. -->
+  <div class="menu-body">
+
+    <!-- STARTERS — variable cardinality 1..4 -->
+    <div class="section" data-section-id="starters">
+      <div class="section-head">
+        <div class="section-name" data-section-title-for="starters">Antipasti</div>
+        <div class="section-sub" data-section-subtitle-for="starters">Starters</div>
+      </div>
+      <div class="dish-grid"></div>
+    </div>
+
+    <!-- ENTREES — variable cardinality 1..4 -->
+    <div class="section" data-section-id="entrees">
+      <div class="section-head">
+        <div class="section-name" data-section-title-for="entrees">Secondi</div>
+        <div class="section-sub" data-section-subtitle-for="entrees">Entrees</div>
+      </div>
+      <div class="dish-grid"></div>
+    </div>
+
+  </div><!-- /menu-body -->
+
+  <!-- WEEKLY FOOTER — same 4-row structure as Monday menu. -->
+  <div class="weekly-wrap">
+    <div class="weekly-head">
+      <span class="weekly-title" data-text-id="weekly-title">Throughout the Week at Siena</span>
+    </div>
+
+    <div class="weekly-grid">
+
+      <div class="weekly-cell" data-week-row-id="w-mon">
+        <div class="weekly-day">Mondays</div>
+        <div class="weekly-headline">$26 for 26 Years</div>
+        <div class="weekly-detail">Two courses for $26 &mdash; salad or soup, then a fresh pasta of your choice.</div>
+      </div>
+
+      <div class="weekly-cell" data-week-row-id="w-tue">
+        <div class="weekly-day">Tuesdays</div>
+        <div class="weekly-headline">Tuesday at the Bar</div>
+        <div class="weekly-detail">$5 house wines and $10 premium wines, 4:30&ndash;6:30 in the bar and patio.</div>
+      </div>
+
+      <div class="weekly-cell" data-week-row-id="w-wed">
+        <div class="weekly-day">Wednesdays</div>
+        <div class="weekly-headline">Wine Lovers Wednesday</div>
+        <div class="weekly-detail">25% off all bottles of wine &mdash; and we mean all of them.</div>
+      </div>
+
+      <div class="weekly-cell" data-week-row-id="w-thu">
+        <div class="weekly-day">Thursdays</div>
+        <div class="weekly-headline">Thirsty Thursday</div>
+        <div class="weekly-detail">$10 signature cocktails, all night long.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footnote -->
+  <div class="footnotes">
+    <div class="footnote" data-text-id="policy-line"><strong>Sorry, no split orders.</strong> &nbsp;&middot;&nbsp; <strong>Standard gratuity 22% for parties of 6 or more.</strong></div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ────────────────────────────────────────────────────────────────────────
+     Dish DOM blueprint. The renderer clones this once per item in
+     sections.<id>.items and appends to the matching .dish-grid. Edit here
+     if and only if the dish layout itself changes.
+     ──────────────────────────────────────────────────────────────────── -->
+<template id="dish-template"><div class="dish"><span class="dish-name"></span><div class="dish-desc"></div><div class="dish-price"></div></div></template>
+
+</body>
+</html>

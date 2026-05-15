@@ -34,9 +34,10 @@ const MENUS = [
   {
     id: 'weekend',
     label: 'Weekend Specials',
-    description: 'Friday and Saturday evening specials',
+    description: "Thu–Sat chef's specials — changes every week",
     icon: '🌅',
-    ready: false,
+    ready: true,
+    href: '/weekend',
   },
   {
     id: 'misc2',

@@ -6,8 +6,10 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '/preview':        ['./handoff/**'],
       '/print':          ['./handoff/**'],
-      '/monday-preview': ['./handoff-monday/**'],
-      '/monday-print':   ['./handoff-monday/**'],
+      '/monday-preview':  ['./handoff-monday/**'],
+      '/monday-print':    ['./handoff-monday/**'],
+      '/weekend-preview': ['./handoff-weekend/**'],
+      '/weekend-print':   ['./handoff-weekend/**'],
     },
   },
 };
