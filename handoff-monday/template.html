@@ -146,7 +146,11 @@ body {
 }
 .course-title-row {
   display: flex;
-  align-items: baseline;
+  /* last baseline — so "Choose One" aligns with the LAST line of a
+     wrapping title (e.g. "Insalata o Zuppa" wraps to two lines and
+     we want "Choose One" beside "Zuppa", hugging the gold rule,
+     not floating up beside "Insalata o"). */
+  align-items: last baseline;
   justify-content: space-between;
   gap: 12pt;
   padding-bottom: 6pt;
@@ -210,62 +214,66 @@ body {
   text-align: right;
 }
 
-/* ── Weekly specials footer ── */
-/* Inset further from page edges — the bottom corners of this menu
-   slide into a hard cover, so this card is pulled inward to stay
-   fully visible. */
+/* ── Weekly specials footer ──
+   Open layout, no boxed card. The section is held together by a single
+   gold rule beneath the title (matching the course-header rule pattern
+   above). The bottom corners of this menu slide into a hard cover, so
+   the row of day cells is inset from the page edges to stay fully
+   visible. */
 .weekly-wrap {
-  margin: 16pt 0.55in 0;
-  border: 1.25pt solid #b8821e;
-  background: #faf6ef;
-  padding: 14pt 18pt 13pt;
+  margin: 22pt 0 0;
   position: relative;
+}
+.weekly-head {
+  text-align: center;
+  margin-bottom: 14pt;
+  padding-bottom: 6pt;
+  border-bottom: 0.75pt solid #b8821e;
 }
 .weekly-title {
   font-family: 'Playfair Display', serif;
   font-style: italic;
-  font-weight: 700;
-  font-size: 16pt;
+  font-weight: 600;
+  font-size: 15pt;
   color: #5a2e0e;
-  text-align: center;
   line-height: 1;
-  margin-bottom: 12pt;
 }
 .weekly-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0 14pt;
+  gap: 0 18pt;
   align-items: start;
+  /* Inset from page edges — see hard-cover note above. */
+  margin: 0 0.45in;
 }
 .weekly-cell {
-  padding: 0 4pt;
-  border-left: 0.5pt solid #c9a87a;
+  text-align: center;
 }
-.weekly-cell:first-child { border-left: none; }
 .weekly-day {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
-  font-size: 10pt;
-  letter-spacing: 0.18em;
+  font-size: 8.5pt;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #b8821e;
-  margin-bottom: 5pt;
+  margin-bottom: 6pt;
 }
 .weekly-headline {
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 700;
-  font-size: 13pt;
+  font-size: 13.5pt;
   color: #111;
-  line-height: 1.1;
+  line-height: 1.15;
   margin-bottom: 5pt;
 }
 .weekly-detail {
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
-  font-size: 10pt;
+  font-size: 9.5pt;
   color: #4a3a26;
   line-height: 1.4;
+  text-wrap: pretty;
 }
 
 /* ── Footnote ── */
@@ -374,16 +382,18 @@ body {
 
   </div><!-- /course-block -->
 
-  <!-- WEEKLY SPECIALS CARD -->
+  <!-- WEEKLY SPECIALS — open layout, gold rule beneath the title -->
   <div class="weekly-wrap">
-    <div class="weekly-title" data-text-id="weekly-title">Throughout the Week at Siena</div>
+    <div class="weekly-head">
+      <span class="weekly-title" data-text-id="weekly-title">Throughout the Week at Siena</span>
+    </div>
 
     <div class="weekly-grid">
 
       <div class="weekly-cell" data-week-row-id="w-tue">
         <div class="weekly-day">Tuesdays</div>
         <div class="weekly-headline">Tuesday at the Bar</div>
-        <div class="weekly-detail">$5 house wines and $10 premium wines. 4:30–6:30, bar, patio and cocktail areas only.</div>
+        <div class="weekly-detail">$5 house wines and $10 premium wines, 4:30–6:30 in the bar and patio.</div>
       </div>
 
       <div class="weekly-cell" data-week-row-id="w-wed">

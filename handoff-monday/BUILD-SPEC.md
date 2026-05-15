@@ -104,10 +104,10 @@ The editor must enforce these character limits as **hard caps**. They were tuned
 
 | Field | JSON path | Max chars | Notes |
 |---|---|---|---|
-| Card title | `weekly.title` | **42** | Italic Playfair 16pt, centered. |
-| Day label | `weekly.rows[*].day_label` | **14** | Uppercase Montserrat 10pt, tracked. Use en-dash for ranges: "Thu – Sat". |
-| Headline | `weekly.rows[*].headline` | **28** | Italic Playfair 13pt. |
-| Detail | `weekly.rows[*].detail` | **130** | Regular Montserrat 10pt. Two to three lines per cell is the design target. |
+| Card title | `weekly.title` | **42** | Italic Playfair 15pt, centered, sits above a gold rule that spans the section. |
+| Day label | `weekly.rows[*].day_label` | **14** | Uppercase Montserrat 8.5pt, tracked. Use en-dash for ranges: "Thu – Sat". |
+| Headline | `weekly.rows[*].headline` | **26** | Italic Playfair 13.5pt, centered. |
+| Detail | `weekly.rows[*].detail` | **110** | Regular Montserrat 9.5pt, centered, `text-wrap: pretty`. Two to three lines per cell is the design target — beyond ~110 chars one cell grows visibly taller than its neighbors. |
 
 ### Footer
 
@@ -137,9 +137,9 @@ The following are baked into `template.html` and are NOT exposed to the editor:
 - The `◆` diamond separator between `hero.meta_left` and `hero.meta_right`.
 - The horizontal gold rules above and below the price (`.price-rule`).
 - The gold underline beneath each course title.
-- The vertical dividers between weekly cells (`.weekly-cell` `border-left`).
+- The gold rule beneath the weekly-card title (`.weekly-head` `border-bottom`).
 - The masthead with the restaurant name and city — **deliberately omitted** from this menu (it slides into a hard menu cover that shows branding externally).
-- All CSS, fonts, page break behavior, page padding, and the weekly card's inset margins.
+- All CSS, fonts, page break behavior, page padding, and the weekly grid's inset margins.
 
 If a manager asks to bring back the restaurant-name header or change colors, that's an owner-level decision.
 
@@ -175,7 +175,7 @@ If a manager asks to bring back the restaurant-name header or change colors, tha
 - Section IDs, dish IDs, weekly row IDs
 - Which section a dish belongs to (no cross-section moves)
 - Any CSS, font, color, or layout property
-- The `$` symbol, the diamond, the rules, the weekly card border
+- The `$` symbol, the diamond, the rules, the weekly grid layout
 
 ---
 

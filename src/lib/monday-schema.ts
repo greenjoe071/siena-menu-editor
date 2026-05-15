@@ -14,8 +14,8 @@ export const MONDAY_CHAR_LIMITS = {
   dishPrice:         6,
   weeklyTitle:      42,
   weeklyDayLabel:   14,
-  weeklyHeadline:   28,
-  weeklyDetail:    130,
+  weeklyHeadline:   26,
+  weeklyDetail:    110,
   policyLine:      120,
 } as const;
 
