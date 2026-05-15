@@ -200,12 +200,13 @@ function DishCard({
 // ── Section block ─────────────────────────────────────────────────────────
 
 function SectionBlock({
-  sectionId, section, label, defaultOpen, onChange, onDishChange, onAddDish, onRemoveDish,
+  sectionId, section, label, defaultOpen, variant, onChange, onDishChange, onAddDish, onRemoveDish,
 }: {
   sectionId: SectionId;
   section: WeekendSection;
   label: string;
   defaultOpen: boolean;
+  variant: 'starters' | 'entrees';
   onChange: (id: SectionId, updated: WeekendSection) => void;
   onDishChange: (id: SectionId, index: number, updated: WeekendDish) => void;
   onAddDish: (id: SectionId) => void;
@@ -216,8 +217,8 @@ function SectionBlock({
   const canRemove = section.items.length > 1;
 
   return (
-    <div className="section-block">
-      <div className="section-block-header" onClick={() => setOpen(o => !o)}>
+    <div className={`section-block section-block--${variant}`}>
+      <div className={`section-block-header section-block-header--${variant}`} onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{label} — {section.title}</span>
         <span className="section-count">{section.items.length} dish{section.items.length !== 1 ? 'es' : ''}</span>
@@ -676,12 +677,17 @@ export default function WeekendEditorPage() {
 
             {/* Dish sections */}
             <div className="page-group">
+              <div className="weekend-instructions">
+                <p>Fill in this week's dishes below. You can have up to <strong>4 starters</strong> and <strong>4 entrees</strong> — that's the most the menu has room for. If you need more than that, or anything looks wrong, <strong>call Joe right away.</strong></p>
+              </div>
+
               <div className="page-group-label">This week's dishes</div>
               <SectionBlock
                 sectionId="starters"
                 section={menu.sections.starters}
                 label="Starters"
                 defaultOpen={true}
+                variant="starters"
                 onChange={handleSectionChange}
                 onDishChange={handleDishChange}
                 onAddDish={handleAddDish}
@@ -692,6 +698,7 @@ export default function WeekendEditorPage() {
                 section={menu.sections.entrees}
                 label="Entrees"
                 defaultOpen={true}
+                variant="entrees"
                 onChange={handleSectionChange}
                 onDishChange={handleDishChange}
                 onAddDish={handleAddDish}

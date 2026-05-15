@@ -487,6 +487,32 @@ button {
 }
 .btn-remove-dish:disabled { opacity: 0.25; cursor: default; }
 
+.weekend-instructions {
+  background: #fffbf0;
+  border: 1px solid #e8d99a;
+  border-left: 4px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.section-block-header--starters {
+  background: #fef6e4;
+  border-left: 4px solid var(--gold);
+}
+.section-block-header--starters:hover { background: #fdefc8; }
+.section-block-header--starters .section-title-label { color: #7a5a10; }
+
+.section-block-header--entrees {
+  background: #e8eef5;
+  border-left: 4px solid var(--navy);
+}
+.section-block-header--entrees:hover { background: #d6e2ef; }
+.section-block-header--entrees .section-title-label { color: var(--navy); }
+
 /* ── Home page ───────────────────────────────────────── */
 .home-page {
   min-height: 100vh;
