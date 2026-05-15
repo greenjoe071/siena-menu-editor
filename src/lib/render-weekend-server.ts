@@ -5,6 +5,27 @@ import type { WeekendMenuData } from './weekend-schema';
 
 const HANDOFF = join(process.cwd(), 'handoff-weekend');
 
+function combinedPrice(d: { price: string; price_label?: string; price2?: string; price2_label?: string }): string {
+  if (d.price2) {
+    const l1 = d.price_label  ? `${d.price_label} `  : '';
+    const l2 = d.price2_label ? `${d.price2_label} ` : '';
+    return `${l1}${d.price} / ${l2}${d.price2}`;
+  }
+  return d.price;
+}
+
+function toRendererData(data: WeekendMenuData) {
+  const mapItems = (items: WeekendMenuData['sections']['starters']['items']) =>
+    items.map(d => ({ ...d, price: combinedPrice(d) }));
+  return {
+    ...data,
+    sections: {
+      starters: { ...data.sections.starters, items: mapItems(data.sections.starters.items) },
+      entrees:  { ...data.sections.entrees,  items: mapItems(data.sections.entrees.items) },
+    },
+  };
+}
+
 async function loadRenderer() {
   const src = await readFile(join(HANDOFF, 'render.js'), 'utf8');
   const fakeRoot: Record<string, unknown> = {};
@@ -24,6 +45,6 @@ export async function renderWeekendMenu(data: WeekendMenuData): Promise<string> 
   ]);
 
   const dom = new JSDOM(template);
-  renderer.render!(dom.window.document, data);
+  renderer.render!(dom.window.document, toRendererData(data));
   return '<!DOCTYPE html>\n' + dom.window.document.documentElement.outerHTML;
 }

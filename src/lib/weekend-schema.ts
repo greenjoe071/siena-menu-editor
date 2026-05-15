@@ -7,6 +7,7 @@ export const WEEKEND_CHAR_LIMITS = {
   dishName:        30,
   dishDesc:       140,
   dishPrice:        8,
+  dishPriceLabel:   8,
   weeklyTitle:     42,
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
@@ -16,10 +17,13 @@ export const WEEKEND_CHAR_LIMITS = {
 
 // ── Dish ──────────────────────────────────────────────────────────────────
 const WeekendDishSchema = z.object({
-  id:    z.string(),
-  name:  z.string().min(1, 'Dish name is required').max(WEEKEND_CHAR_LIMITS.dishName),
-  desc:  z.string().min(1, 'Description is required').max(WEEKEND_CHAR_LIMITS.dishDesc),
-  price: z.string().min(1, 'Price is required').max(WEEKEND_CHAR_LIMITS.dishPrice),
+  id:          z.string(),
+  name:        z.string().min(1, 'Dish name is required').max(WEEKEND_CHAR_LIMITS.dishName),
+  desc:        z.string().min(1, 'Description is required').max(WEEKEND_CHAR_LIMITS.dishDesc),
+  price:       z.string().min(1, 'Price is required').max(WEEKEND_CHAR_LIMITS.dishPrice),
+  price_label: z.string().max(WEEKEND_CHAR_LIMITS.dishPriceLabel).optional(),
+  price2:      z.string().max(WEEKEND_CHAR_LIMITS.dishPrice).optional(),
+  price2_label:z.string().max(WEEKEND_CHAR_LIMITS.dishPriceLabel).optional(),
 });
 
 // ── Course section ────────────────────────────────────────────────────────

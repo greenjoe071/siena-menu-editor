@@ -16,6 +16,9 @@ interface WeekendDish {
   name: string;
   desc: string;
   price: string;
+  price_label?: string;
+  price2?: string;
+  price2_label?: string;
 }
 
 interface WeekendSection {
@@ -53,12 +56,45 @@ const L = {
   dishName:        30,
   dishDesc:       140,
   dishPrice:        8,
+  dishPriceLabel:   8,
   weeklyTitle:     42,
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
   weeklyDetail:   110,
   policyLine:     120,
 } as const;
+
+// ── Price helpers ─────────────────────────────────────────────────────────
+
+function filterPrice(v: string): string {
+  const digits = v.replace(/[^0-9.]/g, '');
+  const parts  = digits.split('.');
+  return parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : digits;
+}
+
+function stripDollar(v: string): string {
+  return v.startsWith('$') ? v.slice(1) : v;
+}
+
+function combinedPrice(d: WeekendDish): string {
+  if (d.price2) {
+    const l1 = d.price_label  ? `${d.price_label} `  : '';
+    const l2 = d.price2_label ? `${d.price2_label} ` : '';
+    return `${l1}${d.price} / ${l2}${d.price2}`;
+  }
+  return d.price;
+}
+
+function toRendererData(data: WeekendMenuData) {
+  const mapItems = (items: WeekendDish[]) => items.map(d => ({ ...d, price: combinedPrice(d) }));
+  return {
+    ...data,
+    sections: {
+      starters: { ...data.sections.starters, items: mapItems(data.sections.starters.items) },
+      entrees:  { ...data.sections.entrees,  items: mapItems(data.sections.entrees.items) },
+    },
+  };
+}
 
 // ── ID generation ─────────────────────────────────────────────────────────
 
@@ -85,9 +121,12 @@ function menuHasOverLimit(m: WeekendMenuData): boolean {
     if (s.title.length    > L.sectionTitle)    return true;
     if (s.subtitle.length > L.sectionSubtitle) return true;
     for (const d of s.items) {
-      if (d.name.length  > L.dishName)  return true;
-      if (d.desc.length  > L.dishDesc)  return true;
-      if (d.price.length > L.dishPrice) return true;
+      if (d.name.length                    > L.dishName)       return true;
+      if (d.desc.length                    > L.dishDesc)       return true;
+      if (d.price.length                   > L.dishPrice)      return true;
+      if ((d.price_label  ?? '').length    > L.dishPriceLabel) return true;
+      if ((d.price2       ?? '').length    > L.dishPrice)      return true;
+      if ((d.price2_label ?? '').length    > L.dishPriceLabel) return true;
     }
   }
   for (const r of m.weekly.rows) {
@@ -110,6 +149,27 @@ function CharCount({ value, max }: { value: string; max: number }) {
   return <span className={cls}>{len}/{max}</span>;
 }
 
+// ── Price input (auto-$ prefix, numbers only) ─────────────────────────────
+
+function PriceInput({ value, onChange, placeholder = '0.00' }: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="price-input-wrap">
+      <span className="price-dollar">$</span>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={stripDollar(value)}
+        onChange={e => onChange('$' + filterPrice(e.target.value))}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
 // ── Dish card ─────────────────────────────────────────────────────────────
 
 function DishCard({
@@ -122,8 +182,21 @@ function DishCard({
   onChange: (sectionId: SectionId, index: number, updated: WeekendDish) => void;
   onRemove: (sectionId: SectionId, index: number) => void;
 }) {
+  const [showDual, setShowDual] = useState(!!dish.price2);
+
   function set(field: keyof WeekendDish, value: string) {
     onChange(sectionId, index, { ...dish, [field]: value });
+  }
+
+  function enableDual() {
+    setShowDual(true);
+    onChange(sectionId, index, { ...dish, price_label: '', price2: '', price2_label: '' });
+  }
+
+  function disableDual() {
+    setShowDual(false);
+    const { price_label: _pl, price2: _p2, price2_label: _p2l, ...rest } = dish;
+    onChange(sectionId, index, rest as WeekendDish);
   }
 
   return (
@@ -153,31 +226,79 @@ function DishCard({
           </div>
 
           <div className="dish-fields">
-            <div className="dish-field-row">
-              <div className="field-group" style={{ flex: 1 }}>
-                <div className="field-label-row">
-                  <label>Dish name</label>
-                  <CharCount value={dish.name} max={L.dishName} />
-                </div>
-                <input
-                  value={dish.name}
-                  onChange={e => set('name', e.target.value)}
-                  placeholder="e.g. Burrata e Pèsca"
-                />
+            {/* Name */}
+            <div className="field-group">
+              <div className="field-label-row">
+                <label>Dish name</label>
+                <CharCount value={dish.name} max={L.dishName} />
               </div>
-              <div className="field-group" style={{ width: '100px', flexShrink: 0 }}>
-                <div className="field-label-row">
-                  <label>Price</label>
-                  <CharCount value={dish.price} max={L.dishPrice} />
-                </div>
-                <input
-                  value={dish.price}
-                  onChange={e => set('price', e.target.value)}
-                  placeholder="$17"
-                />
-              </div>
+              <input
+                value={dish.name}
+                onChange={e => set('name', e.target.value)}
+                placeholder="e.g. Burrata e Pèsca"
+              />
             </div>
 
+            {/* Price — single or dual */}
+            {!showDual ? (
+              <div className="dish-field-row" style={{ alignItems: 'flex-end' }}>
+                <div className="field-group" style={{ width: '120px', flexShrink: 0, marginBottom: 0 }}>
+                  <div className="field-label-row">
+                    <label>Price</label>
+                    <CharCount value={stripDollar(dish.price)} max={L.dishPrice} />
+                  </div>
+                  <PriceInput value={dish.price} onChange={v => set('price', v)} />
+                </div>
+                <button className="btn-add-price" onClick={enableDual}>
+                  + 2nd price
+                </button>
+              </div>
+            ) : (
+              <div className="dual-price-wrap">
+                <div className="dual-price-label">Two prices (e.g. Bowl / Cup)</div>
+                <div className="dual-price-row">
+                  <div className="field-group" style={{ width: '80px', flexShrink: 0, marginBottom: 0 }}>
+                    <label>Label 1</label>
+                    <input
+                      value={dish.price_label ?? ''}
+                      onChange={e => set('price_label', e.target.value)}
+                      placeholder="Bowl"
+                      maxLength={L.dishPriceLabel}
+                    />
+                  </div>
+                  <div className="field-group" style={{ width: '110px', flexShrink: 0, marginBottom: 0 }}>
+                    <div className="field-label-row">
+                      <label>Price 1</label>
+                      <CharCount value={stripDollar(dish.price)} max={L.dishPrice} />
+                    </div>
+                    <PriceInput value={dish.price} onChange={v => set('price', v)} />
+                  </div>
+                </div>
+                <div className="dual-price-row">
+                  <div className="field-group" style={{ width: '80px', flexShrink: 0, marginBottom: 0 }}>
+                    <label>Label 2</label>
+                    <input
+                      value={dish.price2_label ?? ''}
+                      onChange={e => set('price2_label', e.target.value)}
+                      placeholder="Cup"
+                      maxLength={L.dishPriceLabel}
+                    />
+                  </div>
+                  <div className="field-group" style={{ width: '110px', flexShrink: 0, marginBottom: 0 }}>
+                    <div className="field-label-row">
+                      <label>Price 2</label>
+                      <CharCount value={stripDollar(dish.price2 ?? '')} max={L.dishPrice} />
+                    </div>
+                    <PriceInput value={dish.price2 ?? ''} onChange={v => set('price2', v)} />
+                  </div>
+                  <button className="btn-remove-price" onClick={disableDual}>
+                    × one price
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
             <div className="field-group" style={{ marginBottom: 0 }}>
               <div className="field-label-row">
                 <label>Description</label>
@@ -517,7 +638,7 @@ export default function WeekendEditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey(k => k + 1);
-      previewWindowRef.current?.postMessage({ type: 'SIENA_WEEKEND_UPDATE', payload: data }, '*');
+      previewWindowRef.current?.postMessage({ type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(data) }, '*');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
