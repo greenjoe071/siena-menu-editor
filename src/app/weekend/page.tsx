@@ -770,15 +770,18 @@ export default function WeekendEditorPage() {
              saveStatus === 'saving' ? 'Saving…' :
              saveStatus === 'error'  ? `⚠ ${saveMsg}` : ''}
           </span>
+        </div>
+
+        {/* ── Action bar ─────────────────────────────────────── */}
+        <div className="weekend-action-bar">
           <button className="btn-new-week" onClick={handleNewWeek}>
             New Week
           </button>
           <button
-            className="btn-ghost"
-            style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '5px 12px' }}
+            className="btn-preview-main"
             onClick={() => { previewWindowRef.current = window.open('/weekend-preview', 'siena-weekend-preview'); }}
           >
-            Preview
+            👁 Preview Menu
           </button>
           <button
             className="btn-print"

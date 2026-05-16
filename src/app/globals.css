@@ -487,6 +487,37 @@ button {
 }
 .btn-remove-dish:disabled { opacity: 0.25; cursor: default; }
 
+.weekend-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 24px;
+  background: #f0ece3;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.btn-preview-main {
+  background: #059669;
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 13px 32px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 3px 10px rgba(5, 150, 105, 0.35);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.btn-preview-main:hover {
+  background: #047857;
+  box-shadow: 0 5px 16px rgba(5, 150, 105, 0.45);
+  transform: translateY(-1px);
+}
+.btn-preview-main:active { transform: translateY(0); }
+
 .weekend-instructions {
   background: #fffbf0;
   border: 1px solid #e8d99a;
