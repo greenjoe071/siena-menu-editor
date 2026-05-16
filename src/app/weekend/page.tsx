@@ -639,7 +639,16 @@ export default function WeekendEditorPage() {
       .catch(() => setSaveStatus('error'));
   }, []);
 
-  const debouncedMenu = useDebounce(menu, 800);
+  const debouncedMenu    = useDebounce(menu, 800);
+  const previewDebounced = useDebounce(menu, 300);
+
+  useEffect(() => {
+    if (previewDebounced && prevJsonRef.current !== '') {
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(previewDebounced) }, '*'
+      );
+    }
+  }, [previewDebounced]);
 
   const saveAndRefresh = useCallback(async (data: WeekendMenuData) => {
     const json = JSON.stringify(data);
@@ -672,9 +681,6 @@ export default function WeekendEditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey(k => k + 1);
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(data) }, '*'
-      );
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
