@@ -41,12 +41,21 @@ const WeeklyRowSchema = z.object({
   detail:    z.string().min(1).max(WEEKEND_CHAR_LIMITS.weeklyDetail),
 });
 
+// ── Dessert (optional whole-section) ─────────────────────────────────────
+const WeekendDessertSchema = z.object({
+  title: z.string().min(1).max(WEEKEND_CHAR_LIMITS.sectionTitle),
+  name:  z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishName),
+  desc:  z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishDesc),
+  price: z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishPrice),
+});
+
 // ── Top-level schema ──────────────────────────────────────────────────────
 export const WeekendMenuSchema = z.object({
   sections: z.object({
     starters: WeekendSectionSchema,
     entrees:  WeekendSectionSchema,
   }),
+  dessert: WeekendDessertSchema.nullable().optional(),
   weekly: z.object({
     title: z.string().min(1).max(WEEKEND_CHAR_LIMITS.weeklyTitle),
     rows:  z.array(WeeklyRowSchema).length(4),

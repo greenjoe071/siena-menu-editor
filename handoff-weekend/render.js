@@ -25,6 +25,11 @@
  *   appends in JSON order. The dish IDs live on the rendered DOM nodes
  *   (`data-dish-id`) so the editor can target them.
  *
+ *   An OPTIONAL third section, `dessert`, holds exactly one dish when
+ *   `data.dessert` is present. When `data.dessert` is absent or null,
+ *   the renderer removes the entire dessert section from the DOM — the
+ *   page then looks identical to the pre-dessert layout.
+ *
  *   The weekly footer is a FIXED 4-row grid (`w-mon`, `w-tue`, `w-wed`,
  *   `w-thu`). Row IDs are stable slots; cell ordering follows JSON
  *   array order. Same pattern as the Monday menu.
@@ -92,6 +97,23 @@
     rowEl.querySelector('.weekly-detail').textContent = row.detail;
   }
 
+  function renderDessert(doc, dessert) {
+    // Optional section. Removed from the DOM entirely when absent or null.
+    const section = doc.querySelector('[data-section-id="dessert"]');
+    if (!section) return;
+    if (!dessert) {
+      section.remove();
+      return;
+    }
+    const titleEl = section.querySelector('[data-section-title-for="dessert"]');
+    if (titleEl) titleEl.textContent = dessert.title;
+    const dishEl = section.querySelector('.dish');
+    if (!dishEl) return;
+    dishEl.querySelector('.dish-name').textContent = dessert.name;
+    dishEl.querySelector('.dish-desc').textContent = dessert.desc;
+    dishEl.querySelector('.dish-price').textContent = dessert.price;
+  }
+
   function renderWeekly(doc, weekly) {
     setText(doc, 'weekly-title', weekly.title);
 
@@ -118,6 +140,10 @@
     for (const [id, section] of Object.entries(data.sections)) {
       renderSection(doc, id, section);
     }
+
+    // Dessert — OPTIONAL single-dish section. When data.dessert is absent
+    // or null, the entire section is removed from the DOM.
+    renderDessert(doc, data.dessert);
 
     // Weekly specials footer — fixed 4 cells.
     renderWeekly(doc, data.weekly);

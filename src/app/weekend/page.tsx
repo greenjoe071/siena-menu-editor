@@ -34,11 +34,19 @@ interface WeeklyRow {
   detail: string;
 }
 
+interface WeekendDessert {
+  title: string;
+  name:  string;
+  desc:  string;
+  price: string;
+}
+
 interface WeekendMenuData {
   sections: {
     starters: WeekendSection;
     entrees:  WeekendSection;
   };
+  dessert?: WeekendDessert | null;
   weekly: {
     title: string;
     rows: WeeklyRow[];
@@ -116,6 +124,12 @@ function useDebounce<T>(value: T, ms: number): T {
 function menuHasOverLimit(m: WeekendMenuData): boolean {
   if (m.weekly.title.length  > L.weeklyTitle)  return true;
   if (m.policy_line.length   > L.policyLine)   return true;
+  if (m.dessert) {
+    if (m.dessert.title.length > L.sectionTitle) return true;
+    if (m.dessert.name.length  > L.dishName)     return true;
+    if (m.dessert.desc.length  > L.dishDesc)     return true;
+    if (m.dessert.price.length > L.dishPrice)    return true;
+  }
   for (const sid of ['starters', 'entrees'] as SectionId[]) {
     const s = m.sections[sid];
     if (s.title.length    > L.sectionTitle)    return true;
@@ -469,6 +483,90 @@ function WeeklyBlock({ weekly, onTitleChange, onRowChange }: {
   );
 }
 
+// ── Dessert block ─────────────────────────────────────────────────────────
+
+const DEFAULT_DESSERT: WeekendDessert = { title: 'Dolci', name: '', desc: '', price: '' };
+
+function DessertBlock({ dessert, onChange }: {
+  dessert: WeekendDessert | null | undefined;
+  onChange: (d: WeekendDessert | null) => void;
+}) {
+  const [open, setOpen] = useState(!!dessert);
+  const active = !!dessert;
+
+  function toggle() {
+    if (active) {
+      onChange(null);
+      setOpen(false);
+    } else {
+      onChange({ ...DEFAULT_DESSERT });
+      setOpen(true);
+    }
+  }
+
+  function set(field: keyof WeekendDessert, value: string) {
+    if (!dessert) return;
+    onChange({ ...dessert, [field]: value });
+  }
+
+  return (
+    <div className="section-block">
+      <div className="section-block-header" onClick={() => active && setOpen(o => !o)} style={{ cursor: active ? 'pointer' : 'default' }}>
+        {active && <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>}
+        {!active && <span className="section-toggle" style={{ opacity: 0.3 }}>▶</span>}
+        <span className="section-title-label">Dessert — {active ? (dessert?.title || 'Dolci') : 'hidden'}</span>
+        <label className="dessert-toggle-label" onClick={e => e.stopPropagation()}>
+          <input type="checkbox" checked={active} onChange={toggle} />
+          {' '}Show on menu
+        </label>
+      </div>
+
+      {active && (
+        <div className={`collapsible-content ${open ? 'open' : ''}`}>
+          <div className="section-body">
+            <div className="dish-row">
+              <div className="dish-fields">
+                <div className="dish-field-row" style={{ marginBottom: '10px' }}>
+                  <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
+                    <div className="field-label-row">
+                      <label>Section title</label>
+                      <CharCount value={dessert!.title} max={L.sectionTitle} />
+                    </div>
+                    <input value={dessert!.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Dolci" />
+                  </div>
+                </div>
+                <div className="field-group">
+                  <div className="field-label-row">
+                    <label>Dish name</label>
+                    <CharCount value={dessert!.name} max={L.dishName} />
+                  </div>
+                  <input value={dessert!.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Torta della Nonna" />
+                </div>
+                <div className="dish-field-row" style={{ alignItems: 'flex-end' }}>
+                  <div className="field-group" style={{ width: '120px', flexShrink: 0, marginBottom: 0 }}>
+                    <div className="field-label-row">
+                      <label>Price</label>
+                      <CharCount value={stripDollar(dessert!.price)} max={L.dishPrice} />
+                    </div>
+                    <PriceInput value={dessert!.price} onChange={v => set('price', v)} />
+                  </div>
+                </div>
+                <div className="field-group" style={{ marginBottom: 0, marginTop: '10px' }}>
+                  <div className="field-label-row">
+                    <label>Description</label>
+                    <CharCount value={dessert!.desc} max={L.dishDesc} />
+                  </div>
+                  <textarea rows={2} value={dessert!.desc} onChange={e => set('desc', e.target.value)} placeholder="e.g. Custard cream and pine nut tart, lemon zest, powdered sugar." />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── History panel ─────────────────────────────────────────────────────────
 
 interface BackupEntry { key: string; ts: number; label: string; }
@@ -634,6 +732,10 @@ export default function WeekendEditorPage() {
     });
   }
 
+  function handleDessertChange(d: WeekendDessert | null) {
+    setMenu(m => m && { ...m, dessert: d ?? undefined });
+  }
+
   function handleWeeklyTitleChange(title: string) {
     setMenu(m => m && { ...m, weekly: { ...m.weekly, title } });
   }
@@ -718,6 +820,11 @@ export default function WeekendEditorPage() {
                 onChange={handleSectionChange} onDishChange={handleDishChange}
                 onAddDish={handleAddDish} onRemoveDish={handleRemoveDish}
               />
+            </div>
+
+            <div className="page-group">
+              <div className="page-group-label">Dessert (optional)</div>
+              <DessertBlock dessert={menu.dessert} onChange={handleDessertChange} />
             </div>
 
             <div className="page-group">

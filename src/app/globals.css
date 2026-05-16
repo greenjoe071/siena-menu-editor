@@ -602,6 +602,25 @@ button {
 }
 .btn-remove-price:hover { color: var(--danger); background: rgba(192,57,43,0.08); }
 
+/* ── Dessert toggle ──────────────────────────────────── */
+.dessert-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--navy);
+  cursor: pointer;
+  margin-left: auto;
+  user-select: none;
+}
+.dessert-toggle-label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--gold);
+  width: 15px;
+  height: 15px;
+}
+
 .dual-price-wrap {
   border: 1px solid var(--border);
   border-radius: var(--radius);

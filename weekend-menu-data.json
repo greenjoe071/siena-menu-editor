@@ -61,6 +61,12 @@
       ]
     }
   },
+  "dessert": {
+    "title": "Dolci",
+    "name": "Torta della Nonna",
+    "desc": "Custard cream and pine nut tart, lemon zest, powdered sugar.",
+    "price": "$12"
+  },
   "weekly": {
     "title": "Throughout the Week at Siena",
     "rows": [

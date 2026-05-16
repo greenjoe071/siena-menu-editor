@@ -181,6 +181,16 @@ body {
   letter-spacing: 0.01em;
 }
 
+/* ── Dessert — single, centered, optional coda. Removed from DOM when data.dessert is absent. ── */
+.dessert-section .dish-grid {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+.dessert-section .dish {
+  text-align: center;
+  max-width: 4.6in;
+}
+
 /* ── Weekly footer — same pattern as Monday menu ── */
 .weekly-wrap {
   margin: 8pt 0 0;
@@ -287,6 +297,21 @@ body {
         <div class="section-sub" data-section-subtitle-for="entrees">Entrees</div>
       </div>
       <div class="dish-grid"><div class="dish" data-dish-id="d-e1" data-section-id="entrees"><span class="dish-name">Dentice</span><div class="dish-desc">Pan-seared Hawaiian blue snapper (uku), sweet corn and crab risotto, lemon butter sauce.</div><div class="dish-price">$48</div></div><div class="dish" data-dish-id="d-e2" data-section-id="entrees"><span class="dish-name">Linguine al Limone</span><div class="dish-desc">Homemade linguine tossed with fresh lemon juice, butter, Parmesan cheese and basil.</div><div class="dish-price">$26</div></div><div class="dish" data-dish-id="d-e3" data-section-id="entrees"><span class="dish-name">Bistecca alla Fiorentina</span><div class="dish-desc">Grilled bone-in ribeye, rosemary, lemon, olive oil, roasted potatoes, charred broccolini.</div><div class="dish-price">$62</div></div><div class="dish" data-dish-id="d-e4" data-section-id="entrees"><span class="dish-name">Osso Buco</span><div class="dish-desc">Slow-braised veal shank, saffron risotto Milanese, gremolata.</div><div class="dish-price">$44</div></div></div>
+    </div>
+
+    <!-- DESSERT — OPTIONAL, exactly one dish. When data.dessert is absent or null,
+         render.js removes this entire <div> from the DOM. -->
+    <div class="section dessert-section" data-section-id="dessert">
+      <div class="section-head">
+        <div class="section-name" data-section-title-for="dessert">Dolci</div>
+      </div>
+      <div class="dish-grid">
+        <div class="dish" data-dish-id="d-dessert" data-section-id="dessert">
+          <span class="dish-name">Torta della Nonna</span>
+          <div class="dish-desc">Custard cream and pine nut tart, lemon zest, powdered sugar.</div>
+          <div class="dish-price">$12</div>
+        </div>
+      </div>
     </div>
 
   </div><!-- /menu-body -->

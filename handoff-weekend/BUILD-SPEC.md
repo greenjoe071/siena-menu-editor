@@ -46,6 +46,12 @@ The menu data is a single JSON object. Its top-level shape:
       "items":    [ /* 1..4 dishes */ ]
     }
   },
+  "dessert": {                  // OPTIONAL — omit or set null to hide.
+    "title": "Dolci",            //                   Exactly one dish when present.
+    "name":  "Torta della Nonna",
+    "desc":  "…",
+    "price": "$12"
+  },
   "weekly": {
     "title": "Throughout the Week at Siena",
     "rows":  [ /* 4 rows */ ]
@@ -56,6 +62,34 @@ The menu data is a single JSON object. Its top-level shape:
 
 There is **no `hero` key.** The hero block is fully static in
 `template.html` and is intentionally not exposed to the editor.
+
+The top-level **`dessert` key is optional**. When it is absent, `null`,
+or missing entirely from the JSON, the renderer removes the entire
+dessert section from the DOM — the rendered page then looks identical
+to the pre-dessert layout (two sections + weekly footer). When it is
+present, it holds exactly one dish; see "Dessert shape" below.
+
+### Dessert shape
+
+```json
+{
+  "title": "Dolci",
+  "name":  "Torta della Nonna",
+  "desc":  "Custard cream and pine nut tart, lemon zest, powdered sugar.",
+  "price": "$12"
+}
+```
+
+- `title` — the Playfair italic section head. Editable: e.g. "Dolci",
+  "Sweet Endings", "Dessert & Coffee". Treated as the on/off label for
+  the section in the editor.
+- `name` / `desc` — same shape and styling as a dish in starters/entrees.
+- `price` — **required when `dessert` is present.** Same `$` glyph
+  convention as the dish prices in starters/entrees: `"$12"`, not
+  `"12"`. The renderer prints the value verbatim.
+- There is no `id` field. The dessert dish slot is the single stable
+  slot `data-dish-id="d-dessert"`, baked into the template alongside
+  the weekly-row slot IDs — not in the data model.
 
 ### Dish shape
 
@@ -147,6 +181,20 @@ the editor must not surface any controls for it.
 | Dish description | `sections.<id>.items[*].desc` | **140** | Regular Montserrat 10pt, `text-wrap: pretty`. Two to three lines comfortably. Beyond ~140 starts pushing column heights and may visually crowd the weekly footer below. |
 | Dish price | `sections.<id>.items[*].price` | **8** | Italic Playfair 11pt, gold. Required, non-empty. Include the `$` glyph: `"$17"`. |
 
+### Dessert (optional)
+
+When the `dessert` key is absent or null on the menu JSON, the whole
+section is removed from the DOM and these fields are not editable.
+When the key is present, every field below is **required** and must
+respect its cap.
+
+| Field | JSON path | Max chars | Notes |
+|---|---|---|---|
+| Section title | `dessert.title` | **20** | Italic Playfair 22pt. Same cap and styling as `sections.<id>.title`. Defaults to `"Dolci"`; common alternates are `"Sweet Endings"`, `"Dessert & Coffee"`. |
+| Dish name | `dessert.name` | **30** | Italic Playfair 16pt. Same cap as `sections.<id>.items[*].name`. |
+| Dish description | `dessert.desc` | **140** | Regular Montserrat 9.5pt, centered, `text-wrap: pretty`. Same cap as dish descriptions in starters/entrees. |
+| Dish price | `dessert.price` | **8** | Italic Playfair 11pt, gold. Required when the section is shown; include the `$` glyph (`"$12"`, never bare `"12"`). Same cap as dish prices in starters/entrees. |
+
 ### Weekly footer
 
 | Field | JSON path | Max chars | Notes |
@@ -170,6 +218,7 @@ the editor must not surface any controls for it.
 |---|---|---|---|
 | `sections.starters.items` | **1** | **4** | The 2-column grid lays out 1–4 dishes naturally. With 1 item it occupies the left cell and the right cell is empty; with 4 it forms a 2×2. |
 | `sections.entrees.items` | **1** | **4** | Same. |
+| `dessert` | **0** | **1** | Whole-section toggle. Absent / `null` → section removed from DOM. Present → exactly one dish. The editor must never let the manager add a second dessert dish. |
 | `weekly.rows` | **4** | **4** | Fixed — the footer is a 4-column CSS grid. |
 
 **Variable cardinality is the defining behavior of this menu.** The
@@ -221,13 +270,23 @@ What it does, in order:
       `<template id="dish-template">`'s blueprint, set
       `data-dish-id` and `data-section-id` on the clone, populate
       `.dish-name` / `.dish-desc` / `.dish-price`, append to the grid.
-3. **Weekly footer**: update the title text, then for each row in
+3. **Dessert section** (`[data-section-id="dessert"]`):
+   - If `data.dessert` is absent / `null` / falsy → `section.remove()`.
+      The entire `<div>` is gone from the rendered HTML.
+   - Otherwise → set the title, populate the single baked-in dish's
+      `.dish-name` / `.dish-desc` / `.dish-price` in place. The dish
+      element keeps its template-baked `data-dish-id="d-dessert"` and
+      `data-section-id="dessert"`; the renderer never clones or
+      replaces it.
+4. **Weekly footer**: update the title text, then for each row in
    `weekly.rows` find the fixed cell by `data-week-row-id`, fill in
    `day_label` / `headline` / `detail`, and re-append in JSON order.
-4. **Policy line**: `innerHTML` (HTML allowed).
+5. **Policy line**: `innerHTML` (HTML allowed).
 
 The renderer never creates or destroys section containers, the weekly
-grid, or the policy line element. It only adds/removes dish elements.
+grid, or the policy line element. It only adds/removes dish elements
+— plus, for the dessert section, optionally removes the section
+container itself.
 
 If you change `template.html`'s structure (e.g. add a new section, or
 change the dish blueprint), `render.js` must be updated in lockstep and
@@ -272,6 +331,9 @@ request, don't make it editable.
 | Dish price | `sections.<id>.items[*].price` |
 | Add/remove dishes (1..4 per section) | `sections.<id>.items` length |
 | Dish order within section | `sections.<id>.items` array order |
+| Show / hide dessert section | `dessert` present-or-absent |
+| Dessert section title | `dessert.title` |
+| Dessert dish name / desc / price | `dessert.name` / `dessert.desc` / `dessert.price` |
 | Weekly footer title | `weekly.title` |
 | Weekly day label | `weekly.rows[*].day_label` |
 | Weekly headline | `weekly.rows[*].headline` |
@@ -286,6 +348,8 @@ request, don't make it editable.
 - Section IDs.
 - Number of weekly rows (always 4).
 - Weekly row IDs (`w-mon`, `w-tue`, `w-wed`, `w-thu`).
+- Number of dessert dishes (0 or exactly 1 — never 2+).
+- The dessert dish slot ID (`d-dessert` is baked into the template).
 - Any CSS, font, color, or layout property.
 - The diamond between the days, the gold rules, the section underlines.
 
@@ -314,6 +378,12 @@ Two-pane layout:
 │       …                │                                     │
 │     [+ Add entree]     │                                     │
 │                        │                                     │
+│ ─ Dessert (optional)   │                                     │
+│   [ ■ Show on menu ]   │                                     │
+│     [title]            │                                     │
+│     [name]             │                                     │
+│     [desc]   [price]   │                                     │
+│                        │                                     │
 │ ─ Throughout the Week  │                                     │
 │   [footer title]       │                                     │
 │     ≡ Mondays          │                                     │
@@ -333,6 +403,11 @@ Two-pane layout:
   within the footer. Drag is blocked across section boundaries.
 - `[+ Add starter]` is disabled when the section already has 4 dishes.
   `[×]` (remove) is disabled when the section has only 1 dish.
+- The Dessert panel has a single "Show on menu" toggle at the top.
+  Toggled OFF → the editor strips the `dessert` key from the JSON
+  before saving (or sets it to `null`) and the panel collapses to just
+  the toggle. Toggled ON → the four dessert fields appear and are all
+  required; an empty save is blocked.
 - Show the character counter for every text field, turning red as the
   user nears the cap. **Block save** when any field exceeds its cap.
 - Auto-save with ~1s debounce after last keystroke. Show a "Saved"
@@ -403,6 +478,13 @@ become next weekend's), the workflow is:
   must gracefully handle removing items down to 1, and adding back up
   to 4. Test all four edge counts.
 
+- **Dessert is whole-section optional.** The default state for a new
+  weekend menu is no dessert. When `data.dessert` is absent, `null`,
+  or otherwise falsy, the renderer calls `section.remove()` on the
+  dessert `<div>` and the rendered HTML contains zero trace of the
+  dessert section. When the manager turns the dessert toggle on, the
+  editor must populate all four fields (title, name, desc, price)
+  before saving — a half-filled dessert is not a valid state.
 - **Dish IDs are mint-once, never-reused.** When the manager clicks
   "Add starter", generate a brand new opaque ID (e.g. nanoid). When
   they click "Remove", drop that item from the array — but don't

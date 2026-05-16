@@ -1,9 +1,13 @@
 /**
- * Snapshot test — guards against formatting drift in the Weekend
- * Specials menu.
+ * Snapshot + behavior tests — guards against formatting drift in the
+ * Weekend Specials menu, plus pins the optional-dessert contract.
  *
- * Verifies: render(template.html, menu-data.json) === expected-render.html
- * (normalized to collapse whitespace).
+ * Tests:
+ *   1. render(template.html, menu-data.json) === expected-render.html
+ *      (normalized to collapse whitespace).
+ *   2. render(template.html, { …seed, dessert: null }) and the same with
+ *      the `dessert` key omitted both produce DOM with no dessert section.
+ *      render(template.html, seed) (dessert present) populates it.
  *
  * Runs under any modern test runner — examples below for Vitest and Node's
  * built-in test runner. Wire whichever fits your stack into CI.
@@ -72,6 +76,67 @@ export async function runSnapshotTest() {
   }
 }
 
+/**
+ * Coverage for the optional `dessert` key.
+ *
+ * When `data.dessert` is null / absent, the renderer MUST remove the entire
+ * dessert section from the rendered DOM. This guards that contract so a
+ * future edit to render.js can't silently leave an empty dessert section
+ * sitting on the menu.
+ */
+export async function runOptionalDessertTest() {
+  const [template, dataRaw, renderer] = await Promise.all([
+    readFile(join(here, 'template.html'), 'utf8'),
+    readFile(join(here, 'menu-data.json'), 'utf8'),
+    loadRenderer(),
+  ]);
+
+  const baseData = JSON.parse(dataRaw);
+
+  // Case 1: dessert: null → section removed.
+  {
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, { ...baseData, dessert: null });
+    const doc = dom.window.document;
+    if (doc.querySelector('[data-section-id="dessert"]')) {
+      throw new Error('dessert:null — dessert section still present in DOM.');
+    }
+    const html = doc.documentElement.outerHTML;
+    if (html.includes(baseData.dessert.name)) {
+      throw new Error('dessert:null — dessert dish name leaked into output.');
+    }
+    if (html.includes(baseData.dessert.title)) {
+      throw new Error('dessert:null — dessert section title leaked into output.');
+    }
+  }
+
+  // Case 2: dessert key omitted entirely → section removed.
+  {
+    const { dessert: _drop, ...noDessert } = baseData;
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, noDessert);
+    if (dom.window.document.querySelector('[data-section-id="dessert"]')) {
+      throw new Error('dessert key omitted — dessert section still present in DOM.');
+    }
+  }
+
+  // Case 3: dessert present → section rendered with the data.
+  {
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, baseData);
+    const section = dom.window.document.querySelector('[data-section-id="dessert"]');
+    if (!section) throw new Error('dessert present — section missing from DOM.');
+    const name = section.querySelector('.dish-name')?.textContent;
+    const price = section.querySelector('.dish-price')?.textContent;
+    if (name !== baseData.dessert.name) {
+      throw new Error('dessert present — name mismatch. got: ' + JSON.stringify(name));
+    }
+    if (price !== baseData.dessert.price) {
+      throw new Error('dessert present — price mismatch. got: ' + JSON.stringify(price));
+    }
+  }
+}
+
 // Vitest / Jest style
 if (typeof globalThis.describe === 'function') {
   // eslint-disable-next-line no-undef
@@ -80,12 +145,16 @@ if (typeof globalThis.describe === 'function') {
     test('render(template, seedData) matches expected-render.html', async () => {
       await runSnapshotTest();
     });
+    // eslint-disable-next-line no-undef
+    test('dessert section is fully removed when data.dessert is absent or null', async () => {
+      await runOptionalDessertTest();
+    });
   });
 }
 
 // node --test style (auto-detected when run directly)
 if (process.argv[1] && process.argv[1].endsWith(fileURLToPath(import.meta.url).split('/').pop())) {
-  runSnapshotTest()
-    .then(() => { console.log('✓ Weekend menu snapshot test passed.'); })
+  Promise.all([runSnapshotTest(), runOptionalDessertTest()])
+    .then(() => { console.log('✓ Weekend menu snapshot + optional-dessert tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }
