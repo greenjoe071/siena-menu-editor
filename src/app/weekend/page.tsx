@@ -220,13 +220,10 @@ function DishCard({
               disabled={!canRemove}
               title={canRemove ? 'Remove dish' : 'Need at least 1 dish'}
               onClick={() => onRemove(sectionId, index)}
-            >
-              ×
-            </button>
+            >×</button>
           </div>
 
           <div className="dish-fields">
-            {/* Name */}
             <div className="field-group">
               <div className="field-label-row">
                 <label>Dish name</label>
@@ -239,7 +236,6 @@ function DishCard({
               />
             </div>
 
-            {/* Price — single or dual */}
             {!showDual ? (
               <div className="dish-field-row" style={{ alignItems: 'flex-end' }}>
                 <div className="field-group" style={{ width: '120px', flexShrink: 0, marginBottom: 0 }}>
@@ -249,9 +245,7 @@ function DishCard({
                   </div>
                   <PriceInput value={dish.price} onChange={v => set('price', v)} />
                 </div>
-                <button className="btn-add-price" onClick={enableDual}>
-                  + 2nd price
-                </button>
+                <button className="btn-add-price" onClick={enableDual}>+ 2nd price</button>
               </div>
             ) : (
               <div className="dual-price-wrap">
@@ -259,12 +253,7 @@ function DishCard({
                 <div className="dual-price-row">
                   <div className="field-group" style={{ width: '80px', flexShrink: 0, marginBottom: 0 }}>
                     <label>Label 1</label>
-                    <input
-                      value={dish.price_label ?? ''}
-                      onChange={e => set('price_label', e.target.value)}
-                      placeholder="Bowl"
-                      maxLength={L.dishPriceLabel}
-                    />
+                    <input value={dish.price_label ?? ''} onChange={e => set('price_label', e.target.value)} placeholder="Bowl" maxLength={L.dishPriceLabel} />
                   </div>
                   <div className="field-group" style={{ width: '110px', flexShrink: 0, marginBottom: 0 }}>
                     <div className="field-label-row">
@@ -277,12 +266,7 @@ function DishCard({
                 <div className="dual-price-row">
                   <div className="field-group" style={{ width: '80px', flexShrink: 0, marginBottom: 0 }}>
                     <label>Label 2</label>
-                    <input
-                      value={dish.price2_label ?? ''}
-                      onChange={e => set('price2_label', e.target.value)}
-                      placeholder="Cup"
-                      maxLength={L.dishPriceLabel}
-                    />
+                    <input value={dish.price2_label ?? ''} onChange={e => set('price2_label', e.target.value)} placeholder="Cup" maxLength={L.dishPriceLabel} />
                   </div>
                   <div className="field-group" style={{ width: '110px', flexShrink: 0, marginBottom: 0 }}>
                     <div className="field-label-row">
@@ -291,25 +275,17 @@ function DishCard({
                     </div>
                     <PriceInput value={dish.price2 ?? ''} onChange={v => set('price2', v)} />
                   </div>
-                  <button className="btn-remove-price" onClick={disableDual}>
-                    × one price
-                  </button>
+                  <button className="btn-remove-price" onClick={disableDual}>× one price</button>
                 </div>
               </div>
             )}
 
-            {/* Description */}
             <div className="field-group" style={{ marginBottom: 0 }}>
               <div className="field-label-row">
                 <label>Description</label>
                 <CharCount value={dish.desc} max={L.dishDesc} />
               </div>
-              <textarea
-                rows={2}
-                value={dish.desc}
-                onChange={e => set('desc', e.target.value)}
-                placeholder="Ingredients and preparation"
-              />
+              <textarea rows={2} value={dish.desc} onChange={e => set('desc', e.target.value)} placeholder="Ingredients and preparation" />
             </div>
           </div>
         </div>
@@ -347,26 +323,20 @@ function SectionBlock({
 
       <div className={`collapsible-content ${open ? 'open' : ''}`}>
         <div className="section-body">
-          <div className="dish-field-row" style={{ marginBottom: '16px' }}>
+          <div className="dish-field-row" style={{ marginBottom: '12px' }}>
             <div className="field-group" style={{ marginBottom: 0 }}>
               <div className="field-label-row">
                 <label>Section title</label>
                 <CharCount value={section.title} max={L.sectionTitle} />
               </div>
-              <input
-                value={section.title}
-                onChange={e => onChange(sectionId, { ...section, title: e.target.value })}
-              />
+              <input value={section.title} onChange={e => onChange(sectionId, { ...section, title: e.target.value })} />
             </div>
-            <div className="field-group" style={{ width: '140px', flexShrink: 0, marginBottom: 0 }}>
+            <div className="field-group" style={{ width: '130px', flexShrink: 0, marginBottom: 0 }}>
               <div className="field-label-row">
                 <label>Subtitle</label>
                 <CharCount value={section.subtitle} max={L.sectionSubtitle} />
               </div>
-              <input
-                value={section.subtitle}
-                onChange={e => onChange(sectionId, { ...section, subtitle: e.target.value })}
-              />
+              <input value={section.subtitle} onChange={e => onChange(sectionId, { ...section, subtitle: e.target.value })} />
             </div>
           </div>
 
@@ -389,12 +359,8 @@ function SectionBlock({
             )}
           </Droppable>
 
-          <button
-            className="btn-add-dish"
-            disabled={!canAdd}
-            onClick={() => onAddDish(sectionId)}
-          >
-            {canAdd ? `+ Add ${label.toLowerCase()}` : `Max 4 dishes reached`}
+          <button className="btn-add-dish" disabled={!canAdd} onClick={() => onAddDish(sectionId)}>
+            {canAdd ? `+ Add ${label.toLowerCase()}` : 'Max 4 dishes reached'}
           </button>
         </div>
       </div>
@@ -404,9 +370,7 @@ function SectionBlock({
 
 // ── Weekly row item ───────────────────────────────────────────────────────
 
-function WeeklyRowItem({
-  row, index, onChange,
-}: {
+function WeeklyRowItem({ row, index, onChange }: {
   row: WeeklyRow;
   index: number;
   onChange: (index: number, updated: WeeklyRow) => void;
@@ -430,48 +394,32 @@ function WeeklyRowItem({
         >
           <div className="dish-row-header">
             <span className="drag-handle" {...provided.dragHandleProps} title="Drag to reorder">⠿</span>
-            <span className="dish-name-preview">
-              {row.day_label || '(no day)'} — {row.headline || '(no headline)'}
-            </span>
+            <span className="dish-name-preview">{row.day_label || '(no day)'} — {row.headline || '(no headline)'}</span>
           </div>
 
           <div className="dish-fields">
             <div className="dish-field-row">
-              <div className="field-group" style={{ width: '140px', flexShrink: 0 }}>
+              <div className="field-group" style={{ width: '130px', flexShrink: 0 }}>
                 <div className="field-label-row">
-                  <label>Day label</label>
+                  <label>Day</label>
                   <CharCount value={row.day_label} max={L.weeklyDayLabel} />
                 </div>
-                <input
-                  value={row.day_label}
-                  onChange={e => set('day_label', e.target.value)}
-                  placeholder="e.g. Mondays"
-                />
+                <input value={row.day_label} onChange={e => set('day_label', e.target.value)} placeholder="e.g. Mondays" />
               </div>
               <div className="field-group" style={{ flex: 1 }}>
                 <div className="field-label-row">
                   <label>Headline</label>
                   <CharCount value={row.headline} max={L.weeklyHeadline} />
                 </div>
-                <input
-                  value={row.headline}
-                  onChange={e => set('headline', e.target.value)}
-                  placeholder="e.g. $26 for 26 Years"
-                />
+                <input value={row.headline} onChange={e => set('headline', e.target.value)} placeholder="e.g. $26 for 26 Years" />
               </div>
             </div>
-
             <div className="field-group" style={{ marginBottom: 0 }}>
               <div className="field-label-row">
                 <label>Detail</label>
                 <CharCount value={row.detail} max={L.weeklyDetail} />
               </div>
-              <textarea
-                rows={2}
-                value={row.detail}
-                onChange={e => set('detail', e.target.value)}
-                placeholder="Description of the special"
-              />
+              <textarea rows={2} value={row.detail} onChange={e => set('detail', e.target.value)} placeholder="Description of the special" />
             </div>
           </div>
         </div>
@@ -482,9 +430,7 @@ function WeeklyRowItem({
 
 // ── Weekly block ──────────────────────────────────────────────────────────
 
-function WeeklyBlock({
-  weekly, onTitleChange, onRowChange,
-}: {
+function WeeklyBlock({ weekly, onTitleChange, onRowChange }: {
   weekly: WeekendMenuData['weekly'];
   onTitleChange: (title: string) => void;
   onRowChange: (index: number, updated: WeeklyRow) => void;
@@ -498,7 +444,6 @@ function WeeklyBlock({
         <span className="section-title-label">Throughout the Week</span>
         <span className="section-count">4 promos — rarely changes</span>
       </div>
-
       <div className={`collapsible-content ${open ? 'open' : ''}`}>
         <div className="section-body">
           <div className="field-group section-title-field">
@@ -508,7 +453,6 @@ function WeeklyBlock({
             </div>
             <input value={weekly.title} onChange={e => onTitleChange(e.target.value)} />
           </div>
-
           <Droppable droppableId="weekly-rows" type="weekly-row">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps} className="dish-list">
@@ -553,9 +497,7 @@ function HistoryPanel({ onRestore }: { onRestore: (data: WeekendMenuData) => voi
       if (!res.ok) { alert('Restore failed — try again.'); return; }
       onRestore(await res.json());
       await load();
-    } finally {
-      setRestoring(null);
-    }
+    } finally { setRestoring(null); }
   }
 
   if (backups.length === 0) return null;
@@ -570,11 +512,7 @@ function HistoryPanel({ onRestore }: { onRestore: (data: WeekendMenuData) => voi
           {backups.map(b => (
             <div key={b.key} className="history-entry">
               <span className="history-label">{b.label}</span>
-              <button
-                className="btn-restore"
-                disabled={restoring === b.key}
-                onClick={() => restore(b)}
-              >
+              <button className="btn-restore" disabled={restoring === b.key} onClick={() => restore(b)}>
                 {restoring === b.key ? 'Restoring…' : 'Restore'}
               </button>
             </div>
@@ -592,16 +530,14 @@ export default function WeekendEditorPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]       = useState('');
   const [historyKey, setHistoryKey] = useState(0);
-  const prevJsonRef      = useRef<string>('');
-  const previewWindowRef = useRef<Window | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('/weekend-preview');
+  const iframeRef    = useRef<HTMLIFrameElement>(null);
+  const prevJsonRef  = useRef<string>('');
 
   useEffect(() => {
     fetch('/api/weekend')
       .then(r => r.json())
-      .then(data => {
-        setMenu(data);
-        prevJsonRef.current = JSON.stringify(data);
-      })
+      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
       .catch(() => setSaveStatus('error'));
   }, []);
 
@@ -638,7 +574,9 @@ export default function WeekendEditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey(k => k + 1);
-      previewWindowRef.current?.postMessage({ type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(data) }, '*');
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(data) }, '*'
+      );
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
@@ -657,16 +595,9 @@ export default function WeekendEditorPage() {
     setMenu(m => {
       if (!m) return m;
       const clearSection = (s: WeekendSection): WeekendSection => ({
-        ...s,
-        items: s.items.map(() => blankDish()),
+        ...s, items: s.items.map(() => blankDish()),
       });
-      return {
-        ...m,
-        sections: {
-          starters: clearSection(m.sections.starters),
-          entrees:  clearSection(m.sections.entrees),
-        },
-      };
+      return { ...m, sections: { starters: clearSection(m.sections.starters), entrees: clearSection(m.sections.entrees) } };
     });
   }
 
@@ -699,8 +630,7 @@ export default function WeekendEditorPage() {
       if (!m) return m;
       const s = m.sections[id];
       if (s.items.length <= 1) return m;
-      const items = s.items.filter((_, i) => i !== index);
-      return { ...m, sections: { ...m.sections, [id]: { ...s, items } } };
+      return { ...m, sections: { ...m.sections, [id]: { ...s, items: s.items.filter((_, i) => i !== index) } } };
     });
   }
 
@@ -759,78 +689,37 @@ export default function WeekendEditorPage() {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="app-wide">
+      <div className="app">
 
-        {/* ── Sticky header ──────────────────────────────────── */}
-        <div className="editor-wide-header">
-          <Link href="/" className="btn-back">← All Menus</Link>
-          <h1>Weekend Specials</h1>
-          <span className={saveStatusClass} style={{ color: undefined }}>
-            {saveStatus === 'saved'  ? '✓ Saved' :
-             saveStatus === 'saving' ? 'Saving…' :
-             saveStatus === 'error'  ? `⚠ ${saveMsg}` : ''}
-          </span>
-        </div>
+        {/* ── Editor pane ──────────────────────────────────────────── */}
+        <div className="editor-pane">
+          <div className="editor-header">
+            <Link href="/" className="btn-back">← All Menus</Link>
+            <h1>Weekend Specials</h1>
+          </div>
 
-        {/* ── Action bar ─────────────────────────────────────── */}
-        <div className="weekend-action-bar">
-          <button className="btn-new-week" onClick={handleNewWeek}>
-            New Week
-          </button>
-          <button
-            className="btn-preview-main"
-            onClick={() => { previewWindowRef.current = window.open('/weekend-preview', 'siena-weekend-preview'); }}
-          >
-            👁 Preview Menu
-          </button>
-          <button
-            className="btn-print"
-            onClick={() => {
-              if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
-              window.open('/weekend-print', '_blank');
-            }}
-          >
-            Print Menu
-          </button>
-        </div>
+          <div className="editor-scroll chef-mode">
 
-        {/* ── Form content ───────────────────────────────────── */}
-        <div className="editor-full chef-mode">
+            <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
+              <p>Up to <strong>4 starters</strong> and <strong>4 entrees</strong>. If you need more than that, <strong>call Joe right away.</strong></p>
+            </div>
 
-          <div style={{ paddingTop: '24px' }}>
-
-            {/* Dish sections */}
             <div className="page-group">
-              <div className="weekend-instructions">
-                <p>Fill in this week's dishes below. You can have up to <strong>4 starters</strong> and <strong>4 entrees</strong> — that's the most the menu has room for. If you need more than that, or anything looks wrong, <strong>call Joe right away.</strong></p>
-              </div>
-
               <div className="page-group-label">This week's dishes</div>
               <SectionBlock
-                sectionId="starters"
-                section={menu.sections.starters}
-                label="Starters"
-                defaultOpen={true}
-                variant="starters"
-                onChange={handleSectionChange}
-                onDishChange={handleDishChange}
-                onAddDish={handleAddDish}
-                onRemoveDish={handleRemoveDish}
+                sectionId="starters" section={menu.sections.starters}
+                label="Starters" defaultOpen={true} variant="starters"
+                onChange={handleSectionChange} onDishChange={handleDishChange}
+                onAddDish={handleAddDish} onRemoveDish={handleRemoveDish}
               />
               <SectionBlock
-                sectionId="entrees"
-                section={menu.sections.entrees}
-                label="Entrees"
-                defaultOpen={true}
-                variant="entrees"
-                onChange={handleSectionChange}
-                onDishChange={handleDishChange}
-                onAddDish={handleAddDish}
-                onRemoveDish={handleRemoveDish}
+                sectionId="entrees" section={menu.sections.entrees}
+                label="Entrees" defaultOpen={true} variant="entrees"
+                onChange={handleSectionChange} onDishChange={handleDishChange}
+                onAddDish={handleAddDish} onRemoveDish={handleRemoveDish}
               />
             </div>
 
-            {/* Weekly footer */}
             <div className="page-group">
               <div className="page-group-label">Throughout the week</div>
               <WeeklyBlock
@@ -840,7 +729,6 @@ export default function WeekendEditorPage() {
               />
             </div>
 
-            {/* Policy line */}
             <div className="page-group">
               <div className="page-group-label">Footer</div>
               <div className="field-group">
@@ -856,7 +744,7 @@ export default function WeekendEditorPage() {
               </div>
             </div>
 
-          </div>
+          </div>{/* end editor-scroll */}
 
           <HistoryPanel
             key={historyKey}
@@ -865,11 +753,53 @@ export default function WeekendEditorPage() {
               prevJsonRef.current = JSON.stringify(data);
               setSaveStatus('saved');
               setSaveMsg('Restored');
+              iframeRef.current?.contentWindow?.postMessage(
+                { type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(data) }, '*'
+              );
               setTimeout(() => setSaveStatus('idle'), 3000);
             }}
           />
 
+          <div className="editor-footer">
+            <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>
+            <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>
+              {saveStatus === 'saved'  ? '✓ Saved' :
+               saveStatus === 'saving' ? 'Saving…' :
+               saveStatus === 'error'  ? `⚠ ${saveMsg}` :
+               'Auto-saves as you type'}
+            </span>
+            <button
+              className="btn-print"
+              onClick={() => {
+                if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
+                window.open('/weekend-print', '_blank');
+              }}
+            >
+              Print Menu
+            </button>
+          </div>
         </div>
+
+        {/* ── Preview pane ─────────────────────────────────────────── */}
+        <div className="preview-pane">
+          <div className="preview-toolbar">
+            <span>Live preview</span>
+            <button
+              className="btn-ghost"
+              style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
+              onClick={() => setPreviewUrl('/weekend-preview?' + Date.now())}
+            >
+              ↺ Reload from server
+            </button>
+          </div>
+          <iframe
+            ref={iframeRef}
+            src={previewUrl}
+            className="preview-iframe"
+            title="Weekend menu preview"
+          />
+        </div>
+
       </div>
     </DragDropContext>
   );
