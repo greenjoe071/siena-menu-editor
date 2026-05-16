@@ -1,0 +1,26 @@
+{
+  "price": "45",
+  "courses": [
+    {
+      "id": "course-1",
+      "title": "Burrata e Fichi",
+      "desc": "Hand-pulled Puglian burrata, roasted black mission figs, prosciutto di Parma, aged balsamic, wood-grilled bread."
+    },
+    {
+      "id": "course-2",
+      "title": "Risotto ai Funghi",
+      "desc": "Carnaroli rice, wild porcini and cremini mushrooms, Parmigiano Reggiano, fresh thyme, brown butter finish."
+    },
+    {
+      "id": "course-3",
+      "title": "Branzino al Forno",
+      "desc": "Whole-roasted Mediterranean branzino, lemon and herbs, Castelvetrano olives, Tuscan white beans, salsa verde."
+    }
+  ],
+  "addon": {
+    "title": "Wine Pairing",
+    "desc": "Three wines, one per course, chosen by the floor",
+    "price": "25"
+  },
+  "policy_line": "<strong>No split checks.</strong>&nbsp;&middot;&nbsp;<strong>Gratuity of 22% for parties of 6 or more.</strong>"
+}

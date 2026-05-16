@@ -27,9 +27,10 @@ const MENUS = [
   {
     id: 'tuewed',
     label: 'Tue – Wed $45 Specials',
-    description: 'Midweek prix fixe menu',
+    description: '3-course prix-fixe dinner, Tuesday and Wednesday nights',
     icon: '✨',
-    ready: false,
+    ready: true,
+    href: '/tueswed',
   },
   {
     id: 'weekend',

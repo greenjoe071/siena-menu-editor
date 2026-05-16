@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Chef's Three-Course Menu (Tues &amp; Wed)</title>
+<style>
+/* ── Self-hosted Playfair ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* 8.5×11, asymmetric padding — bottom corners slide into the hard cover
+   (same pattern as Monday/Weekend). */
+.page {
+  width: 8.5in;
+  height: 11in;
+  padding: 0.55in 0.65in 0.7in;
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+  position: relative;
+  overflow: hidden;
+}
+.page:last-child { page-break-after: auto; }
+
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; justify-content: center; }
+  .page { box-shadow: 0 4px 24px rgba(0,0,0,0.18); background: #fff; }
+}
+@media print {
+  body { background: #fff; padding: 0; display: block; }
+  .page { box-shadow: none; overflow: visible; }
+}
+
+/* ── HERO ── */
+.hero {
+  padding-bottom: 12pt;
+  border-bottom: 0.75pt solid #b8821e;
+  margin-bottom: 22pt;
+}
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 40pt;
+  color: #3a1a06;
+  line-height: 0.95;
+}
+.hero-title .line2 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 18pt;
+  margin-top: 2pt;
+}
+.hero-title .price {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 28pt;
+  color: #b8821e;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.hero-sub {
+  margin-top: 10pt;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 12pt;
+  color: #6b4c2a;
+  letter-spacing: 0.02em;
+}
+
+/* ── BODY — three courses ── */
+.menu-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+.course {
+  display: grid;
+  grid-template-columns: 0.95in 1fr;
+  gap: 22pt;
+  align-items: center;
+  break-inside: avoid;
+}
+.course + .course,
+.course + .addon {
+  margin-top: 14pt;
+  padding-top: 14pt;
+  border-top: 0.4pt solid #e3d6bf;
+}
+.course-num {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 58pt;
+  color: #b8821e;
+  line-height: 0.85;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+.dish-name {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22pt;
+  color: #111;
+  line-height: 1.15;
+  margin-bottom: 6pt;
+}
+.dish-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 10.5pt;
+  color: #333;
+  line-height: 1.5;
+  max-width: 5.1in;
+  text-wrap: pretty;
+}
+
+/* ── ADD-ON BLOCK (editable, optional) ── */
+.addon {
+  text-align: center;
+  margin-top: 16pt;
+  padding-top: 14pt;
+  border-top: 0.5pt solid #c9a87a;
+}
+.addon-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13pt;
+  color: #5a2e0e;
+  line-height: 1.3;
+}
+.addon-title .addon-price {
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 10pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-left: 8pt;
+}
+.addon-note {
+  display: block;
+  margin-top: 3pt;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 8.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a6f4a;
+}
+
+/* ── WEEKLY FOOTER (static) ── */
+.weekly-wrap { margin: 20pt 0 0; }
+.weekly-head {
+  text-align: center;
+  margin-bottom: 12pt;
+  padding-bottom: 5pt;
+  border-bottom: 0.75pt solid #b8821e;
+}
+.weekly-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 15pt;
+  color: #5a2e0e;
+  line-height: 1;
+}
+.weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 16pt;
+  margin: 0 0.45in;
+  align-items: start;
+}
+.weekly-cell { text-align: center; }
+.weekly-day {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 8.5pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
+  margin-bottom: 5pt;
+}
+.weekly-headline {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 13pt;
+  color: #111;
+  line-height: 1.15;
+  margin-bottom: 4pt;
+}
+.weekly-detail {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 9.5pt;
+  color: #4a3a26;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+/* ── Policy footnote ── */
+.footnotes { margin-top: 10pt; text-align: center; }
+.footnote {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 9.5pt;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+.footnote strong { color: #111; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-title">
+      <span class="line1">Chef&rsquo;s</span>
+      <span class="line2">
+        <span class="price">$<span data-text-id="price">45</span></span>
+        Three-Course Menu
+      </span>
+    </div>
+    <div class="hero-sub">Suggestioni del Capo Cuoco &middot; Prix Fixe</div>
+  </div>
+
+  <!-- BODY — three fixed-cardinality courses -->
+  <div class="menu-body">
+
+    <div class="course" data-course-id="course-1">
+      <div class="course-num">I</div>
+      <div>
+        <span class="dish-name" data-text-id="course-1-title">Ricotta Montata</span>
+        <div class="dish-desc" data-text-id="course-1-desc">Whipped ricotta with spicy orange honey, wood-grilled bread, fresh mint and basil.</div>
+      </div>
+    </div>
+
+    <div class="course" data-course-id="course-2">
+      <div class="course-num">II</div>
+      <div>
+        <span class="dish-name" data-text-id="course-2-title">Zuppa di Patate Dolci</span>
+        <div class="dish-desc" data-text-id="course-2-desc">Creamy roasted sweet potato and ginger soup, brie cheese, parsley, finished with a swirl of brown butter.</div>
+      </div>
+    </div>
+
+    <div class="course" data-course-id="course-3">
+      <div class="course-num">III</div>
+      <div>
+        <span class="dish-name" data-text-id="course-3-title">Spaghetti all&rsquo;Amatriciana</span>
+        <div class="dish-desc" data-text-id="course-3-desc">Classic Roman dish &mdash; guanciale, Pecorino Romano, peeled San Marzano tomatoes, cracked black pepper.</div>
+      </div>
+    </div>
+
+    <!-- ADD-ON (optional — toggles by addon.title presence) -->
+    <div class="addon" data-addon>
+      <div class="addon-title">
+        <span data-text-id="addon-title">Wine Pairing</span><span class="addon-price">Add $<span data-text-id="addon-price">25</span></span>
+      </div>
+      <span class="addon-note" data-text-id="addon-desc">Three wines, one per course, chosen by the floor</span>
+    </div>
+
+  </div><!-- /menu-body -->
+
+  <!-- WEEKLY SPECIALS FOOTER — fully static -->
+  <div class="weekly-wrap">
+    <div class="weekly-head">
+      <span class="weekly-title">Throughout the Week at Siena</span>
+    </div>
+
+    <div class="weekly-grid">
+
+      <div class="weekly-cell">
+        <div class="weekly-day">Mondays</div>
+        <div class="weekly-headline">$26 for 26 Years</div>
+        <div class="weekly-detail">Two-course Monday menu &mdash; soup or salad, plus a Roman pasta classic.</div>
+      </div>
+
+      <div class="weekly-cell">
+        <div class="weekly-day">Thursdays</div>
+        <div class="weekly-headline">Thirsty Thursday</div>
+        <div class="weekly-detail">$10 signature cocktails, all night long.</div>
+      </div>
+
+      <div class="weekly-cell">
+        <div class="weekly-day">Thu &ndash; Sat</div>
+        <div class="weekly-headline">Weekend Specials</div>
+        <div class="weekly-detail">A new set of specials every week. This is where Chef gets creative.</div>
+      </div>
+
+      <div class="weekly-cell">
+        <div class="weekly-day">Nightly</div>
+        <div class="weekly-headline">Bar Happy Hour</div>
+        <div class="weekly-detail">4:30&ndash;6:30 in the bar and on the patio &mdash; wine, beer and bites.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Policy footnote (editable, optional) -->
+  <div class="footnotes" data-footnotes>
+    <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong>&nbsp;&middot;&nbsp;<strong>Gratuity of 22% for parties of 6 or more.</strong></div>
+  </div>
+
+</div><!-- /page -->
+
+</body>
+</html>
