@@ -624,6 +624,144 @@ button {
   gap: 8px;
 }
 
+/* ══════════════════════════════════════════════════════
+   CHEF MODE — dark cards with white inputs
+   Applied to Weekend, Tue–Wed, and Monday editors
+   ══════════════════════════════════════════════════════ */
+
+/* ── Dish-row cards go dark ──────────────────────────── */
+.chef-mode .dish-row {
+  background: #1e1409;
+  border: 1px solid #4a3018;
+  border-radius: 8px;
+}
+
+.chef-mode .dish-row-header {
+  background: #2a1c0e;
+  border-bottom: 1px solid #4a3018;
+}
+
+.chef-mode .dish-name-preview {
+  color: #f0d890;
+}
+
+.chef-mode .drag-handle {
+  color: rgba(240, 216, 144, 0.4);
+}
+
+.chef-mode .btn-remove-dish {
+  color: rgba(240, 216, 144, 0.4);
+}
+.chef-mode .btn-remove-dish:hover:not(:disabled) {
+  color: #ff7f7f;
+  background: rgba(255, 100, 100, 0.15);
+}
+
+/* ── Labels on dark card bg ──────────────────────────── */
+.chef-mode .dish-row .field-group label,
+.chef-mode .dish-row .field-label-row label {
+  color: #d4b57a;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chef-mode .dish-row .char-count {
+  color: rgba(212, 181, 122, 0.45);
+}
+.chef-mode .dish-row .char-count.warn { color: #f59e0b; }
+.chef-mode .dish-row .char-count.over { color: #ff6b6b; font-weight: 700; }
+
+/* ── Labels on light bg (hero, section titles) ───────── */
+.chef-mode .field-group label,
+.chef-mode .field-label-row label {
+  color: #4a3010;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── THE BIG ONE — white inputs with gold border ─────── */
+.chef-mode .field-group input,
+.chef-mode .field-group textarea {
+  background: #ffffff;
+  border: 2px solid #c9a05a;
+  border-radius: 7px;
+  color: #1e1a14;
+  font-size: 14px;
+  padding: 9px 13px;
+  line-height: 1.5;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.chef-mode .field-group input:focus,
+.chef-mode .field-group textarea:focus {
+  outline: none;
+  border-color: #b8821e;
+  box-shadow: 0 0 0 3px rgba(184, 130, 30, 0.28);
+}
+
+/* Placeholder text — make it readable, not invisible */
+.chef-mode .field-group input::placeholder,
+.chef-mode .field-group textarea::placeholder {
+  color: #b09060;
+  opacity: 1;
+}
+
+/* ── Price input wrapper on dark card ────────────────── */
+.chef-mode .price-input-wrap {
+  background: #ffffff;
+  border: 2px solid #c9a05a;
+  border-radius: 7px;
+}
+.chef-mode .price-input-wrap:focus-within {
+  border-color: #b8821e;
+  box-shadow: 0 0 0 3px rgba(184, 130, 30, 0.28);
+}
+.chef-mode .price-input-wrap input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  font-size: 14px;
+  padding: 9px 8px 9px 2px;
+}
+
+/* ── Dual price on dark card ─────────────────────────── */
+.chef-mode .dual-price-wrap {
+  background: #261708;
+  border-color: #4a3018;
+}
+.chef-mode .dual-price-label {
+  color: rgba(212, 181, 122, 0.5);
+}
+
+/* ── Dish-fields padding ─────────────────────────────── */
+.chef-mode .dish-fields {
+  padding: 12px 14px 14px;
+  gap: 10px;
+}
+
+/* ── Section body — keep light so dish-rows pop out ──── */
+.chef-mode .section-body {
+  background: #f5f0e8;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Add-dish button on light section body ───────────── */
+.chef-mode .btn-add-dish {
+  border-color: #c9a05a;
+  color: #7a5a20;
+  font-weight: 600;
+}
+.chef-mode .btn-add-dish:hover:not(:disabled) {
+  background: #fffbf0;
+  color: #4a3010;
+  border-color: #b8821e;
+  border-style: solid;
+}
+
 /* ── Home page ───────────────────────────────────────── */
 .home-page {
   min-height: 100vh;

@@ -374,7 +374,7 @@ export default function TuewedEditorPage() {
       </div>
 
       {/* ── Form content ───────────────────────────────────── */}
-      <div className="editor-full">
+      <div className="editor-full chef-mode">
         <div style={{ paddingTop: '24px' }}>
 
           {/* Instructions */}

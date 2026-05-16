@@ -592,7 +592,7 @@ export default function MondayEditorPage() {
             <h1>Monday $26 Specials</h1>
           </div>
 
-          <div className="editor-scroll">
+          <div className="editor-scroll chef-mode">
 
             {/* Hero */}
             <div className="page-group">
