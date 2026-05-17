@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en"><head>
+<!DOCTYPE html><html lang="en"><head>
 <meta charset="utf-8">
 <title>Siena Ristorante — Spring / Summer Menu 2026</title>
 <style>
@@ -292,7 +291,7 @@ body {
   flex-shrink: 0;
 }
 .page-art img {
-  width: 2.2in;
+  width: 1.9in;
   height: auto;
   display: block;
 }
@@ -300,6 +299,49 @@ body {
    themselves down with auto — they sit naturally after the art. */
 .page-art + .footnotes {
   margin-top: 0;
+}
+
+/* ── Add-ons lines (pasta / salad / steak) ── */
+.pasta-addons,
+.salad-addons,
+.steak-addons {
+  text-align: center;
+  margin: 10pt 0 2pt;
+  padding: 6pt 4pt 4pt;
+}
+.pasta-addons .addons-label,
+.salad-addons .addons-label,
+.steak-addons .addons-label {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 10.5pt;
+  color: #b8821e;
+  margin-right: 6pt;
+}
+.pasta-addons .addons-items,
+.salad-addons .addons-items,
+.steak-addons .addons-items {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 9pt;
+  color: #333;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.pasta-addons .addons-items strong,
+.salad-addons .addons-items strong,
+.steak-addons .addons-items strong {
+  color: #111;
+  font-weight: 600;
+}
+.pasta-addons .addons-tail {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 9.5pt;
+  color: #555;
+  white-space: nowrap;
 }
 
 /* ── Bread note ── */
@@ -470,12 +512,17 @@ body {
       <div class="dish-price">15</div>
     </div></div><!-- /two-col -->
 
+  <!-- Salad add-ons -->
+  <div class="salad-addons" data-addons-block-id="salad">
+    <span class="addons-label" data-addons-label-for="salad">Add to any Salad</span><span class="addons-items" data-addons-items-for="salad"><strong>Grilled Chicken</strong> 8 &nbsp;·&nbsp; <strong>Grilled Salmon</strong> 12</span>
+  </div>
+
   <!-- Bread note -->
   <div class="bread-note" data-text-id="bread-note-body"><strong data-text-id="bread-note-title">Fresh Baked Bread</strong>
     Each day at Siena we bake all of our bread from scratch. Fifteen minutes before guests arrive, we bake just enough to ensure each table gets the hottest, freshest bread possible. Bread is complimentary and served upon request — to prevent waste and to respect our gluten-free guests.</div>
 
   <div class="footnotes">
-    <div class="footnote" data-text-id="raw-warning-full">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.</div>
+    <div class="footnote"><span data-text-id="raw-warning-main">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness,</span><br><span data-text-id="raw-warning-qualifier">especially if you have certain medical conditions.</span></div>
     <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
   </div>
 
@@ -558,6 +605,11 @@ body {
       <div class="dish-price">34</div>
     </div></div><!-- /two-col pasta -->
 
+  <!-- Pasta add-ons -->
+  <div class="pasta-addons" data-addons-block-id="pasta">
+    <span class="addons-label" data-addons-label-for="pasta">Add to any pasta</span><span class="addons-items" data-addons-items-for="pasta"><strong>Chicken</strong> 6.25 &nbsp;·&nbsp; <strong>Shrimp</strong> 8 &nbsp;·&nbsp; <strong>Scallops</strong> 12 &nbsp;·&nbsp; <strong>Mushrooms</strong> 6 &nbsp;·&nbsp; <strong>Sausage</strong> 4</span> <span class="addons-tail" data-addons-tail-for="pasta">— or ask your server for other options.</span>
+  </div>
+
   <!-- Contorni -->
   <div class="section-head section-head--spaced" data-section-id="contorni">
     <span class="section-title" data-section-title-for="contorni">Contorni</span>
@@ -621,7 +673,7 @@ body {
   </div>
 
   <div class="footnotes">
-    <div class="footnote" data-text-id="raw-warning-short">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness.</div>
+    <div class="footnote"><span data-text-id="raw-warning-main">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness,</span><br><span data-text-id="raw-warning-qualifier">especially if you have certain medical conditions.</span></div>
     <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
   </div>
 
@@ -712,6 +764,11 @@ body {
       <div class="dish-price">52</div>
     </div></div><!-- /two-col secondi -->
 
+  <!-- Steak add-ons -->
+  <div class="steak-addons" data-addons-block-id="steak">
+    <span class="addons-label" data-addons-label-for="steak">Add to any steak</span><span class="addons-items" data-addons-items-for="steak"><strong>Sautéed Mushrooms</strong> 6 &nbsp;·&nbsp; <strong>Grilled Shrimp</strong> 9 &nbsp;·&nbsp; <strong>Seared Scallops</strong> 12</span>
+  </div>
+
   <!-- Drinks -->
   <div class="drinks-panel">
     <div class="section-head" data-section-id="non-alcoholic">
@@ -741,7 +798,7 @@ body {
   </div>
 
   <div class="footnotes">
-    <div class="footnote" data-text-id="raw-warning-full">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.</div>
+    <div class="footnote"><span data-text-id="raw-warning-main">* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness,</span><br><span data-text-id="raw-warning-qualifier">especially if you have certain medical conditions.</span></div>
     <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong></div>
   </div>
 

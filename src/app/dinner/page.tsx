@@ -18,7 +18,6 @@ interface Dish {
   raw?: boolean;
   price_format?: 'single' | 'dual';
   price?: string;
-  // New dual-price fields
   price_a_label?: string;
   price_a?: string;
   price_b_label?: string;
@@ -33,13 +32,30 @@ interface Section {
   items: Dish[];
 }
 
+interface AddonItem {
+  id: string;
+  name: string;
+  price: string;
+  enabled: boolean;
+}
+
+interface AddonBlock {
+  enabled: boolean;
+  label: string;
+  items: AddonItem[];
+  tail?: string;
+}
+
 interface MenuData {
   header: { restaurant_name: string; sub_page_1: string; sub_other_pages: string };
   about_blurb: string;
   bread_note: { title: string; body: string };
-  raw_warning_full: string;
-  raw_warning_short: string;
+  raw_warning_main: string;
+  raw_warning_qualifier: string;
   policy_line: string;
+  salad_addons: AddonBlock;
+  pasta_addons: AddonBlock;
+  steak_addons: AddonBlock;
   sections: {
     antipasti: Section;
     'zuppa-insalate': Section;
@@ -54,10 +70,10 @@ type SectionId = keyof MenuData['sections'];
 
 // ── Page groupings (matches template layout) ─────────────────────────────
 
-const PAGE_GROUPS: { label: string; sections: SectionId[] }[] = [
-  { label: 'Page 1', sections: ['antipasti', 'zuppa-insalate'] },
-  { label: 'Page 2', sections: ['pasta', 'contorni'] },
-  { label: 'Page 3', sections: ['secondi', 'non-alcoholic'] },
+const PAGE_GROUPS: { label: string; sections: SectionId[]; addonKey?: keyof Pick<MenuData, 'salad_addons' | 'pasta_addons' | 'steak_addons'>; addonAfter?: SectionId }[] = [
+  { label: 'Page 1', sections: ['antipasti', 'zuppa-insalate'], addonKey: 'salad_addons', addonAfter: 'zuppa-insalate' },
+  { label: 'Page 2', sections: ['pasta', 'contorni'], addonKey: 'pasta_addons', addonAfter: 'pasta' },
+  { label: 'Page 3', sections: ['secondi', 'non-alcoholic'], addonKey: 'steak_addons', addonAfter: 'secondi' },
 ];
 
 const SECTION_LABELS: Record<SectionId, string> = {
@@ -69,6 +85,12 @@ const SECTION_LABELS: Record<SectionId, string> = {
   'non-alcoholic': 'Non-Alcoholic Beverages',
 };
 
+const ADDON_LABELS: Record<string, string> = {
+  salad_addons: 'Salad Add-ons',
+  pasta_addons: 'Pasta Add-ons',
+  steak_addons: 'Steak Add-ons',
+};
+
 // ── Small helpers ─────────────────────────────────────────────────────────
 
 function useDebounce<T>(value: T, ms: number): T {
@@ -78,6 +100,139 @@ function useDebounce<T>(value: T, ms: number): T {
     return () => clearTimeout(t);
   }, [value, ms]);
   return debounced;
+}
+
+// ── Add-on block editor ───────────────────────────────────────────────────
+
+function AddonBlockEditor({
+  blockKey,
+  block,
+  nameEditable,
+  variableCardinality,
+  onChange,
+}: {
+  blockKey: string;
+  block: AddonBlock;
+  nameEditable: boolean;
+  variableCardinality: boolean;
+  onChange: (updated: AddonBlock) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  function setItem(index: number, updated: AddonItem) {
+    const items = [...block.items];
+    items[index] = updated;
+    onChange({ ...block, items });
+  }
+
+  function addItem() {
+    const newItem: AddonItem = { id: `a-${Math.random().toString(36).slice(2, 6)}`, name: '', price: '', enabled: true };
+    onChange({ ...block, items: [...block.items, newItem] });
+  }
+
+  function removeItem(index: number) {
+    const items = block.items.filter((_, i) => i !== index);
+    onChange({ ...block, items });
+  }
+
+  // Pasta single-line character count warning
+  const pastaCharCount = blockKey === 'pasta_addons'
+    ? block.items.filter(i => i.enabled).reduce((sum, i) => sum + i.name.length + i.price.length + 2, 0)
+    : 0;
+
+  return (
+    <div className="section-block addon-block">
+      <div className="section-block-header" onClick={() => setOpen((o) => !o)}>
+        <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
+        <span className="section-title-label">{ADDON_LABELS[blockKey]}</span>
+        <label className="addon-block-toggle" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={block.enabled}
+            onChange={(e) => onChange({ ...block, enabled: e.target.checked })}
+          />
+          {block.enabled ? 'Showing' : 'Hidden'}
+        </label>
+      </div>
+
+      <div className={`collapsible-content ${open ? 'open' : ''}`}>
+        <div className="section-body addon-body">
+          <div className="field-group">
+            <label>Label (gold eyebrow text)</label>
+            <input
+              value={block.label}
+              onChange={(e) => onChange({ ...block, label: e.target.value })}
+              placeholder="e.g. Add to any Salad"
+            />
+          </div>
+
+          {pastaCharCount > 70 && (
+            <div className="field-warn">
+              Total characters across enabled items ({pastaCharCount}) exceeds 70 — items may wrap to a second line on the printed menu.
+            </div>
+          )}
+
+          <div className="addon-items-list">
+            {block.items.map((item, i) => (
+              <div key={item.id} className="addon-item-row">
+                {nameEditable ? (
+                  <input
+                    className="addon-name-input"
+                    value={item.name}
+                    onChange={(e) => setItem(i, { ...item, name: e.target.value })}
+                    placeholder="Item name"
+                  />
+                ) : (
+                  <span className="addon-name-label">{item.name}</span>
+                )}
+                <div className="addon-price-group">
+                  <span className="addon-price-dollar">$</span>
+                  <input
+                    className="addon-price-input"
+                    value={item.price}
+                    onChange={(e) => setItem(i, { ...item, price: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <label className="addon-item-toggle" title="Show/hide this item on the printed menu">
+                  <input
+                    type="checkbox"
+                    checked={item.enabled}
+                    onChange={(e) => setItem(i, { ...item, enabled: e.target.checked })}
+                  />
+                  On
+                </label>
+                {variableCardinality && (
+                  <button
+                    className="btn-remove-addon"
+                    onClick={() => removeItem(i)}
+                    title="Remove this item"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {variableCardinality && (
+            <button className="btn-add-addon" onClick={addItem}>+ Add item</button>
+          )}
+
+          {blockKey === 'pasta_addons' && (
+            <div className="field-group" style={{ marginTop: '10px' }}>
+              <label>Tail line (optional — leave blank to hide)</label>
+              <input
+                value={block.tail ?? ''}
+                onChange={(e) => onChange({ ...block, tail: e.target.value })}
+                placeholder="e.g. — or ask your server for other options."
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Dish field component ──────────────────────────────────────────────────
@@ -156,7 +311,7 @@ function DishRow({
             {isDual ? (
               <div className="dish-field-row">
                 <div className="field-group price-field">
-                  <label>{dish.price_a_label ?? dish.bowl_price !== undefined ? (dish.price_a_label || 'Bowl') : 'A'} $</label>
+                  <label>{dish.price_a_label ?? (dish.bowl_price !== undefined ? 'Bowl' : 'A')} $</label>
                   <input
                     value={dish.price_a ?? dish.bowl_price ?? ''}
                     onChange={(e) => set('price_a', e.target.value)}
@@ -164,7 +319,7 @@ function DishRow({
                   />
                 </div>
                 <div className="field-group price-field">
-                  <label>{dish.price_b_label ?? dish.cup_price !== undefined ? (dish.price_b_label || 'Cup') : 'B'} $</label>
+                  <label>{dish.price_b_label ?? (dish.cup_price !== undefined ? 'Cup' : 'B')} $</label>
                   <input
                     value={dish.price_b ?? dish.cup_price ?? ''}
                     onChange={(e) => set('price_b', e.target.value)}
@@ -297,7 +452,7 @@ function HistoryPanel({
       if (!res.ok) { alert('Restore failed — try again.'); return; }
       const data = await res.json();
       onRestore(data);
-      await load(); // refresh list
+      await load();
     } finally {
       setRestoring(null);
     }
@@ -341,7 +496,6 @@ export default function EditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
 
-  // Load initial data
   useEffect(() => {
     fetch('/api/menu')
       .then((r) => r.json())
@@ -352,12 +506,11 @@ export default function EditorPage() {
       .catch(() => setSaveStatus('error'));
   }, []);
 
-  // Debounced save + preview refresh
   const debouncedMenu = useDebounce(menu, 800);
 
   const saveAndRefresh = useCallback(async (data: MenuData) => {
     const json = JSON.stringify(data);
-    if (json === prevJsonRef.current) return; // nothing changed
+    if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
 
     setSaveStatus('saving');
@@ -380,7 +533,6 @@ export default function EditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey((k) => k + 1);
-      // Push data directly into the iframe — no reload, no scroll jump
       iframeRef.current?.contentWindow?.postMessage(
         { type: 'SIENA_MENU_UPDATE', payload: data }, '*'
       );
@@ -403,12 +555,16 @@ export default function EditorPage() {
     setMenu((m) => m && { ...m, header: { ...m.header, [field]: value } });
   }
 
-  function setTopLevel(field: keyof Omit<MenuData, 'header' | 'bread_note' | 'sections'>, value: string) {
+  function setTopLevel(field: 'about_blurb' | 'raw_warning_main' | 'raw_warning_qualifier' | 'policy_line', value: string) {
     setMenu((m) => m && { ...m, [field]: value });
   }
 
   function setBreadNote(field: keyof MenuData['bread_note'], value: string) {
     setMenu((m) => m && { ...m, bread_note: { ...m.bread_note, [field]: value } });
+  }
+
+  function setAddonBlock(key: 'salad_addons' | 'pasta_addons' | 'steak_addons', updated: AddonBlock) {
+    setMenu((m) => m && { ...m, [key]: updated });
   }
 
   function handleSectionChange(sectionId: SectionId, updated: Section) {
@@ -426,7 +582,7 @@ export default function EditorPage() {
 
   function handleDragEnd(result: DropResult) {
     if (!result.destination) return;
-    if (result.source.droppableId !== result.destination.droppableId) return; // cross-section blocked
+    if (result.source.droppableId !== result.destination.droppableId) return;
     const sectionId = result.source.droppableId as SectionId;
     setMenu((m) => {
       if (!m) return m;
@@ -452,6 +608,12 @@ export default function EditorPage() {
     : saveStatus === 'saving' ? 'save-status saving'
     : saveStatus === 'error' ? 'save-status error'
     : 'save-status';
+
+  const ADDON_CONFIG: { key: 'salad_addons' | 'pasta_addons' | 'steak_addons'; nameEditable: boolean; variableCardinality: boolean }[] = [
+    { key: 'salad_addons', nameEditable: false, variableCardinality: false },
+    { key: 'pasta_addons', nameEditable: true, variableCardinality: true },
+    { key: 'steak_addons', nameEditable: false, variableCardinality: false },
+  ];
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -490,24 +652,39 @@ export default function EditorPage() {
               </div>
             </div>
 
-            {/* Sections by page */}
-            {PAGE_GROUPS.map((group) => (
-              <div key={group.label} className="page-group">
-                <div className="page-group-label">
-                  {group.label} — {group.sections.map((s) => SECTION_LABELS[s]).join(' · ')}
+            {/* Sections by page, with add-on blocks inserted after their section */}
+            {PAGE_GROUPS.map((group) => {
+              const addonCfg = group.addonKey ? ADDON_CONFIG.find(c => c.key === group.addonKey) : undefined;
+              return (
+                <div key={group.label} className="page-group">
+                  <div className="page-group-label">
+                    {group.label} — {group.sections.map((s) => SECTION_LABELS[s]).join(' · ')}
+                  </div>
+                  {group.sections.map((sid, i) => (
+                    <>
+                      <SectionBlock
+                        key={sid}
+                        sectionId={sid}
+                        section={menu.sections[sid]}
+                        defaultOpen={i === 0 && group.label === 'Page 1'}
+                        onChange={handleSectionChange}
+                        onDishChange={handleDishChange}
+                      />
+                      {group.addonKey && group.addonAfter === sid && addonCfg && (
+                        <AddonBlockEditor
+                          key={group.addonKey}
+                          blockKey={group.addonKey}
+                          block={menu[group.addonKey]}
+                          nameEditable={addonCfg.nameEditable}
+                          variableCardinality={addonCfg.variableCardinality}
+                          onChange={(updated) => setAddonBlock(group.addonKey!, updated)}
+                        />
+                      )}
+                    </>
+                  ))}
                 </div>
-                {group.sections.map((sid, i) => (
-                  <SectionBlock
-                    key={sid}
-                    sectionId={sid}
-                    section={menu.sections[sid]}
-                    defaultOpen={i === 0 && group.label === 'Page 1'}
-                    onChange={handleSectionChange}
-                    onDishChange={handleDishChange}
-                  />
-                ))}
-              </div>
-            ))}
+              );
+            })}
 
             {/* Bread note */}
             <div className="page-group">
@@ -526,12 +703,12 @@ export default function EditorPage() {
             <div className="page-group">
               <div className="page-group-label">Footer text</div>
               <div className="field-group">
-                <label>Raw-food warning (long — pages 1 &amp; 3)</label>
-                <textarea rows={3} value={menu.raw_warning_full} onChange={(e) => setTopLevel('raw_warning_full', e.target.value)} />
+                <label>Raw-food warning (main line)</label>
+                <textarea rows={2} value={menu.raw_warning_main} onChange={(e) => setTopLevel('raw_warning_main', e.target.value)} />
               </div>
               <div className="field-group">
-                <label>Raw-food warning (short — page 2)</label>
-                <textarea rows={2} value={menu.raw_warning_short} onChange={(e) => setTopLevel('raw_warning_short', e.target.value)} />
+                <label>Raw-food warning (qualifier line)</label>
+                <textarea rows={2} value={menu.raw_warning_qualifier} onChange={(e) => setTopLevel('raw_warning_qualifier', e.target.value)} />
               </div>
               <div className="field-group">
                 <label>Policy line (HTML: &lt;strong&gt; allowed)</label>

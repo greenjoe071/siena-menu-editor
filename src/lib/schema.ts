@@ -7,23 +7,6 @@ const DishBase = z.object({
   raw: z.boolean().optional(),
 });
 
-const SinglePriceDish = DishBase.extend({
-  price_format: z.literal('single').optional(),
-  price: z.string().min(1, 'Price is required'),
-});
-
-const DualPriceDish = DishBase.extend({
-  price_format: z.literal('dual'),
-  bowl_price: z.string().min(1, 'Bowl price is required'),
-  cup_price: z.string().min(1, 'Cup price is required'),
-});
-
-export const DishSchema = z.discriminatedUnion('price_format', [
-  DualPriceDish,
-  // single is the default, catches anything without price_format or with 'single'
-  SinglePriceDish,
-]).or(DishBase.extend({ price: z.string().min(1) }));
-
 // Simpler flat dish schema (discriminatedUnion is finicky with optional keys)
 export const AnyDishSchema = z.object({
   id: z.string().regex(/^d-[0-9a-f]{4}$/),
@@ -32,7 +15,7 @@ export const AnyDishSchema = z.object({
   raw: z.boolean().optional(),
   price_format: z.enum(['single', 'dual']).optional(),
   price: z.string().optional(),
-  // New dual-price fields (price_a_label / price_a / price_b_label / price_b)
+  // Dual-price fields (price_a_label / price_a / price_b_label / price_b)
   price_a_label: z.string().optional(),
   price_a: z.string().optional(),
   price_b_label: z.string().optional(),
@@ -77,6 +60,22 @@ export const SECTION_COUNTS: Record<string, number> = {
   'non-alcoholic': 9,
 };
 
+// ── Add-on block schemas ──────────────────────────────────────────────────
+
+const AddonItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  price: z.string().min(1, 'Price required'),
+  enabled: z.boolean(),
+});
+
+const AddonBlockSchema = z.object({
+  enabled: z.boolean(),
+  label: z.string().min(1),
+  items: z.array(AddonItemSchema).min(1),
+  tail: z.string().optional(),
+});
+
 export const MenuSchema = z.object({
   header: z.object({
     restaurant_name: z.string().min(1),
@@ -88,9 +87,12 @@ export const MenuSchema = z.object({
     title: z.string().min(1),
     body: z.string().min(1),
   }),
-  raw_warning_full: z.string().min(1),
-  raw_warning_short: z.string().min(1),
+  raw_warning_main: z.string().min(1),
+  raw_warning_qualifier: z.string().min(1),
   policy_line: z.string().min(1),
+  salad_addons: AddonBlockSchema,
+  pasta_addons: AddonBlockSchema,
+  steak_addons: AddonBlockSchema,
   sections: z.object({
     antipasti: SectionSchema,
     'zuppa-insalate': SectionSchema,
@@ -113,3 +115,5 @@ export const MenuSchema = z.object({
 });
 
 export type MenuData = z.infer<typeof MenuSchema>;
+export type AddonItem = z.infer<typeof AddonItemSchema>;
+export type AddonBlock = z.infer<typeof AddonBlockSchema>;

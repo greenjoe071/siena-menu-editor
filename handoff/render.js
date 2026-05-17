@@ -14,15 +14,17 @@
  *   const dom = new JSDOM(templateHtml);
  *   render(dom.window.document, menuData);
  *
- * Note on subsections:
- *   The Non-Alcoholic Beverages section is split visually into two groups
- *   ("waters/sodas" and "Mocktails") via a static subhead in the template.
- *   Each dish element lives in exactly one of two `.two-col-flow` containers,
- *   and that group membership is FIXED at template load time. The renderer
- *   never moves a dish across containers; it only re-orders items within
- *   each container according to the JSON. This matches the design rule
- *   that subsection membership, like section membership, is not editable
- *   from the manager-facing app.
+ * Notes:
+ *   - Subsections (Non-Alcoholic Beverages → Mocktails) — each dish lives in
+ *     exactly one of two `.two-col-flow` containers, and that membership is
+ *     FIXED at template load time. The renderer never moves a dish across
+ *     containers; it only re-orders items within each container.
+ *
+ *   - Add-on blocks (pasta / salad / steak) — each block is a single line
+ *     under its section. The renderer rebuilds the `.addons-items` innerHTML
+ *     from the JSON array each render. Items have an `enabled` flag (default
+ *     true). The whole block is removed from the DOM when `block.enabled ===
+ *     false` OR when no items remain enabled.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -38,6 +40,14 @@
     }
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function renderBreadNote(doc, breadNote) {
     const el = doc.querySelector('.bread-note[data-text-id="bread-note-body"]');
     if (!el) return;
@@ -47,6 +57,60 @@
     strong.textContent = breadNote.title;
     el.appendChild(strong);
     el.appendChild(doc.createTextNode('\n    ' + breadNote.body));
+  }
+
+  /**
+   * Render one add-on block (pasta / salad / steak).
+   *
+   * Behavior:
+   *   - If `data` is missing/null OR `data.enabled === false` → remove block.
+   *   - Filter items by `enabled !== false` (absent flag defaults to true).
+   *   - If no enabled items remain → remove block.
+   *   - Otherwise: write label, rebuild items innerHTML, write tail (if slot
+   *     exists in template and data.tail is present).
+   *
+   * Items are rendered as `<strong>{name}</strong> {price}` joined by
+   * `&nbsp;·&nbsp;` (a non-breaking-space middle-dot separator) — matching
+   * the printed treatment exactly.
+   */
+  function renderAddonsBlock(doc, blockId, data) {
+    const block = doc.querySelector('[data-addons-block-id="' + blockId + '"]');
+    if (!block) return;
+
+    if (!data || data.enabled === false) {
+      block.remove();
+      return;
+    }
+
+    const items = (data.items || []).filter(i => i.enabled !== false);
+    if (items.length === 0) {
+      block.remove();
+      return;
+    }
+
+    const labelEl = block.querySelector('[data-addons-label-for="' + blockId + '"]');
+    if (labelEl && data.label != null) labelEl.textContent = data.label;
+
+    const itemsEl = block.querySelector('[data-addons-items-for="' + blockId + '"]');
+    if (itemsEl) {
+      itemsEl.innerHTML = items
+        .map(item => '<strong>' + escapeHtml(item.name) + '</strong> ' + escapeHtml(item.price))
+        .join(' &nbsp;·&nbsp; ');
+    }
+
+    const tailEl = block.querySelector('[data-addons-tail-for="' + blockId + '"]');
+    if (tailEl) {
+      if (data.tail != null && data.tail !== '') {
+        tailEl.textContent = data.tail;
+      } else {
+        // No tail content — drop the leading space too so serialization stays clean.
+        const prev = tailEl.previousSibling;
+        if (prev && prev.nodeType === 3 /* TEXT_NODE */ && /^\s+$/.test(prev.nodeValue)) {
+          prev.remove();
+        }
+        tailEl.remove();
+      }
+    }
   }
 
   function renderDishName(doc, dish) {
@@ -74,9 +138,6 @@
     const newPrice = doc.createElement('div');
     if (dish.price_format === 'dual') {
       newPrice.className = 'dish-price-dual';
-      // Labels are stored in the data so San Pellegrino can use "Sm/Lg"
-      // and Tomato Bisque can use "Bowl/Cup". Fall back to legacy fields
-      // if labels are absent.
       const a_label = dish.price_a_label || 'Bowl';
       const a_value = dish.price_a != null ? dish.price_a : dish.bowl_price;
       const b_label = dish.price_b_label || 'Cup';
@@ -90,21 +151,15 @@
   }
 
   function renderSection(doc, sectionId, sectionData) {
-    // Title (single section header — subsection heads are static)
     const titleEl = doc.querySelector('[data-section-title-for="' + sectionId + '"]');
     if (titleEl) titleEl.textContent = sectionData.title;
 
-    // Find ALL containers belonging to this section. Most sections have one;
-    // non-alcoholic has two (split by the Mocktails subhead).
     const containers = [].slice.call(doc.querySelectorAll(
       '[data-section-id="' + sectionId + '"].two-col, ' +
       '[data-section-id="' + sectionId + '"].two-col-flow'
     ));
     if (containers.length === 0) return;
 
-    // Capture each dish's owning container from the initial template state.
-    // This is the subsection-membership "constant" — we never move a dish
-    // out of the container the template assigned it to.
     const dishEl = {};
     const dishContainer = {};
     for (const c of containers) {
@@ -115,10 +170,6 @@
       }
     }
 
-    // Walk the JSON order; update each dish's content; re-append it to its
-    // assigned container. Within each container, append-order matches the
-    // relative order in the JSON. Items destined for different containers
-    // never interleave.
     for (const dish of sectionData.items) {
       const el = dishEl[dish.id];
       const container = dishContainer[dish.id];
@@ -139,9 +190,14 @@
     renderBreadNote(doc, data.bread_note);
 
     // Footer
-    setText(doc, 'raw-warning-full', data.raw_warning_full);
-    setText(doc, 'raw-warning-short', data.raw_warning_short);
+    setText(doc, 'raw-warning-main', data.raw_warning_main);
+    setText(doc, 'raw-warning-qualifier', data.raw_warning_qualifier);
     setText(doc, 'policy-line', data.policy_line, true);
+
+    // Add-on blocks
+    renderAddonsBlock(doc, 'salad', data.salad_addons);
+    renderAddonsBlock(doc, 'pasta', data.pasta_addons);
+    renderAddonsBlock(doc, 'steak', data.steak_addons);
 
     // Sections
     for (const [id, section] of Object.entries(data.sections)) {

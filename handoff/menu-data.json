@@ -9,9 +9,38 @@
     "title": "Fresh Baked Bread",
     "body": "Each day at Siena we bake all of our bread from scratch. Fifteen minutes before guests arrive, we bake just enough to ensure each table gets the hottest, freshest bread possible. Bread is complimentary and served upon request — to prevent waste and to respect our gluten-free guests."
   },
-  "raw_warning_full": "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.",
-  "raw_warning_short": "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness.",
+  "raw_warning_main": "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness,",
+  "raw_warning_qualifier": "especially if you have certain medical conditions.",
   "policy_line": "<strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong>",
+  "salad_addons": {
+    "enabled": true,
+    "label": "Add to any Salad",
+    "items": [
+      { "id": "sa-chicken", "name": "Grilled Chicken", "price": "8",  "enabled": true },
+      { "id": "sa-salmon",  "name": "Grilled Salmon",  "price": "12", "enabled": true }
+    ]
+  },
+  "pasta_addons": {
+    "enabled": true,
+    "label": "Add to any pasta",
+    "items": [
+      { "id": "a-chicken",   "name": "Chicken",   "price": "6.25", "enabled": true },
+      { "id": "a-shrimp",    "name": "Shrimp",    "price": "8",    "enabled": true },
+      { "id": "a-scallops",  "name": "Scallops",  "price": "12",   "enabled": true },
+      { "id": "a-mushrooms", "name": "Mushrooms", "price": "6",    "enabled": true },
+      { "id": "a-sausage",   "name": "Sausage",   "price": "4",    "enabled": true }
+    ],
+    "tail": "— or ask your server for other options."
+  },
+  "steak_addons": {
+    "enabled": true,
+    "label": "Add to any steak",
+    "items": [
+      { "id": "ta-mushrooms", "name": "Sautéed Mushrooms", "price": "6",  "enabled": true },
+      { "id": "ta-shrimp",    "name": "Grilled Shrimp",    "price": "9",  "enabled": true },
+      { "id": "ta-scallops",  "name": "Seared Scallops",   "price": "12", "enabled": true }
+    ]
+  },
   "sections": {
     "antipasti": {
       "title": "Antipasti",
