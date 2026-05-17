@@ -1,22 +1,22 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { describe, it, expect } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-describe('Siena Tueswed render snapshot', () => {
-  it('matches expected-render.html', () => {
-    const template = readFileSync(join(__dirname, 'template.html'), 'utf8');
-    const renderSrc = readFileSync(join(__dirname, 'render.js'), 'utf8');
-    const data = JSON.parse(readFileSync(join(__dirname, 'menu-data.json'), 'utf8'));
-    const expected = readFileSync(join(__dirname, 'expected-render.html'), 'utf8');
+const HANDOFF = join(import.meta.dirname);
 
-    const dom = new JSDOM(template);
-    const fakeRoot = {};
-    const mod = { exports: {} };
-    new Function('module', 'self', renderSrc)(mod, fakeRoot);
-    const renderer = (mod.exports && mod.exports.render) ? mod.exports : fakeRoot['SienaTuewedRender'];
-    renderer.render(dom.window.document, data);
-    const result = '<!DOCTYPE html>\n' + dom.window.document.documentElement.outerHTML;
-    expect(result).toBe(expected);
+describe('Tue–Wed menu snapshot', () => {
+  it('renders seed data and matches expected-render.html', () => {
+    const template = readFileSync(join(HANDOFF, 'template.html'), 'utf8');
+    const renderSrc = readFileSync(join(HANDOFF, 'render.js'), 'utf8');
+    const seedData = JSON.parse(readFileSync(join(HANDOFF, 'menu-data.json'), 'utf8'));
+    const expected = readFileSync(join(HANDOFF, 'expected-render.html'), 'utf8');
+
+    const dom = new JSDOM(template, { runScripts: 'dangerously' });
+    const { window } = dom;
+    new window.Function(renderSrc)();
+    window.SienaTuewedRender.render(window.document, seedData);
+
+    expect(dom.serialize()).toBe(expected);
   });
 });
