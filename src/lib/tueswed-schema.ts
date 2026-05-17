@@ -30,7 +30,7 @@ export const TuewedMenuSchema = z.object({
   price:       z.string().min(1, 'Price is required').max(TUESWED_CHAR_LIMITS.price),
   courses:     z.tuple([TuewedCourseSchema, TuewedCourseSchema, TuewedCourseSchema]),
   addon:       TuewedAddonSchema.optional(),
-  policy_line: z.string().max(TUESWED_CHAR_LIMITS.policyLine).optional(),
+  policy_line: z.string().max(TUESWED_CHAR_LIMITS.policyLine),
 });
 
 export type TuewedMenuData = z.infer<typeof TuewedMenuSchema>;

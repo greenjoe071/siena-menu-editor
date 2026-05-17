@@ -21,7 +21,7 @@ interface TuewedMenuData {
   price: string;
   courses: [TuewedCourse, TuewedCourse, TuewedCourse];
   addon?: TuewedAddon;
-  policy_line?: string;
+  policy_line: string;
 }
 
 // ── Char limits (must match BUILD-SPEC.md and tueswed-schema.ts) ──────────
@@ -215,7 +215,11 @@ export default function TuewedEditorPage() {
   useEffect(() => {
     fetch('/api/tueswed')
       .then(r => r.json())
-      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
+      .then(data => {
+        const normalized = { ...data, policy_line: data.policy_line ?? '' };
+        setMenu(normalized);
+        prevJsonRef.current = JSON.stringify(normalized);
+      })
       .catch(() => setSaveStatus('error'));
   }, []);
 
@@ -299,10 +303,6 @@ export default function TuewedEditorPage() {
     setMenu(m => m && { ...m, addon: updated });
   }
 
-  function handlePolicyToggle(on: boolean) {
-    setMenu(m => m && { ...m, policy_line: on ? '' : undefined });
-  }
-
   // ── Render ──────────────────────────────────────────────────────────────
 
   if (!menu) {
@@ -313,8 +313,7 @@ export default function TuewedEditorPage() {
     );
   }
 
-  const showAddon  = menu.addon !== undefined;
-  const showPolicy = menu.policy_line !== undefined;
+  const showAddon = menu.addon !== undefined;
 
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
@@ -430,34 +429,21 @@ export default function TuewedEditorPage() {
 
           {/* Policy line */}
           <div className="page-group">
-            <div className="page-group-label">Footer (optional)</div>
+            <div className="page-group-label">Footer</div>
             <div className="dish-row">
               <div className="dish-fields">
-                <div style={{ marginBottom: showPolicy ? '12px' : 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#d4b57a', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    <input
-                      type="checkbox"
-                      checked={showPolicy}
-                      onChange={e => handlePolicyToggle(e.target.checked)}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#b8821e' }}
-                    />
-                    Include policy line
-                  </label>
-                </div>
-                {showPolicy && (
-                  <div className="field-group" style={{ marginBottom: 0 }}>
-                    <div className="field-label-row">
-                      <label>Policy line (HTML: &lt;strong&gt;, &lt;em&gt; allowed)</label>
-                      <CharCount value={menu.policy_line ?? ''} max={L.policyLine} />
-                    </div>
-                    <textarea
-                      rows={2}
-                      value={menu.policy_line ?? ''}
-                      onChange={e => setMenu(m => m && { ...m, policy_line: e.target.value })}
-                      placeholder="e.g. <strong>No split checks.</strong>"
-                    />
+                <div className="field-group" style={{ marginBottom: 0 }}>
+                  <div className="field-label-row">
+                    <label>Policy line (HTML: &lt;strong&gt;, &lt;em&gt; allowed)</label>
+                    <CharCount value={menu.policy_line} max={L.policyLine} />
                   </div>
-                )}
+                  <textarea
+                    rows={2}
+                    value={menu.policy_line}
+                    onChange={e => setMenu(m => m && { ...m, policy_line: e.target.value })}
+                    placeholder="e.g. <strong>No split checks.</strong>"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -467,8 +453,9 @@ export default function TuewedEditorPage() {
         <HistoryPanel
           key={historyKey}
           onRestore={data => {
-            setMenu(data);
-            prevJsonRef.current = JSON.stringify(data);
+            const normalized = { ...data, policy_line: data.policy_line ?? '' };
+            setMenu(normalized);
+            prevJsonRef.current = JSON.stringify(normalized);
             setSaveStatus('saved');
             setSaveMsg('Restored');
             iframeRef.current?.contentWindow?.postMessage(
