@@ -1,0 +1,609 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Happy Hour</title>
+<style>
+/* ── Self-hosted Playfair (display + italic) ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page { size: 8.5in 14in; margin: 0; }
+
+:root {
+  --gold: #b8821e;
+  --gold-soft: #c9a87a;
+  --brown: #3a1a06;
+  --brown-mid: #5a2e0e;
+  --muted: #6b4c2a;
+  --cream: #faf6ef;
+  --body: #4a3a26;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: var(--brown);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 8.5in;
+  height: 14in;
+  padding: 0.42in 0.5in 0.34in;
+  background: var(--cream);
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+  overflow: hidden;
+  position: relative;
+}
+.page:last-child { page-break-after: auto; }
+
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; justify-content: center; }
+  .page { box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
+}
+@media print { body { background: #fff; padding: 0; display: block; } .page { box-shadow: none; overflow: visible; } }
+
+/* ═════════════════ MASTHEAD (STATIC) ═════════════════ */
+.masthead {
+  text-align: center;
+  padding-bottom: 8pt;
+}
+.masthead .restaurant {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 9pt;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--brown-mid);
+  margin-bottom: 2pt;
+}
+.masthead .display {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 64pt;
+  color: var(--brown);
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+}
+.masthead .categories {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brown-mid);
+  margin-top: 12pt;
+}
+.masthead .categories .dot { color: var(--gold-soft); margin: 0 6pt; }
+.masthead .hours {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 12pt;
+  color: var(--brown);
+  margin-top: 4pt;
+}
+.masthead .hours .dot { color: var(--gold); margin: 0 6pt; font-size: 9pt; position: relative; top: -1pt; }
+.masthead .rooms {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 8pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4pt;
+}
+.masthead .rooms .dot { color: var(--gold-soft); margin: 0 6pt; }
+
+/* ═════════════════ HH SPECIALS STRIP ═════════════════ */
+.hh-strip {
+  margin-top: 22pt;
+  border-top: 0.75pt solid var(--gold);
+  border-bottom: 0.75pt solid var(--gold);
+  padding: 11pt 0 12pt;
+  position: relative;
+}
+.hh-strip-label {
+  position: absolute;
+  top: -6pt;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cream);
+  padding: 0 12pt;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 8pt;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--brown-mid);
+  white-space: nowrap;
+}
+.hh-strip-label .diamond { color: var(--gold); margin: 0 6pt; font-size: 7pt; position: relative; top: -1pt; }
+
+.hh-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+}
+.hh-special-cell {
+  text-align: center;
+  padding: 0 6pt;
+  border-right: 0.5pt solid var(--gold-soft);
+}
+.hh-special-cell:last-child { border-right: none; }
+.hh-special-cell .price {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 24pt;
+  color: var(--brown);
+  line-height: 1;
+}
+.hh-special-cell .price .dollar { font-size: 18pt; position: relative; top: -3pt; margin-right: 1pt; }
+.hh-special-cell .label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 8.5pt;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  margin-top: 5pt;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═════════════════ BODY GRID ═════════════════ */
+.body-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 26pt;
+  padding-top: 26pt;
+  min-height: 0;
+  position: relative;
+}
+.body-grid::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 26pt;
+  bottom: 0;
+  width: 0.5pt;
+  margin-left: -0.25pt;
+  background: var(--gold-soft);
+  pointer-events: none;
+}
+
+.col { display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+
+/* ─── section ─── */
+.section { margin-bottom: 0; }
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10pt;
+  margin-bottom: 8pt;
+  padding-bottom: 3pt;
+  border-bottom: 0.5pt solid var(--gold-soft);
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 19pt;
+  color: var(--brown);
+  line-height: 1;
+}
+.section-note {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 7.5pt;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+/* ─── dish row (small plates) ─── */
+.dish {
+  margin-bottom: 6pt;
+  break-inside: avoid;
+}
+.dish:last-child { margin-bottom: 0; }
+.dish-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8pt;
+}
+.dish-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 12pt;
+  color: var(--brown);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dish-price {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 12pt;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.dish-price .dollar { font-size: 10pt; margin-right: 0.5pt; }
+.dish-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 8.5pt;
+  color: var(--body);
+  line-height: 1.35;
+  margin-top: 1pt;
+  padding-right: 18pt;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── cocktail row ─── */
+.cocktail {
+  margin-bottom: 6pt;
+  break-inside: avoid;
+}
+.cocktail:last-child { margin-bottom: 0; }
+.cocktail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8pt;
+}
+.cocktail-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 12pt;
+  color: var(--brown);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cocktail-prices {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9pt;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+.cocktail-prices .hh {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 11pt;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+}
+.cocktail-prices .hh .dollar { font-size: 9pt; margin-right: 0.5pt; }
+.cocktail-prices .sep { color: var(--gold-soft); margin: 0 4pt; }
+.cocktail-prices .reg {
+  color: var(--muted);
+  font-weight: 500;
+  text-decoration: line-through;
+  text-decoration-color: var(--gold-soft);
+}
+.cocktail-prices .reg .dollar { font-size: 7.5pt; margin-right: 0.5pt; }
+.cocktail-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 8.5pt;
+  color: var(--body);
+  line-height: 1.35;
+  margin-top: 1pt;
+  padding-right: 18pt;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cocktail-floater {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 9pt;
+  color: var(--brown-mid);
+  margin-top: 2pt;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cocktail-floater .plus { color: var(--gold); margin-right: 3pt; font-style: normal; font-family: 'Montserrat', sans-serif; font-weight: 700; }
+.cocktail-floater .floater-price { color: var(--gold); font-weight: 700; font-family: 'Playfair Display', serif; font-style: italic; margin-left: 4pt; }
+.cocktail-floater .floater-price .dollar { font-size: 7.5pt; margin-right: 0.5pt; }
+
+/* ─── two-up list (wine, beer) ─── */
+.list-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 18pt;
+  row-gap: 4pt;
+}
+.list-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8pt;
+  padding-bottom: 2pt;
+  border-bottom: 0.4pt dotted var(--gold-soft);
+  min-width: 0;
+}
+.list-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 9.5pt;
+  color: var(--brown);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.list-price {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 9pt;
+  color: var(--gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.list-price .slash { color: var(--gold-soft); margin: 0 2pt; font-weight: 400; }
+
+/* ─── mid-column ornament (left col, between Small Plates & Wine) ─── */
+.mid-spacer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.mid-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10pt;
+  width: 1.6in;
+}
+.mid-ornament .rule {
+  flex: 1;
+  height: 0;
+  border-top: 0.5pt solid var(--gold-soft);
+}
+.mid-ornament .diamond {
+  color: var(--gold);
+  font-size: 8pt;
+  line-height: 1;
+}
+
+/* ─── cross-promo (right col, between Cocktails & Beer) ─── */
+.cross-promo {
+  border-top: 0.5pt solid var(--gold);
+  border-bottom: 0.5pt solid var(--gold);
+  padding: 9pt 0 10pt;
+  margin: 0 14pt;
+  text-align: center;
+}
+.cross-promo .body {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 8pt;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--brown-mid);
+}
+.cross-promo .headline {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 17pt;
+  color: var(--brown);
+  margin-top: 4pt;
+  line-height: 1.05;
+}
+
+/* ═════════════════ FOOTER (STATIC) ═════════════════ */
+.footer {
+  margin-top: 14pt;
+  padding-top: 10pt;
+  border-top: 0.5pt solid var(--gold-soft);
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--brown-mid);
+  line-height: 1.4;
+}
+.footer .policy {
+  font-size: 9pt;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.footer .policy .sep { color: var(--gold-soft); margin: 0 5pt; }
+.footer .pets {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 10.5pt;
+  color: var(--muted);
+  margin-top: 3pt;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ═════════════════ MASTHEAD (STATIC — no data hooks) ═════════════════ -->
+  <div class="masthead">
+    <div class="restaurant">Siena Ristorante Toscana</div>
+    <div class="display">Happy Hour</div>
+    <div class="categories">Bites <span class="dot">·</span> Cocktails <span class="dot">·</span> Wine <span class="dot">·</span> Beer</div>
+    <div class="hours">Monday – Friday <span class="dot">·</span> 4:30 – 6:30 pm</div>
+    <div class="rooms">Bar Countertop <span class="dot">·</span> Cocktail Lounge <span class="dot">·</span> Bar Covered Patio</div>
+  </div>
+
+  <!-- ═════════════════ HH SPECIALS STRIP (5 fixed cells) ═════════════════ -->
+  <div class="hh-strip">
+    <div class="hh-strip-label">The Specials <span class="diamond">◆</span> Bar Area Only</div>
+    <div class="hh-strip-grid">
+      <div class="hh-special-cell" data-item-id="hh-1">
+        <div class="price"><span class="dollar">$</span><span data-text-id="hh-1-price">4</span></div>
+        <div class="label" data-text-id="hh-1-label">Bud &amp; Miller Lites</div>
+      </div>
+      <div class="hh-special-cell" data-item-id="hh-2">
+        <div class="price"><span class="dollar">$</span><span data-text-id="hh-2-price">8</span></div>
+        <div class="label" data-text-id="hh-2-label">Well Drinks</div>
+      </div>
+      <div class="hh-special-cell" data-item-id="hh-3">
+        <div class="price"><span class="dollar">$</span><span data-text-id="hh-3-price">9</span></div>
+        <div class="label" data-text-id="hh-3-label">Lemon Drop</div>
+      </div>
+      <div class="hh-special-cell" data-item-id="hh-4">
+        <div class="price"><span class="dollar">$</span><span data-text-id="hh-4-price">9</span></div>
+        <div class="label" data-text-id="hh-4-label">Cosmopolitan</div>
+      </div>
+      <div class="hh-special-cell" data-item-id="hh-5">
+        <div class="price"><span class="dollar">$</span><span data-text-id="hh-5-price">10</span></div>
+        <div class="label" data-text-id="hh-5-label">Select Glass Wines</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ BODY ═════════════════ -->
+  <div class="body-grid">
+
+    <!-- ─────────── LEFT COLUMN ─────────── -->
+    <div class="col">
+
+      <!-- Small Plates (10 fixed items) -->
+      <div class="section" data-section-id="small-plates" style="margin-bottom: 0;">
+        <div class="section-head">
+          <div class="section-title">Small Plates</div>
+          <div class="section-note">From the Kitchen</div>
+        </div>
+        <div class="dish" data-item-id="sp-1"><div class="dish-head"><div class="dish-name" data-text-id="sp-1-name">Fichi Ripieni</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-1-price">6</span></div></div><div class="dish-desc" data-text-id="sp-1-desc">Black mission figs, prosciutto, goat cheese</div></div>
+        <div class="dish" data-item-id="sp-2"><div class="dish-head"><div class="dish-name" data-text-id="sp-2-name">Tuscan Bread Bites</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-2-price">6</span></div></div><div class="dish-desc" data-text-id="sp-2-desc">Parmesan, white truffle aioli, sea salt</div></div>
+        <div class="dish" data-item-id="sp-3"><div class="dish-head"><div class="dish-name" data-text-id="sp-3-name">Pesto Pane</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-3-price">6</span></div></div><div class="dish-desc" data-text-id="sp-3-desc">Wood-roasted bread, pesto, mozzarella, tomato</div></div>
+        <div class="dish" data-item-id="sp-4"><div class="dish-head"><div class="dish-name" data-text-id="sp-4-name">Gamberetti Fritti</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-4-price">7</span></div></div><div class="dish-desc" data-text-id="sp-4-desc">Fried shrimp, Italian salsa verde aioli</div></div>
+        <div class="dish" data-item-id="sp-5"><div class="dish-head"><div class="dish-name" data-text-id="sp-5-name">Portobello Bruschetta</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-5-price">7</span></div></div><div class="dish-desc" data-text-id="sp-5-desc">Goat cheese, garlic, tomato, basil, balsamic</div></div>
+        <div class="dish" data-item-id="sp-6"><div class="dish-head"><div class="dish-name" data-text-id="sp-6-name">Polpette</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-6-price">8</span></div></div><div class="dish-desc" data-text-id="sp-6-desc">Meatballs, salsa verde pomodoro, ricotta</div></div>
+        <div class="dish" data-item-id="sp-7"><div class="dish-head"><div class="dish-name" data-text-id="sp-7-name">Cozze in Bianco</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-7-price">8</span></div></div><div class="dish-desc" data-text-id="sp-7-desc">Mussels, garlic white wine, grilled bread</div></div>
+        <div class="dish" data-item-id="sp-8"><div class="dish-head"><div class="dish-name" data-text-id="sp-8-name">Formaggio Brie al Forno</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-8-price">10</span></div></div><div class="dish-desc" data-text-id="sp-8-desc">Wood-roasted brie, crostini, pancetta jam</div></div>
+        <div class="dish" data-item-id="sp-9"><div class="dish-head"><div class="dish-name" data-text-id="sp-9-name">Calamari Fritti</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-9-price">10</span></div></div><div class="dish-desc" data-text-id="sp-9-desc">Fried calamari, pomodoro sauce, lemon</div></div>
+        <div class="dish" data-item-id="sp-10"><div class="dish-head"><div class="dish-name" data-text-id="sp-10-name">Bruschetta al Cinghiale</div><div class="dish-price"><span class="dollar">$</span><span data-text-id="sp-10-price">10</span></div></div><div class="dish-desc" data-text-id="sp-10-desc">Siena bread, red wine–braised wild boar ragù</div></div>
+      </div>
+
+      <!-- Centered ornament -->
+      <div class="mid-spacer">
+        <div class="mid-ornament" aria-hidden="true">
+          <span class="rule"></span>
+          <span class="diamond">◆</span>
+          <span class="rule"></span>
+        </div>
+      </div>
+
+      <!-- Wine by the Glass (8 fixed items) -->
+      <div class="section" data-section-id="wines" style="margin-bottom: 0;">
+        <div class="section-head">
+          <div class="section-title">Wine by the Glass</div>
+          <div class="section-note">Glass / Bottle</div>
+        </div>
+        <div class="list-2col">
+          <div class="list-row" data-item-id="wn-1"><div class="list-name" data-text-id="wn-1-name">Cabernet Sauvignon</div><div class="list-price"><span data-text-id="wn-1-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-1-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-2"><div class="list-name" data-text-id="wn-2-name">Chianti</div><div class="list-price"><span data-text-id="wn-2-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-2-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-3"><div class="list-name" data-text-id="wn-3-name">Toscana Rosso</div><div class="list-price"><span data-text-id="wn-3-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-3-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-4"><div class="list-name" data-text-id="wn-4-name">Toscana Bianco</div><div class="list-price"><span data-text-id="wn-4-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-4-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-5"><div class="list-name" data-text-id="wn-5-name">Chardonnay</div><div class="list-price"><span data-text-id="wn-5-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-5-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-6"><div class="list-name" data-text-id="wn-6-name">Lugana – Turbiana</div><div class="list-price"><span data-text-id="wn-6-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-6-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-7"><div class="list-name" data-text-id="wn-7-name">Pinot Grigio</div><div class="list-price"><span data-text-id="wn-7-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-7-bottle-price">40</span></div></div>
+          <div class="list-row" data-item-id="wn-8"><div class="list-name" data-text-id="wn-8-name">Prosecco</div><div class="list-price"><span data-text-id="wn-8-glass-price">10</span><span class="slash">/</span><span data-text-id="wn-8-bottle-price">50</span></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─────────── RIGHT COLUMN ─────────── -->
+    <div class="col">
+
+      <!-- Signature Cocktails (8 fixed items) -->
+      <div class="section" data-section-id="cocktails" style="margin-bottom: 0;">
+        <div class="section-head">
+          <div class="section-title">Signature Cocktails</div>
+          <div class="section-note">HH Price <span style="color:var(--gold-soft);">·</span> Regular</div>
+        </div>
+        <div class="cocktail" data-item-id="ck-1"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-1-name">Aperol Spritz</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-1-hh-price">10</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-1-reg-price">13</span></span></div></div><div class="cocktail-desc" data-text-id="ck-1-desc">Aperol, Prosecco, served over ice</div></div>
+        <div class="cocktail" data-item-id="ck-2"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-2-name">Italian Sangria</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-2-hh-price">9</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-2-reg-price">13</span></span></div></div><div class="cocktail-desc" data-text-id="ck-2-desc">Red wine, Prosecco, brandy, citrus</div></div>
+        <div class="cocktail" data-item-id="ck-3"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-3-name">Godfather</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-3-hh-price">10</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-3-reg-price">14</span></span></div></div><div class="cocktail-desc" data-text-id="ck-3-desc">Maker's Mark Bourbon, Amaretto Disaronno</div></div>
+        <div class="cocktail" data-item-id="ck-4"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-4-name">Negroni Sbagliato</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-4-hh-price">11</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-4-reg-price">14</span></span></div></div><div class="cocktail-desc" data-text-id="ck-4-desc">Campari, sweet vermouth, Prosecco</div></div>
+        <div class="cocktail" data-item-id="ck-5"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-5-name">Gold Rush Manhattan</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-5-hh-price">11</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-5-reg-price">15</span></span></div></div><div class="cocktail-desc" data-text-id="ck-5-desc">Redemption Rye, Licor 43, Luxardo cherry</div></div>
+        <div class="cocktail" data-item-id="ck-6"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-6-name">Tuscan Affair</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-6-hh-price">11</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-6-reg-price">15</span></span></div></div><div class="cocktail-desc" data-text-id="ck-6-desc">St. Germain, Prosecco, rose sugar rim</div></div>
+        <div class="cocktail" data-item-id="ck-7"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-7-name">Siena Margarita</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-7-hh-price">11</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-7-reg-price">15</span></span></div></div><div class="cocktail-desc" data-text-id="ck-7-desc">LunAzul Blue Agave, Cointreau, salted rim</div><div class="cocktail-floater" data-floater-for="ck-7"><span class="plus">+</span><span data-text-id="ck-7-floater-text">Grand Marnier or Herradura floater</span><span class="floater-price"><span class="dollar">$</span><span data-text-id="ck-7-floater-price">3</span></span></div></div>
+        <div class="cocktail" data-item-id="ck-8"><div class="cocktail-head"><div class="cocktail-name" data-text-id="ck-8-name">Italian Paloma</div><div class="cocktail-prices"><span class="hh"><span class="dollar">$</span><span data-text-id="ck-8-hh-price">11</span></span><span class="sep">·</span><span class="reg"><span class="dollar">$</span><span data-text-id="ck-8-reg-price">15</span></span></div></div><div class="cocktail-desc" data-text-id="ck-8-desc">Contratto Aperitif, Tequila, grapefruit</div></div>
+      </div>
+
+      <!-- Bar promo (editable headline + body) -->
+      <div class="cross-promo" data-promo="">
+        <div class="body" data-text-id="promo-body">Tuesday Nights at the Bar</div>
+        <div class="headline" data-text-id="promo-headline">$10 Signature Cocktails</div>
+      </div>
+
+      <!-- Bottled Beer (10 fixed items) -->
+      <div class="section" data-section-id="beers" style="margin-bottom: 0;">
+        <div class="section-head">
+          <div class="section-title">Bottled Beer</div>
+          <div class="section-note">$4 HH <span style="color:var(--gold-soft);">·</span> Bud &amp; Miller</div>
+        </div>
+        <div class="list-2col">
+          <div class="list-row" data-item-id="br-1"><div class="list-name" data-text-id="br-1-name">Bud Light</div><div class="list-price" data-text-id="br-1-price">6.50</div></div>
+          <div class="list-row" data-item-id="br-2"><div class="list-name" data-text-id="br-2-name">Miller Lite</div><div class="list-price" data-text-id="br-2-price">6.50</div></div>
+          <div class="list-row" data-item-id="br-3"><div class="list-name" data-text-id="br-3-name">Michelob Ultra</div><div class="list-price" data-text-id="br-3-price">6.50</div></div>
+          <div class="list-row" data-item-id="br-4"><div class="list-name" data-text-id="br-4-name">Dos XX Lager</div><div class="list-price" data-text-id="br-4-price">7.00</div></div>
+          <div class="list-row" data-item-id="br-5"><div class="list-name" data-text-id="br-5-name">Shiner Bock</div><div class="list-price" data-text-id="br-5-price">7.00</div></div>
+          <div class="list-row" data-item-id="br-6"><div class="list-name" data-text-id="br-6-name">McConauhaze IPA</div><div class="list-price" data-text-id="br-6-price">7.00</div></div>
+          <div class="list-row" data-item-id="br-7"><div class="list-name" data-text-id="br-7-name">Stella Artois</div><div class="list-price" data-text-id="br-7-price">7.50</div></div>
+          <div class="list-row" data-item-id="br-8"><div class="list-name" data-text-id="br-8-name">Peroni</div><div class="list-price" data-text-id="br-8-price">7.50</div></div>
+          <div class="list-row" data-item-id="br-9"><div class="list-name" data-text-id="br-9-name">Menabrea Amber</div><div class="list-price" data-text-id="br-9-price">8.00</div></div>
+          <div class="list-row" data-item-id="br-10"><div class="list-name" data-text-id="br-10-name">Menabrea Bionda</div><div class="list-price" data-text-id="br-10-price">8.00</div></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ═════════════════ FOOTER (STATIC) ═════════════════ -->
+  <div class="footer">
+    <div class="policy">No separate checks <span class="sep">·</span> No outside food or beverage</div>
+    <div class="pets">Well-behaved pets welcome on our patio</div>
+  </div>
+
+</div>
+
+
+
+</body></html>

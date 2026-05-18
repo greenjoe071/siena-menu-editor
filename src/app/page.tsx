@@ -12,9 +12,10 @@ const MENUS = [
   {
     id: 'happyhour',
     label: 'Happy Hour',
-    description: 'Discounted drinks and bites',
+    description: 'Edit bites, cocktails, wine, beer, and the bar promo',
     icon: '🍹',
-    ready: false,
+    ready: true,
+    href: '/happyhour',
   },
   {
     id: 'monday',

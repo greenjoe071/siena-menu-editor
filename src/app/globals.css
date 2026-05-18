@@ -928,6 +928,36 @@ button {
   background: #9a7a20;
 }
 
+/* ── Happy Hour editor extras ───────────────────────── */
+.section-note {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.chef-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.floater-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.floater-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 /* ── Add-on block editor ────────────────────────────── */
 .addon-block .section-block-header {
   background: #f0ece3;

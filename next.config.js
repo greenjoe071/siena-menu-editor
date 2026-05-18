@@ -10,8 +10,10 @@ const nextConfig = {
       '/monday-print':    ['./handoff-monday/**'],
       '/weekend-preview':  ['./handoff-weekend/**'],
       '/weekend-print':    ['./handoff-weekend/**'],
-      '/tueswed-preview':  ['./handoff-tueswed/**'],
-      '/tueswed-print':    ['./handoff-tueswed/**'],
+      '/tueswed-preview':    ['./handoff-tueswed/**'],
+      '/tueswed-print':      ['./handoff-tueswed/**'],
+      '/happyhour-preview':  ['./handoff-happyhour/**'],
+      '/happyhour-print':    ['./handoff-happyhour/**'],
     },
   },
 };

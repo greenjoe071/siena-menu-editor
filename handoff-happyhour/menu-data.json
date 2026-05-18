@@ -1,0 +1,57 @@
+{
+  "hh_specials": [
+    { "id": "hh-1", "price": "4",  "label": "Bud & Miller Lites" },
+    { "id": "hh-2", "price": "8",  "label": "Well Drinks" },
+    { "id": "hh-3", "price": "9",  "label": "Lemon Drop" },
+    { "id": "hh-4", "price": "9",  "label": "Cosmopolitan" },
+    { "id": "hh-5", "price": "10", "label": "Select Glass Wines" }
+  ],
+  "small_plates": [
+    { "id": "sp-1",  "name": "Fichi Ripieni",          "price": "6",  "desc": "Black mission figs, prosciutto, goat cheese" },
+    { "id": "sp-2",  "name": "Tuscan Bread Bites",     "price": "6",  "desc": "Parmesan, white truffle aioli, sea salt" },
+    { "id": "sp-3",  "name": "Pesto Pane",             "price": "6",  "desc": "Wood-roasted bread, pesto, mozzarella, tomato" },
+    { "id": "sp-4",  "name": "Gamberetti Fritti",      "price": "7",  "desc": "Fried shrimp, Italian salsa verde aioli" },
+    { "id": "sp-5",  "name": "Portobello Bruschetta",  "price": "7",  "desc": "Goat cheese, garlic, tomato, basil, balsamic" },
+    { "id": "sp-6",  "name": "Polpette",               "price": "8",  "desc": "Meatballs, salsa verde pomodoro, ricotta" },
+    { "id": "sp-7",  "name": "Cozze in Bianco",        "price": "8",  "desc": "Mussels, garlic white wine, grilled bread" },
+    { "id": "sp-8",  "name": "Formaggio Brie al Forno", "price": "10", "desc": "Wood-roasted brie, crostini, pancetta jam" },
+    { "id": "sp-9",  "name": "Calamari Fritti",        "price": "10", "desc": "Fried calamari, pomodoro sauce, lemon" },
+    { "id": "sp-10", "name": "Bruschetta al Cinghiale", "price": "10", "desc": "Siena bread, red wine–braised wild boar ragù" }
+  ],
+  "cocktails": [
+    { "id": "ck-1", "name": "Aperol Spritz",      "hh_price": "10", "reg_price": "13", "desc": "Aperol, Prosecco, served over ice",         "floater_text": "", "floater_price": "" },
+    { "id": "ck-2", "name": "Italian Sangria",    "hh_price": "9",  "reg_price": "13", "desc": "Red wine, Prosecco, brandy, citrus",        "floater_text": "", "floater_price": "" },
+    { "id": "ck-3", "name": "Godfather",          "hh_price": "10", "reg_price": "14", "desc": "Maker's Mark Bourbon, Amaretto Disaronno",  "floater_text": "", "floater_price": "" },
+    { "id": "ck-4", "name": "Negroni Sbagliato",  "hh_price": "11", "reg_price": "14", "desc": "Campari, sweet vermouth, Prosecco",         "floater_text": "", "floater_price": "" },
+    { "id": "ck-5", "name": "Gold Rush Manhattan", "hh_price": "11", "reg_price": "15", "desc": "Redemption Rye, Licor 43, Luxardo cherry", "floater_text": "", "floater_price": "" },
+    { "id": "ck-6", "name": "Tuscan Affair",      "hh_price": "11", "reg_price": "15", "desc": "St. Germain, Prosecco, rose sugar rim",     "floater_text": "", "floater_price": "" },
+    { "id": "ck-7", "name": "Siena Margarita",    "hh_price": "11", "reg_price": "15", "desc": "LunAzul Blue Agave, Cointreau, salted rim", "floater_text": "Grand Marnier or Herradura floater", "floater_price": "3" },
+    { "id": "ck-8", "name": "Italian Paloma",     "hh_price": "11", "reg_price": "15", "desc": "Contratto Aperitif, Tequila, grapefruit",   "floater_text": "", "floater_price": "" }
+  ],
+  "wines": [
+    { "id": "wn-1", "name": "Cabernet Sauvignon",  "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-2", "name": "Chianti",             "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-3", "name": "Toscana Rosso",       "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-4", "name": "Toscana Bianco",      "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-5", "name": "Chardonnay",          "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-6", "name": "Lugana – Turbiana",   "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-7", "name": "Pinot Grigio",        "glass_price": "10", "bottle_price": "40" },
+    { "id": "wn-8", "name": "Prosecco",            "glass_price": "10", "bottle_price": "50" }
+  ],
+  "beers": [
+    { "id": "br-1",  "name": "Bud Light",        "price": "6.50" },
+    { "id": "br-2",  "name": "Miller Lite",      "price": "6.50" },
+    { "id": "br-3",  "name": "Michelob Ultra",   "price": "6.50" },
+    { "id": "br-4",  "name": "Dos XX Lager",     "price": "7.00" },
+    { "id": "br-5",  "name": "Shiner Bock",      "price": "7.00" },
+    { "id": "br-6",  "name": "McConauhaze IPA",  "price": "7.00" },
+    { "id": "br-7",  "name": "Stella Artois",    "price": "7.50" },
+    { "id": "br-8",  "name": "Peroni",           "price": "7.50" },
+    { "id": "br-9",  "name": "Menabrea Amber",   "price": "8.00" },
+    { "id": "br-10", "name": "Menabrea Bionda",  "price": "8.00" }
+  ],
+  "promo": {
+    "body": "Tuesday Nights at the Bar",
+    "headline": "$10 Signature Cocktails"
+  }
+}
