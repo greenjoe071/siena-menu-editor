@@ -1,10 +1,9 @@
 /**
- * Siena Happy Hour Renderer — JSON → HTML hydrator.
+ * Siena Happy Hour Renderer — v2 (layout-budget model)
  *
- * Mutates the template DOM in place. Does NOT regenerate structure,
- * CSS, or any of the static chrome (masthead, footer, section labels,
- * "The Specials · Bar Area Only" eyebrow, gold ornaments, etc.).
- * If this file changes, the snapshot test must still pass.
+ * JSON → HTML hydrator. Mutates the template DOM in place. Does NOT
+ * regenerate structure or CSS. If this file changes, the snapshot
+ * test must still pass.
  *
  * Usage (browser):
  *   const doc = new DOMParser().parseFromString(templateHtml, 'text/html');
@@ -16,33 +15,37 @@
  *   new dom.window.Function(renderSrc)();
  *   dom.window.SienaHappyhourRender.render(dom.window.document, menuData);
  *
- * Data shape — see menu-data.json for the realistic seed:
+ * Data shape — see menu-data.json:
  *
  *   {
- *     "hh_specials": [ { "id": "hh-1", "price": "4",  "label": "Bud & Miller Lites" }, ... 5 total ],
- *     "small_plates": [ { "id": "sp-1", "name": "...", "price": "6",  "desc": "..." }, ... 10 total ],
- *     "cocktails":   [ { "id": "ck-1", "name": "...", "hh_price": "10", "reg_price": "13",
- *                        "desc": "...",
- *                        "floater_text": "",   // optional — when empty, floater line is removed
- *                        "floater_price": "" }, ... 8 total ],
- *     "wines":       [ { "id": "wn-1", "name": "...", "glass_price": "10", "bottle_price": "40" }, ... 8 total ],
- *     "beers":       [ { "id": "br-1", "name": "...", "price": "6.50" }, ... 10 total ],
- *     "promo":       { "body": "Tuesday Nights at the Bar", "headline": "$10 Signature Cocktails" }
+ *     "hh_specials":  [ { "id": "hh-1", "price": "$4",  "label": "Bud Light\nMiller Lite" }, ... 5 ],
+ *     "small_plates": [ { "id": "sp-1", "name": "...",  "price": "$6",  "desc": "..." }, ... 10 ],
+ *     "cocktails":    [ { "id": "ck-1", "name": "...",  "hh_price": "$10", "reg_price": "$13",
+ *                         "desc": "...", "floater": "" }, ... 8 ],
+ *     "wines":        [ { "id": "wn-1", "name": "...",  "glass_price": "10", "bottle_price": "40" }, ... 8 ],
+ *     "beers":        [ { "id": "br-1", "name": "...",  "price": "6.50" }, ... 10 ],
+ *     "promo":        { "eyebrow": "Tuesday Nights at the Bar",
+ *                       "headline": "$10 Signature Cocktails" }
  *   }
  *
- * Cardinality is FIXED per section (5/10/8/8/10) and the editor must not
- * add or remove items. Slots are matched by id, so reordering the array
- * has no effect on the printed output.
+ * IMPORTANT — v2 model changes from v1:
+ *   - Prices are stored as the user sees them (including $ where shown).
+ *     "$" is NOT applied by the renderer.
+ *   - HH strip labels support newlines (`\n`) which render as <br>.
+ *     This is the ONLY way to get a two-line label like "Bud Light /
+ *     Miller Lite" — split on \n in your data.
+ *   - Cocktail floater is a SINGLE plain-text string (not text+price).
+ *     The leading "+" is template chrome. Empty → row removed.
+ *   - Promo headline auto-detects a leading "$XX" token and wraps it
+ *     in <span class="price"> for the gold accent. Pure plain text
+ *     elsewhere renders without the accent. The editor types one
+ *     plain string ("$10 Signature Cocktails") and the visual styling
+ *     is applied here.
+ *   - No per-field character caps in the data model. Validation is
+ *     done by `validate.js` against the rendered page height.
  *
- * Prices are stored as digits-only strings ("4", "10", "6.50"). The "$"
- * glyph and the "/" between glass/bottle prices are baked into the
- * template and are not addressable here.
- *
- * The only optional fields are per-cocktail `floater_text` and
- * `floater_price`. When `floater_text` is empty/missing, the entire
- * `[data-floater-for="ck-N"]` block is removed for that cocktail.
- * When `floater_text` is present but `floater_price` is empty, the
- * "$XX" suffix is removed and only the text shows.
+ * Cardinality is FIXED per section (5/10/8/8/10). Slots are matched
+ * by `id`, so reordering the array has no effect on the printed output.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -61,12 +64,49 @@
     }
   }
 
-  // ── single-price item renderers ───────────────────────────────────
+  // Set content on a `data-html-id` slot, building DOM nodes rather
+  // than assigning innerHTML — this prevents HTML injection from
+  // user-supplied text while still allowing newlines (→ <br>) for
+  // labels.
+  function setLabelLines(doc, htmlId, value) {
+    const el = doc.querySelector('[data-html-id="' + htmlId + '"]');
+    if (!el) return;
+    // Clear
+    while (el.firstChild) el.removeChild(el.firstChild);
+    const lines = String(value).split('\n');
+    lines.forEach((line, i) => {
+      if (i > 0) el.appendChild(doc.createElement('br'));
+      el.appendChild(doc.createTextNode(line));
+    });
+  }
+
+  // Promo headline: auto-detect a leading "$XX" or "$XX.XX" token and
+  // wrap it in <span class="price"> for the gold accent. Everything
+  // else is plain text.
+  function setPromoHeadline(doc, value) {
+    const el = doc.querySelector('[data-html-id="promo-headline"]');
+    if (!el) return;
+    while (el.firstChild) el.removeChild(el.firstChild);
+
+    const str = String(value);
+    const m = str.match(/^(\$\d+(?:\.\d+)?)\s+(.+)$/);
+    if (m) {
+      const priceSpan = doc.createElement('span');
+      priceSpan.className = 'price';
+      priceSpan.textContent = m[1];
+      el.appendChild(priceSpan);
+      el.appendChild(doc.createTextNode(' ' + m[2]));
+    } else {
+      el.appendChild(doc.createTextNode(str));
+    }
+  }
+
+  // ── item renderers ────────────────────────────────────────────────
 
   function renderHhSpecial(doc, item) {
     if (!item || !item.id) return;
     setText(doc, item.id + '-price', isFilled(item.price) ? item.price : '');
-    setText(doc, item.id + '-label', isFilled(item.label) ? item.label : '');
+    setLabelLines(doc, item.id + '-label', isFilled(item.label) ? item.label : '');
   }
 
   function renderSmallPlate(doc, item) {
@@ -82,8 +122,6 @@
     setText(doc, item.id + '-price', isFilled(item.price) ? item.price : '');
   }
 
-  // ── dual-price item renderers ─────────────────────────────────────
-
   function renderCocktail(doc, item) {
     if (!item || !item.id) return;
     setText(doc, item.id + '-name',      isFilled(item.name)      ? item.name      : '');
@@ -91,24 +129,13 @@
     setText(doc, item.id + '-reg-price', isFilled(item.reg_price) ? item.reg_price : '');
     setText(doc, item.id + '-desc',      isFilled(item.desc)      ? item.desc      : '');
 
-    // Floater (optional). Empty floater_text → remove the entire floater row.
     const floater = doc.querySelector('[data-floater-for="' + item.id + '"]');
     if (!floater) return;
-
-    if (!isFilled(item.floater_text)) {
+    if (!isFilled(item.floater)) {
       floater.remove();
       return;
     }
-
-    setText(doc, item.id + '-floater-text', item.floater_text);
-
-    // Floater price empty → drop the "$XX" suffix but keep the text.
-    const priceEl = floater.querySelector('.floater-price');
-    if (isFilled(item.floater_price)) {
-      setText(doc, item.id + '-floater-price', item.floater_price);
-    } else if (priceEl) {
-      priceEl.remove();
-    }
+    setText(doc, item.id + '-floater', item.floater);
   }
 
   function renderWine(doc, item) {
@@ -118,15 +145,11 @@
     setText(doc, item.id + '-bottle-price', isFilled(item.bottle_price) ? item.bottle_price : '');
   }
 
-  // ── promo ─────────────────────────────────────────────────────────
-
   function renderPromo(doc, promo) {
     if (!promo) return;
-    if (isFilled(promo.body))     setText(doc, 'promo-body',     promo.body);
-    if (isFilled(promo.headline)) setText(doc, 'promo-headline', promo.headline);
+    if (isFilled(promo.eyebrow))  setText(doc, 'promo-eyebrow', promo.eyebrow);
+    if (isFilled(promo.headline)) setPromoHeadline(doc, promo.headline);
   }
-
-  // ── top-level ─────────────────────────────────────────────────────
 
   function renderEach(doc, list, renderer) {
     if (!Array.isArray(list)) return;
@@ -135,7 +158,7 @@
 
   function render(doc, data) {
     if (!data) return;
-    renderEach(doc, data.hh_specials, renderHhSpecial);
+    renderEach(doc, data.hh_specials,  renderHhSpecial);
     renderEach(doc, data.small_plates, renderSmallPlate);
     renderEach(doc, data.cocktails,    renderCocktail);
     renderEach(doc, data.wines,        renderWine);

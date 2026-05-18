@@ -1,70 +1,48 @@
 import { z } from 'zod';
 
-// ── Char limits — every cap is a HARD LIMIT (BUILD-SPEC §3) ──────────────
-export const HH_CHAR_LIMITS = {
-  hhSpecialPrice:    4,
-  hhSpecialLabel:   22,
-  smallPlateName:   28,
-  smallPlatePrice:   4,
-  smallPlateDesc:   48,
-  cocktailName:     24,
-  cocktailHhPrice:   3,
-  cocktailRegPrice:  3,
-  cocktailDesc:     48,
-  floaterText:      40,
-  floaterPrice:      3,
-  wineName:         18,
-  wineGlassPrice:    3,
-  wineBottlePrice:   3,
-  beerName:         18,
-  beerPrice:         5,
-  promoBody:        30,
-  promoHeadline:    26,
-} as const;
-
-const L = HH_CHAR_LIMITS;
-
-// ── Item schemas ──────────────────────────────────────────────────────────
+// ── Loose sanity caps — not the primary validation ────────────────────────
+// The authoritative check is the page-fit validator (validate.js) running in
+// a real browser. These caps only stop someone from pasting a paragraph.
+// See BUILD-SPEC §0 and CHANGES-v2.md for the full explanation.
 
 const HhSpecialSchema = z.object({
   id:    z.string(),
-  price: z.string().min(1).max(L.hhSpecialPrice),
-  label: z.string().min(1).max(L.hhSpecialLabel),
+  price: z.string().min(1).max(8),   // stored as "$4", "$10"
+  label: z.string().min(1).max(60),  // may contain \n for two-line labels
 });
 
 const SmallPlateSchema = z.object({
   id:    z.string(),
-  name:  z.string().min(1).max(L.smallPlateName),
-  price: z.string().min(1).max(L.smallPlatePrice),
-  desc:  z.string().min(1).max(L.smallPlateDesc),
+  name:  z.string().min(1).max(60),
+  price: z.string().min(1).max(8),   // stored as "$6", "$10"
+  desc:  z.string().min(1).max(240),
 });
 
 const CocktailSchema = z.object({
-  id:           z.string(),
-  name:         z.string().min(1).max(L.cocktailName),
-  hh_price:     z.string().min(1).max(L.cocktailHhPrice),
-  reg_price:    z.string().min(1).max(L.cocktailRegPrice),
-  desc:         z.string().min(1).max(L.cocktailDesc),
-  floater_text:  z.string().max(L.floaterText).optional().default(''),
-  floater_price: z.string().max(L.floaterPrice).optional().default(''),
+  id:        z.string(),
+  name:      z.string().min(1).max(60),
+  hh_price:  z.string().min(1).max(8),   // stored as "$10"
+  reg_price: z.string().min(1).max(8),   // stored as "$13"
+  desc:      z.string().min(1).max(240),
+  floater:   z.string().max(120).default(''), // single string; empty = no floater
 });
 
 const WineSchema = z.object({
   id:           z.string(),
-  name:         z.string().min(1).max(L.wineName),
-  glass_price:  z.string().min(1).max(L.wineGlassPrice),
-  bottle_price: z.string().min(1).max(L.wineBottlePrice),
+  name:         z.string().min(1).max(60),
+  glass_price:  z.string().min(1).max(6),  // digits only, design omits $
+  bottle_price: z.string().min(1).max(6),  // digits only, design omits $
 });
 
 const BeerSchema = z.object({
   id:    z.string(),
-  name:  z.string().min(1).max(L.beerName),
-  price: z.string().min(1).max(L.beerPrice),
+  name:  z.string().min(1).max(60),
+  price: z.string().min(1).max(8),  // digits+decimal, e.g. "6.50"
 });
 
 const PromoSchema = z.object({
-  body:     z.string().min(1).max(L.promoBody),
-  headline: z.string().min(1).max(L.promoHeadline),
+  eyebrow:  z.string().min(1).max(80), // was "body" in v1
+  headline: z.string().min(1).max(80),
 });
 
 // ── Top-level schema ──────────────────────────────────────────────────────

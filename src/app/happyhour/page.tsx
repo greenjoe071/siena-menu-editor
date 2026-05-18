@@ -3,36 +3,14 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ── Char limits (mirrors happyhour-schema.ts) ────────────────────────────
-const L = {
-  hhSpecialPrice:    4,
-  hhSpecialLabel:   22,
-  smallPlateName:   28,
-  smallPlatePrice:   4,
-  smallPlateDesc:   48,
-  cocktailName:     24,
-  cocktailHhPrice:   3,
-  cocktailRegPrice:  3,
-  cocktailDesc:     48,
-  floaterText:      40,
-  floaterPrice:      3,
-  wineName:         18,
-  wineGlassPrice:    3,
-  wineBottlePrice:   3,
-  beerName:         18,
-  beerPrice:         5,
-  promoBody:        30,
-  promoHeadline:    26,
-} as const;
-
 // ── Types ─────────────────────────────────────────────────────────────────
 
 interface HhSpecial  { id: string; price: string; label: string; }
 interface SmallPlate { id: string; name: string; price: string; desc: string; }
-interface Cocktail   { id: string; name: string; hh_price: string; reg_price: string; desc: string; floater_text: string; floater_price: string; }
+interface Cocktail   { id: string; name: string; hh_price: string; reg_price: string; desc: string; floater: string; }
 interface Wine       { id: string; name: string; glass_price: string; bottle_price: string; }
 interface Beer       { id: string; name: string; price: string; }
-interface Promo      { body: string; headline: string; }
+interface Promo      { eyebrow: string; headline: string; }
 
 interface MenuData {
   hh_specials:  HhSpecial[];
@@ -56,26 +34,31 @@ function useDebounce<T>(value: T, ms: number): T {
   return debounced;
 }
 
-// Digits-only filter (for most price inputs)
-function digitsOnly(v: string) { return v.replace(/[^0-9]/g, ''); }
-// Digits + one decimal (for beer prices like "6.50")
+// Strip leading $ for display in price inputs; only digits pass through
+function stripDollar(v: string) { return v.replace(/^\$/, ''); }
+// Reconstruct "$N" from raw digit input
+function dollarPrice(raw: string) {
+  const digits = raw.replace(/[^0-9]/g, '');
+  return digits ? '$' + digits : '';
+}
+// Digits + one decimal point (for beer like "6.50", no $ prefix)
 function digitsDecimal(v: string) {
   const cleaned = v.replace(/[^0-9.]/g, '');
   const parts = cleaned.split('.');
   return parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
 }
+// Digits only (for wine prices, no $ prefix)
+function digitsOnly(v: string) { return v.replace(/[^0-9]/g, ''); }
 
-// ── Small UI components ───────────────────────────────────────────────────
-
-function CharCount({ value, max }: { value: string; max: number }) {
-  const len = value.length;
-  const over = len >= max;
-  return (
-    <span className={`char-count ${over ? 'over' : ''}`}>
-      {len}/{max}
-    </span>
-  );
-}
+// Human-readable section names for the validation error banner
+const SECTION_NAMES: Record<string, string> = {
+  'hh-specials':   'The Specials',
+  'small-plates':  'Small Plates',
+  'cocktails':     'Signature Cocktails',
+  'wines':         'Wine by the Glass',
+  'beers':         'Bottled Beer',
+};
+function sectionLabel(id: string) { return SECTION_NAMES[id] ?? id; }
 
 // ── Section wrapper ───────────────────────────────────────────────────────
 
@@ -100,6 +83,8 @@ function SectionPanel({ title, note, defaultOpen, children }: {
 }
 
 // ── HH Specials ───────────────────────────────────────────────────────────
+// Price stored as "$4", "$10". Label may contain \n for two-line cells
+// (e.g. "Bud Light\nMiller Lite"). Textarea handles the newline naturally.
 
 function HhSpecialRow({ item, onChange }: {
   item: HhSpecial;
@@ -109,28 +94,24 @@ function HhSpecialRow({ item, onChange }: {
     <div className="dish-row">
       <div className="dish-fields">
         <div className="dish-field-row" style={{ gap: '12px' }}>
-          <div className="field-group price-field" style={{ flex: '0 0 80px' }}>
-            <div className="field-label-row">
-              <label>$ Price</label>
-              <CharCount value={item.price} max={L.hhSpecialPrice} />
-            </div>
+          <div className="field-group price-field" style={{ flex: '0 0 88px' }}>
+            <label>$ Price</label>
             <input
-              value={item.price}
-              maxLength={L.hhSpecialPrice}
-              onChange={e => onChange({ ...item, price: digitsOnly(e.target.value) })}
+              value={stripDollar(item.price)}
+              maxLength={4}
+              onChange={e => onChange({ ...item, price: dollarPrice(e.target.value) })}
               placeholder="10"
             />
           </div>
           <div className="field-group" style={{ flex: 1 }}>
-            <div className="field-label-row">
-              <label>Label</label>
-              <CharCount value={item.label} max={L.hhSpecialLabel} />
-            </div>
-            <input
+            <label>Label</label>
+            <textarea
               value={item.label}
-              maxLength={L.hhSpecialLabel}
+              rows={2}
+              maxLength={60}
               onChange={e => onChange({ ...item, label: e.target.value })}
-              placeholder="e.g. Well Drinks"
+              placeholder={'e.g. Well Drinks\nor two-line label'}
+              style={{ resize: 'none', fontFamily: 'inherit', fontSize: 'inherit' }}
             />
           </div>
         </div>
@@ -140,6 +121,7 @@ function HhSpecialRow({ item, onChange }: {
 }
 
 // ── Small Plates ──────────────────────────────────────────────────────────
+// Price stored as "$6". Desc may wrap — no hard cap, page-fit is the limit.
 
 function SmallPlateRow({ item, onChange }: {
   item: SmallPlate;
@@ -153,26 +135,34 @@ function SmallPlateRow({ item, onChange }: {
       <div className="dish-fields">
         <div className="dish-field-row" style={{ gap: '12px' }}>
           <div className="field-group" style={{ flex: 1 }}>
-            <div className="field-label-row">
-              <label>Name</label>
-              <CharCount value={item.name} max={L.smallPlateName} />
-            </div>
-            <input value={item.name} maxLength={L.smallPlateName} onChange={e => onChange({ ...item, name: e.target.value })} placeholder="Dish name" />
+            <label>Name</label>
+            <input
+              value={item.name}
+              maxLength={60}
+              onChange={e => onChange({ ...item, name: e.target.value })}
+              placeholder="Dish name"
+            />
           </div>
-          <div className="field-group price-field" style={{ flex: '0 0 72px' }}>
-            <div className="field-label-row">
-              <label>$ Price</label>
-              <CharCount value={item.price} max={L.smallPlatePrice} />
-            </div>
-            <input value={item.price} maxLength={L.smallPlatePrice} onChange={e => onChange({ ...item, price: digitsOnly(e.target.value) })} placeholder="8" />
+          <div className="field-group price-field" style={{ flex: '0 0 88px' }}>
+            <label>$ Price</label>
+            <input
+              value={stripDollar(item.price)}
+              maxLength={4}
+              onChange={e => onChange({ ...item, price: dollarPrice(e.target.value) })}
+              placeholder="8"
+            />
           </div>
         </div>
         <div className="field-group">
-          <div className="field-label-row">
-            <label>Description</label>
-            <CharCount value={item.desc} max={L.smallPlateDesc} />
-          </div>
-          <input value={item.desc} maxLength={L.smallPlateDesc} onChange={e => onChange({ ...item, desc: e.target.value })} placeholder="Ingredients, one line" />
+          <label>Description</label>
+          <textarea
+            value={item.desc}
+            rows={2}
+            maxLength={240}
+            onChange={e => onChange({ ...item, desc: e.target.value })}
+            placeholder="Ingredients description"
+            style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }}
+          />
         </div>
       </div>
     </div>
@@ -180,12 +170,14 @@ function SmallPlateRow({ item, onChange }: {
 }
 
 // ── Cocktails ─────────────────────────────────────────────────────────────
+// HH and Reg prices stored as "$10", "$13".
+// Floater is a single plain-text string; empty = no floater.
 
 function CocktailRow({ item, onChange }: {
   item: Cocktail;
   onChange: (updated: Cocktail) => void;
 }) {
-  const hasFloater = item.floater_text.trim() !== '';
+  const hasFloater = item.floater.trim() !== '';
   return (
     <div className="dish-row">
       <div className="dish-row-header">
@@ -193,71 +185,64 @@ function CocktailRow({ item, onChange }: {
       </div>
       <div className="dish-fields">
         <div className="field-group">
-          <div className="field-label-row">
-            <label>Name</label>
-            <CharCount value={item.name} max={L.cocktailName} />
-          </div>
-          <input value={item.name} maxLength={L.cocktailName} onChange={e => onChange({ ...item, name: e.target.value })} placeholder="Cocktail name" />
+          <label>Name</label>
+          <input
+            value={item.name}
+            maxLength={60}
+            onChange={e => onChange({ ...item, name: e.target.value })}
+            placeholder="Cocktail name"
+          />
         </div>
         <div className="dish-field-row" style={{ gap: '12px' }}>
           <div className="field-group price-field" style={{ flex: 1 }}>
-            <div className="field-label-row">
-              <label>HH Price $</label>
-              <CharCount value={item.hh_price} max={L.cocktailHhPrice} />
-            </div>
-            <input value={item.hh_price} maxLength={L.cocktailHhPrice} onChange={e => onChange({ ...item, hh_price: digitsOnly(e.target.value) })} placeholder="10" />
+            <label>HH Price $</label>
+            <input
+              value={stripDollar(item.hh_price)}
+              maxLength={4}
+              onChange={e => onChange({ ...item, hh_price: dollarPrice(e.target.value) })}
+              placeholder="10"
+            />
           </div>
           <div className="field-group price-field" style={{ flex: 1 }}>
-            <div className="field-label-row">
-              <label>Reg Price $</label>
-              <CharCount value={item.reg_price} max={L.cocktailRegPrice} />
-            </div>
-            <input value={item.reg_price} maxLength={L.cocktailRegPrice} onChange={e => onChange({ ...item, reg_price: digitsOnly(e.target.value) })} placeholder="13" />
+            <label>Reg Price $</label>
+            <input
+              value={stripDollar(item.reg_price)}
+              maxLength={4}
+              onChange={e => onChange({ ...item, reg_price: dollarPrice(e.target.value) })}
+              placeholder="13"
+            />
           </div>
         </div>
         <div className="field-group">
-          <div className="field-label-row">
-            <label>Description</label>
-            <CharCount value={item.desc} max={L.cocktailDesc} />
-          </div>
-          <input value={item.desc} maxLength={L.cocktailDesc} onChange={e => onChange({ ...item, desc: e.target.value })} placeholder="Ingredients, one line" />
+          <label>Description</label>
+          <textarea
+            value={item.desc}
+            rows={2}
+            maxLength={240}
+            onChange={e => onChange({ ...item, desc: e.target.value })}
+            placeholder="Ingredients description"
+            style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: 'inherit' }}
+          />
         </div>
-        {/* Floater */}
+        {/* Floater — single text string, template adds the leading "+" */}
         <div className="floater-section">
           <label className="floater-toggle-label">
             <input
               type="checkbox"
               checked={hasFloater}
-              onChange={e => onChange({ ...item, floater_text: e.target.checked ? ' ' : '', floater_price: '' })}
+              onChange={e => onChange({ ...item, floater: e.target.checked ? ' ' : '' })}
             />
-            Floater (e.g. upgrade option)
+            Floater / upgrade option
           </label>
           {hasFloater && (
-            <div className="dish-field-row" style={{ gap: '12px', marginTop: '8px' }}>
-              <div className="field-group" style={{ flex: 1 }}>
-                <div className="field-label-row">
-                  <label>Floater text</label>
-                  <CharCount value={item.floater_text} max={L.floaterText} />
-                </div>
-                <input
-                  value={item.floater_text}
-                  maxLength={L.floaterText}
-                  onChange={e => onChange({ ...item, floater_text: e.target.value })}
-                  placeholder="Grand Marnier or Herradura floater"
-                />
-              </div>
-              <div className="field-group price-field" style={{ flex: '0 0 80px' }}>
-                <div className="field-label-row">
-                  <label>$ Price</label>
-                  <CharCount value={item.floater_price} max={L.floaterPrice} />
-                </div>
-                <input
-                  value={item.floater_price}
-                  maxLength={L.floaterPrice}
-                  onChange={e => onChange({ ...item, floater_price: digitsOnly(e.target.value) })}
-                  placeholder="3"
-                />
-              </div>
+            <div className="field-group" style={{ marginTop: '8px' }}>
+              <label>Floater line (e.g. Grand Marnier or Herradura Reposado floater $3)</label>
+              <input
+                value={item.floater.trim()}
+                maxLength={120}
+                onChange={e => onChange({ ...item, floater: e.target.value })}
+                placeholder="Grand Marnier or Herradura Reposado floater $3"
+              />
             </div>
           )}
         </div>
@@ -267,6 +252,7 @@ function CocktailRow({ item, onChange }: {
 }
 
 // ── Wine ──────────────────────────────────────────────────────────────────
+// Prices are digits only (design omits $).
 
 function WineRow({ item, onChange }: {
   item: Wine;
@@ -277,25 +263,31 @@ function WineRow({ item, onChange }: {
       <div className="dish-fields">
         <div className="dish-field-row" style={{ gap: '12px' }}>
           <div className="field-group" style={{ flex: 1 }}>
-            <div className="field-label-row">
-              <label>Name</label>
-              <CharCount value={item.name} max={L.wineName} />
-            </div>
-            <input value={item.name} maxLength={L.wineName} onChange={e => onChange({ ...item, name: e.target.value })} placeholder="Wine name" />
+            <label>Name</label>
+            <input
+              value={item.name}
+              maxLength={60}
+              onChange={e => onChange({ ...item, name: e.target.value })}
+              placeholder="Wine name"
+            />
           </div>
           <div className="field-group price-field" style={{ flex: '0 0 72px' }}>
-            <div className="field-label-row">
-              <label>Glass</label>
-              <CharCount value={item.glass_price} max={L.wineGlassPrice} />
-            </div>
-            <input value={item.glass_price} maxLength={L.wineGlassPrice} onChange={e => onChange({ ...item, glass_price: digitsOnly(e.target.value) })} placeholder="10" />
+            <label>Glass</label>
+            <input
+              value={item.glass_price}
+              maxLength={4}
+              onChange={e => onChange({ ...item, glass_price: digitsOnly(e.target.value) })}
+              placeholder="10"
+            />
           </div>
           <div className="field-group price-field" style={{ flex: '0 0 72px' }}>
-            <div className="field-label-row">
-              <label>Bottle</label>
-              <CharCount value={item.bottle_price} max={L.wineBottlePrice} />
-            </div>
-            <input value={item.bottle_price} maxLength={L.wineBottlePrice} onChange={e => onChange({ ...item, bottle_price: digitsOnly(e.target.value) })} placeholder="40" />
+            <label>Bottle</label>
+            <input
+              value={item.bottle_price}
+              maxLength={4}
+              onChange={e => onChange({ ...item, bottle_price: digitsOnly(e.target.value) })}
+              placeholder="40"
+            />
           </div>
         </div>
       </div>
@@ -304,6 +296,7 @@ function WineRow({ item, onChange }: {
 }
 
 // ── Beer ──────────────────────────────────────────────────────────────────
+// Price is digits+decimal (design omits $), e.g. "6.50".
 
 function BeerRow({ item, onChange }: {
   item: Beer;
@@ -314,18 +307,22 @@ function BeerRow({ item, onChange }: {
       <div className="dish-fields">
         <div className="dish-field-row" style={{ gap: '12px' }}>
           <div className="field-group" style={{ flex: 1 }}>
-            <div className="field-label-row">
-              <label>Name</label>
-              <CharCount value={item.name} max={L.beerName} />
-            </div>
-            <input value={item.name} maxLength={L.beerName} onChange={e => onChange({ ...item, name: e.target.value })} placeholder="Beer name" />
+            <label>Name</label>
+            <input
+              value={item.name}
+              maxLength={60}
+              onChange={e => onChange({ ...item, name: e.target.value })}
+              placeholder="Beer name"
+            />
           </div>
           <div className="field-group price-field" style={{ flex: '0 0 88px' }}>
-            <div className="field-label-row">
-              <label>Price</label>
-              <CharCount value={item.price} max={L.beerPrice} />
-            </div>
-            <input value={item.price} maxLength={L.beerPrice} onChange={e => onChange({ ...item, price: digitsDecimal(e.target.value) })} placeholder="6.50" />
+            <label>Price</label>
+            <input
+              value={item.price}
+              maxLength={6}
+              onChange={e => onChange({ ...item, price: digitsDecimal(e.target.value) })}
+              placeholder="6.50"
+            />
           </div>
         </div>
       </div>
@@ -392,20 +389,25 @@ export default function HappyhourEditorPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
   const [historyKey, setHistoryKey] = useState(0);
+  // null = not yet validated; true = fits; false = overflow
+  const [validationFits, setValidationFits] = useState<boolean | null>(null);
+  const [worstSection, setWorstSection] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState('/happyhour-preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
+  // Queue: when user edits, we stash the data here; save fires after validation confirms fit
+  const pendingSaveRef = useRef<MenuData | null>(null);
 
+  // Load initial data
   useEffect(() => {
     fetch('/api/happyhour')
       .then(r => r.json())
       .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
-      .catch(() => setSaveStatus('error'));
+      .catch(() => { setSaveStatus('error'); setSaveMsg('Failed to load menu data'); });
   }, []);
 
-  const debouncedMenu = useDebounce(menu, 800);
-
-  const saveAndRefresh = useCallback(async (data: MenuData) => {
+  // Server save — only called after validation confirms the page fits
+  const saveToServer = useCallback(async (data: MenuData) => {
     const json = JSON.stringify(data);
     if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
@@ -418,19 +420,55 @@ export default function HappyhourEditorPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        const msg = body.issues ? body.issues.map((i: { message: string }) => i.message).join('; ') : (body.error || 'Save failed');
+        const msg = body.issues
+          ? body.issues.map((i: { message: string }) => i.message).join('; ')
+          : (body.error || 'Save failed');
         setSaveStatus('error'); setSaveMsg(msg); return;
       }
       setSaveStatus('saved'); setSaveMsg('Saved');
       setHistoryKey(k => k + 1);
-      iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_HAPPYHOUR_UPDATE', payload: data }, '*');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
   }, []);
 
+  // Listen for validation results posted back from the preview iframe
   useEffect(() => {
-    if (debouncedMenu && prevJsonRef.current !== '') saveAndRefresh(debouncedMenu);
-  }, [debouncedMenu, saveAndRefresh]);
+    function onMessage(e: MessageEvent) {
+      if (!e.data || e.data.type !== 'SIENA_HAPPYHOUR_VALIDATE_RESULT') return;
+      const result = e.data.result as { fits: boolean; worstSection?: string | null; overflowPx?: number };
+      setValidationFits(result.fits);
+      if (result.fits) {
+        setWorstSection(null);
+        // If there's a pending save, fire it now that we know the page fits
+        if (pendingSaveRef.current) {
+          saveToServer(pendingSaveRef.current);
+          pendingSaveRef.current = null;
+        }
+      } else {
+        setWorstSection(result.worstSection ?? null);
+        pendingSaveRef.current = null;
+        setSaveStatus('error');
+        const section = result.worstSection ? sectionLabel(result.worstSection) : 'the page';
+        setSaveMsg(`Content overflows in "${section}" — try shortening a description`);
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [saveToServer]);
+
+  // Debounce menu edits → send to iframe for live preview + validation
+  const debouncedMenu = useDebounce(menu, 600);
+  useEffect(() => {
+    if (!debouncedMenu || prevJsonRef.current === '') return;
+    const json = JSON.stringify(debouncedMenu);
+    // Queue the save; it will fire once validation result comes back as fits=true
+    pendingSaveRef.current = debouncedMenu;
+    // Trigger live preview + validation in the iframe
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'SIENA_HAPPYHOUR_UPDATE', payload: debouncedMenu },
+      '*'
+    );
+  }, [debouncedMenu]);
 
   // ── Array item updaters ────────────────────────────────────────────────
 
@@ -454,6 +492,8 @@ export default function HappyhourEditorPage() {
     saveStatus === 'saving' ? 'save-status saving' :
     saveStatus === 'error'  ? 'save-status error'  : 'save-status';
 
+  const overflowSection = validationFits === false && worstSection ? sectionLabel(worstSection) : null;
+
   return (
     <div className="app">
       {/* ── Editor pane ───────────────────────────────────────────── */}
@@ -462,6 +502,16 @@ export default function HappyhourEditorPage() {
           <Link href="/" className="btn-back">← All Menus</Link>
           <h1>Happy Hour Menu</h1>
         </div>
+
+        {/* Overflow warning banner */}
+        {overflowSection && (
+          <div style={{
+            background: '#7f1d1d', color: '#fecaca', fontSize: '13px',
+            padding: '8px 16px', borderBottom: '1px solid #991b1b',
+          }}>
+            ⚠ Content overflows in <strong>{overflowSection}</strong> — try shortening a description. Save is paused until it fits.
+          </div>
+        )}
 
         <div className="editor-scroll chef-mode">
 
@@ -516,25 +566,19 @@ export default function HappyhourEditorPage() {
             <div className="dish-row">
               <div className="dish-fields">
                 <div className="field-group">
-                  <div className="field-label-row">
-                    <label>Eyebrow (small uppercase line)</label>
-                    <CharCount value={menu.promo.body} max={L.promoBody} />
-                  </div>
+                  <label>Eyebrow (small uppercase line)</label>
                   <input
-                    value={menu.promo.body}
-                    maxLength={L.promoBody}
-                    onChange={e => setMenu(m => m && { ...m, promo: { ...m.promo, body: e.target.value } })}
+                    value={menu.promo.eyebrow}
+                    maxLength={80}
+                    onChange={e => setMenu(m => m && { ...m, promo: { ...m.promo, eyebrow: e.target.value } })}
                     placeholder="e.g. Tuesday Nights at the Bar"
                   />
                 </div>
                 <div className="field-group">
-                  <div className="field-label-row">
-                    <label>Headline</label>
-                    <CharCount value={menu.promo.headline} max={L.promoHeadline} />
-                  </div>
+                  <label>Headline (leading $XX gets gold accent automatically)</label>
                   <input
                     value={menu.promo.headline}
-                    maxLength={L.promoHeadline}
+                    maxLength={80}
                     onChange={e => setMenu(m => m && { ...m, promo: { ...m.promo, headline: e.target.value } })}
                     placeholder="e.g. $10 Signature Cocktails"
                   />
@@ -550,6 +594,8 @@ export default function HappyhourEditorPage() {
           onRestore={data => {
             setMenu(data);
             prevJsonRef.current = JSON.stringify(data);
+            setValidationFits(null);
+            setWorstSection(null);
             setSaveStatus('saved'); setSaveMsg('Restored');
             iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_HAPPYHOUR_UPDATE', payload: data }, '*');
             setTimeout(() => setSaveStatus('idle'), 3000);
@@ -560,6 +606,8 @@ export default function HappyhourEditorPage() {
           <span className={saveStatusClass}>{saveMsg || 'Auto-saves as you type'}</span>
           <button
             className="btn-print"
+            disabled={validationFits === false}
+            title={validationFits === false ? 'Fix overflow before printing' : undefined}
             onClick={() => {
               if (menu) localStorage.setItem('siena-happyhour-print-data', JSON.stringify(menu));
               window.open('/happyhour-print', '_blank');
@@ -574,15 +622,25 @@ export default function HappyhourEditorPage() {
       <div className="preview-pane">
         <div className="preview-toolbar">
           <span>Live preview</span>
+          {validationFits === false && (
+            <span style={{ color: '#fca5a5', fontSize: '12px', marginLeft: '8px' }}>
+              ⚠ Overflow
+            </span>
+          )}
           <button
             className="btn-ghost"
-            style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
+            style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px', marginLeft: 'auto' }}
             onClick={() => setPreviewUrl('/happyhour-preview?' + Date.now())}
           >
             ↺ Reload from server
           </button>
         </div>
-        <iframe ref={iframeRef} src={previewUrl} className="preview-iframe" title="Happy Hour preview" />
+        <iframe
+          ref={iframeRef}
+          src={previewUrl}
+          className="preview-iframe"
+          title="Happy Hour preview"
+        />
       </div>
     </div>
   );
