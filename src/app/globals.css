@@ -861,12 +861,16 @@ button {
   color: #fff;
   box-shadow: 0 4px 20px rgba(26, 58, 92, 0.22);
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  outline: 2px solid transparent;
+  outline-offset: 0px;
+  transition: transform 0.22s ease-out, box-shadow 0.22s ease-out, outline-color 0.22s ease-out, outline-offset 0.22s ease-out;
 }
 
 .menu-card--active:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(26, 58, 92, 0.32);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 48px rgba(26, 58, 92, 0.38), 0 4px 16px rgba(184, 150, 42, 0.2);
+  outline-color: var(--gold);
+  outline-offset: 3px;
 }
 
 /* ── Coming soon card ───────────────────────────────── */
@@ -882,6 +886,20 @@ button {
 .menu-card-icon {
   font-size: 40px;
   line-height: 1;
+  display: inline-block;
+  transition: transform 0.2s ease-out;
+}
+
+.menu-card--active:hover .menu-card-icon {
+  animation: icon-pop 0.38s ease-out forwards;
+}
+
+@keyframes icon-pop {
+  0%   { transform: scale(1)    rotate(0deg); }
+  35%  { transform: scale(1.4)  rotate(-10deg); }
+  65%  { transform: scale(1.2)  rotate(5deg); }
+  85%  { transform: scale(1.28) rotate(-2deg); }
+  100% { transform: scale(1.25) rotate(0deg); }
 }
 
 .menu-card-body {
@@ -921,11 +939,13 @@ button {
   padding: 14px 20px;
   border-radius: 10px;
   text-align: center;
-  transition: background 0.15s;
+  transition: background 0.18s, letter-spacing 0.18s;
+  letter-spacing: 0;
 }
 
 .menu-card--active:hover .menu-card-action {
   background: #9a7a20;
+  letter-spacing: 0.03em;
 }
 
 /* ── Happy Hour editor extras ───────────────────────── */

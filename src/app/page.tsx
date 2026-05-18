@@ -21,7 +21,7 @@ const MENUS = [
     id: 'monday',
     label: 'Monday $26 Specials',
     description: 'Weekly Monday night specials',
-    icon: '🥂',
+    icon: '🍝',
     ready: true,
     href: '/monday',
   },
