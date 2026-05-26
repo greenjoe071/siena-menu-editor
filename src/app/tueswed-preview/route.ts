@@ -8,11 +8,19 @@ export const dynamic = 'force-dynamic';
 const HANDOFF = join(process.cwd(), 'handoff-tueswed');
 
 export async function GET() {
-  const [data, renderSrc, validateSrc] = await Promise.all([
+  const [data, renderSrc, validateSrc, templateSrc] = await Promise.all([
     readTuewedMenu(),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'validate.js'), 'utf8'),
+    readFile(join(HANDOFF, 'template.html'), 'utf8'),
   ]);
+
+  // Extract the .page div's inner HTML from the raw template.
+  // render.js permanently removes optional nodes (addon, footnotes) when their
+  // content is empty. To allow those nodes to reappear on subsequent updates we
+  // reset the .page to its original template state before every live render.
+  const pageInnerMatch = templateSrc.match(/<div class="page">([\s\S]*?)<\/div><!-- \/page -->/);
+  const templatePageInner = pageInnerMatch ? pageInnerMatch[1] : '';
 
   let html = await renderTuewedMenu(data);
 
@@ -20,6 +28,8 @@ export async function GET() {
 ${renderSrc}
 ${validateSrc}
 var _tuewedValidateTimer = null;
+var _tuewedPageInner = ${JSON.stringify(templatePageInner)};
+
 function _tuewedRunValidate() {
   var Validate = window.SienaTuewedValidate || SienaTuewedValidate;
   Validate.waitForLayout(document).then(function() {
@@ -27,10 +37,19 @@ function _tuewedRunValidate() {
     window.parent.postMessage({ type: 'SIENA_TUESWED_VALIDATE_RESULT', report: report }, '*');
   });
 }
+
+function _tuewedApplyUpdate(payload) {
+  // Reset the page to the raw template before rendering so that optional
+  // nodes removed by render.js (addon, footnotes) can come back.
+  var page = document.querySelector('.page');
+  if (page && _tuewedPageInner) page.innerHTML = _tuewedPageInner;
+  (window.SienaTuewedRender || SienaTuewedRender).render(document, payload);
+}
+
 window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SIENA_TUESWED_UPDATE') {
     try {
-      (window.SienaTuewedRender || SienaTuewedRender).render(document, e.data.payload);
+      _tuewedApplyUpdate(e.data.payload);
       clearTimeout(_tuewedValidateTimer);
       _tuewedValidateTimer = setTimeout(_tuewedRunValidate, 120);
     } catch(_) {}

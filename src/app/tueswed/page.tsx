@@ -26,14 +26,15 @@ interface TuewedMenuData {
 
 // ── Char limits (must match BUILD-SPEC.md and tueswed-schema.ts) ──────────
 
+// Paste-safety caps (loose guards only — layout-budget validator is authoritative)
 const L = {
   price:       3,
-  courseTitle: 38,
-  courseDesc:  140,
-  addonTitle:  24,
-  addonDesc:   70,
+  courseTitle: 60,
+  courseDesc:  240,
+  addonTitle:  40,
+  addonDesc:   120,
   addonPrice:  3,
-  policyLine:  120,
+  policyLine:  300,
 } as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -49,21 +50,6 @@ function useDebounce<T>(value: T, ms: number): T {
     return () => clearTimeout(t);
   }, [value, ms]);
   return debounced;
-}
-
-function menuHasPasteSafetyViolation(m: TuewedMenuData): boolean {
-  if (m.price.length                   > L.price)       return true;
-  for (const c of m.courses) {
-    if (c.title.length                 > L.courseTitle)  return true;
-    if (c.desc.length                  > L.courseDesc)   return true;
-  }
-  if (m.addon) {
-    if (m.addon.title.length           > L.addonTitle)   return true;
-    if ((m.addon.desc  ?? '').length   > L.addonDesc)    return true;
-    if ((m.addon.price ?? '').length   > L.addonPrice)   return true;
-  }
-  if ((m.policy_line ?? '').length     > L.policyLine)   return true;
-  return false;
 }
 
 // ── CharCount ─────────────────────────────────────────────────────────────
@@ -228,9 +214,10 @@ export default function TuewedEditorPage() {
 
   const debouncedMenu = useDebounce(menu, 800);
 
-  // commitSave declared first — used by validation listener below
-  const commitSave = useCallback(async (data: TuewedMenuData) => {
+  // Server save — only called after validation confirms the page fits
+  const saveToServer = useCallback(async (data: TuewedMenuData) => {
     const json = JSON.stringify(data);
+    if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
     setSaveStatus('saving');
     setSaveMsg('Saving…');
@@ -263,38 +250,37 @@ export default function TuewedEditorPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_TUESWED_VALIDATE_RESULT') return;
-      const report = e.data.report as { fits: boolean; worstSection?: string };
+      const report = e.data.report as { fits: boolean; worstSection?: string | null };
       setValidationFits(report.fits);
-      setWorstSection(report.fits ? null : (report.worstSection ?? null));
-      if (report.fits && pendingSaveRef.current) {
-        const toSave = pendingSaveRef.current;
+      if (report.fits) {
+        setWorstSection(null);
+        if (pendingSaveRef.current) {
+          saveToServer(pendingSaveRef.current);
+          pendingSaveRef.current = null;
+        }
+      } else {
+        setWorstSection(report.worstSection ?? null);
         pendingSaveRef.current = null;
-        commitSave(toSave);
+        setSaveStatus('error');
+        const section = report.worstSection
+          ? report.worstSection.replace('course-', 'Course ')
+          : 'the page';
+        setSaveMsg(`Content overflows in "${section}" — try shortening a description`);
       }
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [commitSave]);
+  }, [saveToServer]);
 
-  const saveAndRefresh = useCallback(async (data: TuewedMenuData) => {
-    // Always push update to preview iframe so validation can run
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: 'SIENA_TUESWED_UPDATE', payload: data }, '*'
-    );
-
-    if (menuHasPasteSafetyViolation(data)) {
-      setSaveStatus('error');
-      setSaveMsg('Text is too long in one or more fields');
-      return;
-    }
-
-    // Queue save — released when iframe reports fits === true
-    pendingSaveRef.current = data;
-  }, []);
-
+  // Debounce menu edits → send to iframe for live preview + validation
   useEffect(() => {
-    if (debouncedMenu) saveAndRefresh(debouncedMenu);
-  }, [debouncedMenu, saveAndRefresh]);
+    if (!debouncedMenu || prevJsonRef.current === '') return;
+    pendingSaveRef.current = debouncedMenu;
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'SIENA_TUESWED_UPDATE', payload: debouncedMenu },
+      '*'
+    );
+  }, [debouncedMenu]);
 
   // ── New Week ────────────────────────────────────────────────────────────
 
