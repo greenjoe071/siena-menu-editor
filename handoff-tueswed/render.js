@@ -1,6 +1,8 @@
 /**
  * Siena Tuesday/Wednesday Prix-Fixe Renderer — JSON → HTML hydrator.
  *
+ * v2 (chapter-rule design, layout-budget constraint model)
+ *
  * Mutates the template DOM in place. Does NOT regenerate structure,
  * CSS, or the static weekly-specials footer. If this file changes,
  * the snapshot test must still pass.
@@ -37,9 +39,17 @@
  *   - addon.desc  empty         → small caps note line removed; title stays.
  *   - policy_line empty/missing → the footnotes block is removed.
  *
- * Everything else (restaurant chrome, day labels, weekly footer cells,
- * Roman numerals, "Suggestioni del Capo Cuoco · Prix Fixe", $ glyph,
- * "Add $" prefix) is baked into the template and not addressable here.
+ * Everything else (the hero title "Chef's Three-Course Menu", the
+ * $ glyph, the "Add $" prefix, the "Prix Fixe · Tuesdays & Wednesdays"
+ * tucked subtitle, the chapter-rule Roman numerals I/II/III, and the
+ * four weekly-specials footer cells) is baked into the template and
+ * not addressable here.
+ *
+ * v2 NOTE — constraint model changed.
+ *   This handoff uses the LAYOUT-BUDGET constraint model. There are
+ *   no per-field character caps in the renderer. The editor must
+ *   call `validate.js` against a live-rendered preview after every
+ *   edit to confirm the page still fits. See BUILD-SPEC.md §4.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();

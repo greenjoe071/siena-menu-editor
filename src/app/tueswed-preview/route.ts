@@ -8,20 +8,36 @@ export const dynamic = 'force-dynamic';
 const HANDOFF = join(process.cwd(), 'handoff-tueswed');
 
 export async function GET() {
-  const [data, renderSrc] = await Promise.all([
+  const [data, renderSrc, validateSrc] = await Promise.all([
     readTuewedMenu(),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
+    readFile(join(HANDOFF, 'validate.js'), 'utf8'),
   ]);
 
   let html = await renderTuewedMenu(data);
 
   const liveScript = `<script>
 ${renderSrc}
+${validateSrc}
+var _tuewedValidateTimer = null;
+function _tuewedRunValidate() {
+  var Validate = window.SienaTuewedValidate || SienaTuewedValidate;
+  Validate.waitForLayout(document).then(function() {
+    var report = Validate.validate(document);
+    window.parent.postMessage({ type: 'SIENA_TUESWED_VALIDATE_RESULT', report: report }, '*');
+  });
+}
 window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SIENA_TUESWED_UPDATE') {
-    try { (window.SienaTuewedRender || SienaTuewedRender).render(document, e.data.payload); } catch(_) {}
+    try {
+      (window.SienaTuewedRender || SienaTuewedRender).render(document, e.data.payload);
+      clearTimeout(_tuewedValidateTimer);
+      _tuewedValidateTimer = setTimeout(_tuewedRunValidate, 120);
+    } catch(_) {}
   }
 });
+// Run initial validation after fonts ready
+document.fonts.ready.then(function() { _tuewedRunValidate(); });
 </script>
 <style>
   .preview-print-btn {

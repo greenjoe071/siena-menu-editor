@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
-// ── Char limits (mirrors BUILD-SPEC.md) ───────────────────────────────────
+// ── Paste-safety caps (loose guards only — layout-budget validator is authoritative) ──
 export const TUESWED_CHAR_LIMITS = {
   price:       3,
-  courseTitle: 38,
-  courseDesc:  140,
-  addonTitle:  24,
-  addonDesc:   70,
+  courseTitle: 60,
+  courseDesc:  240,
+  addonTitle:  40,
+  addonDesc:   120,
   addonPrice:  3,
-  policyLine:  120,
+  policyLine:  300,
 } as const;
 
 // ── Course ────────────────────────────────────────────────────────────────

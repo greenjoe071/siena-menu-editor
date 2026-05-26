@@ -51,7 +51,7 @@ function useDebounce<T>(value: T, ms: number): T {
   return debounced;
 }
 
-function menuHasOverLimit(m: TuewedMenuData): boolean {
+function menuHasPasteSafetyViolation(m: TuewedMenuData): boolean {
   if (m.price.length                   > L.price)       return true;
   for (const c of m.courses) {
     if (c.title.length                 > L.courseTitle)  return true;
@@ -204,13 +204,16 @@ function HistoryPanel({ onRestore }: { onRestore: (data: TuewedMenuData) => void
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function TuewedEditorPage() {
-  const [menu, setMenu]             = useState<TuewedMenuData | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [saveMsg, setSaveMsg]       = useState('');
-  const [historyKey, setHistoryKey] = useState(0);
-  const [previewUrl, setPreviewUrl] = useState('/tueswed-preview');
-  const iframeRef   = useRef<HTMLIFrameElement>(null);
-  const prevJsonRef = useRef<string>('');
+  const [menu, setMenu]                 = useState<TuewedMenuData | null>(null);
+  const [saveStatus, setSaveStatus]     = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveMsg, setSaveMsg]           = useState('');
+  const [historyKey, setHistoryKey]     = useState(0);
+  const [previewUrl, setPreviewUrl]     = useState('/tueswed-preview');
+  const [validationFits, setValidationFits] = useState<boolean | null>(null);
+  const [worstSection, setWorstSection]     = useState<string | null>(null);
+  const iframeRef    = useRef<HTMLIFrameElement>(null);
+  const prevJsonRef  = useRef<string>('');
+  const pendingSaveRef = useRef<TuewedMenuData | null>(null);
 
   useEffect(() => {
     fetch('/api/tueswed')
@@ -225,17 +228,10 @@ export default function TuewedEditorPage() {
 
   const debouncedMenu = useDebounce(menu, 800);
 
-  const saveAndRefresh = useCallback(async (data: TuewedMenuData) => {
+  // commitSave declared first — used by validation listener below
+  const commitSave = useCallback(async (data: TuewedMenuData) => {
     const json = JSON.stringify(data);
-    if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
-
-    if (menuHasOverLimit(data)) {
-      setSaveStatus('error');
-      setSaveMsg('Fix fields shown in red before saving');
-      return;
-    }
-
     setSaveStatus('saving');
     setSaveMsg('Saving…');
     try {
@@ -256,9 +252,6 @@ export default function TuewedEditorPage() {
       setSaveStatus('saved');
       setSaveMsg('Saved');
       setHistoryKey(k => k + 1);
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: 'SIENA_TUESWED_UPDATE', payload: data }, '*'
-      );
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
@@ -266,8 +259,41 @@ export default function TuewedEditorPage() {
     }
   }, []);
 
+  // ── Validation listener ─────────────────────────────────────────────────
   useEffect(() => {
-    if (debouncedMenu && prevJsonRef.current !== '') saveAndRefresh(debouncedMenu);
+    function onMessage(e: MessageEvent) {
+      if (!e.data || e.data.type !== 'SIENA_TUESWED_VALIDATE_RESULT') return;
+      const report = e.data.report as { fits: boolean; worstSection?: string };
+      setValidationFits(report.fits);
+      setWorstSection(report.fits ? null : (report.worstSection ?? null));
+      if (report.fits && pendingSaveRef.current) {
+        const toSave = pendingSaveRef.current;
+        pendingSaveRef.current = null;
+        commitSave(toSave);
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [commitSave]);
+
+  const saveAndRefresh = useCallback(async (data: TuewedMenuData) => {
+    // Always push update to preview iframe so validation can run
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'SIENA_TUESWED_UPDATE', payload: data }, '*'
+    );
+
+    if (menuHasPasteSafetyViolation(data)) {
+      setSaveStatus('error');
+      setSaveMsg('Text is too long in one or more fields');
+      return;
+    }
+
+    // Queue save — released when iframe reports fits === true
+    pendingSaveRef.current = data;
+  }, []);
+
+  useEffect(() => {
+    if (debouncedMenu) saveAndRefresh(debouncedMenu);
   }, [debouncedMenu, saveAndRefresh]);
 
   // ── New Week ────────────────────────────────────────────────────────────
@@ -329,6 +355,13 @@ export default function TuewedEditorPage() {
           <Link href="/" className="btn-back">← All Menus</Link>
           <h1>Tue–Wed $45 Prix Fixe</h1>
         </div>
+
+        {validationFits === false && (
+          <div className="overflow-banner">
+            ⚠ Menu is too long to fit on one page
+            {worstSection && ` — trim the "${worstSection.replace('course-', 'Course ')}" section`}
+          </div>
+        )}
 
         <div className="editor-scroll chef-mode">
 
@@ -475,6 +508,8 @@ export default function TuewedEditorPage() {
           </span>
           <button
             className="btn-print"
+            disabled={validationFits === false}
+            title={validationFits === false ? 'Menu overflows — shorten text before printing' : undefined}
             onClick={() => {
               if (menu) localStorage.setItem('siena-tueswed-print-data', JSON.stringify(menu));
               window.open('/tueswed-print', '_blank');

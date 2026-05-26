@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <title>Siena Ristorante — Chef's Three-Course Menu (Tues &amp; Wed)</title>
 <style>
-/* ── Self-hosted Playfair ── */
+/* ── Self-hosted Playfair (variable + italic variable) ── */
 @font-face {
   font-family: 'Playfair Display';
   src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
@@ -27,8 +27,8 @@ body {
   print-color-adjust: exact;
 }
 
-/* 8.5×11, asymmetric padding — bottom corners slide into the hard cover
-   (same pattern as Monday/Weekend). */
+/* 8.5×11 page. Asymmetric bottom padding because the bottom corners
+   slide into the hard-cover holder — same convention as Monday menu. */
 .page {
   width: 8.5in;
   height: 11in;
@@ -50,93 +50,107 @@ body {
   .page { box-shadow: none; overflow: visible; }
 }
 
-/* ── HERO ── */
+/* ── HERO — "Chef's Three-Course Menu" with inline gold $45 ── */
 .hero {
   padding-bottom: 12pt;
   border-bottom: 0.75pt solid #b8821e;
-  margin-bottom: 22pt;
+  margin-bottom: 18pt;
 }
+/* Title + inline price on the same baseline. 36pt is the sweet spot
+   that lets the $45 fit without wrapping (37pt+ causes the price to
+   drop to its own line). */
 .hero-title {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 40pt;
-  color: #3a1a06;
-  line-height: 0.95;
-}
-.hero-title .line2 {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 18pt;
-  margin-top: 2pt;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 36pt;
+  color: #3a1a06;
+  line-height: 1.0;
+  letter-spacing: -0.005em;
 }
 .hero-title .price {
   font-family: 'Playfair Display', serif;
   font-style: italic;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 28pt;
   color: #b8821e;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
-.hero-sub {
+.hero-meta {
   margin-top: 10pt;
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 500;
-  font-size: 12pt;
+  font-size: 13pt;
   color: #6b4c2a;
   letter-spacing: 0.02em;
 }
 
-/* ── BODY — three courses ── */
+/* ── BODY — three courses separated by chapter rules with the Roman
+   numeral interrupting each rule.
+   justify-content: space-evenly absorbs slack so descriptions can
+   grow without pushing the weekly footer.
+   ── */
 .menu-body {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
+  min-height: 0;
+  text-align: center;
 }
-.course {
-  display: grid;
-  grid-template-columns: 0.95in 1fr;
-  gap: 22pt;
+
+.course-rule {
+  position: relative;
+  height: 30pt;
+  display: flex;
   align-items: center;
-  break-inside: avoid;
+  justify-content: center;
 }
-.course + .course,
-.course + .addon {
-  margin-top: 14pt;
-  padding-top: 14pt;
-  border-top: 0.4pt solid #e3d6bf;
+.course-rule::before {
+  content: '';
+  position: absolute;
+  left: 0.3in; right: 0.3in; top: 50%;
+  border-top: 0.6pt solid #b8821e;
 }
 .course-num {
+  position: relative;
+  background: #fff;
+  padding: 0 16pt;
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 500;
-  font-size: 58pt;
+  font-size: 30pt;
   color: #b8821e;
-  line-height: 0.85;
-  text-align: center;
-  letter-spacing: -0.02em;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.course-body {
+  padding: 6pt 0.3in 0;
 }
 .dish-name {
-  display: block;
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 700;
   font-size: 22pt;
   color: #111;
-  line-height: 1.15;
+  line-height: 1.12;
   margin-bottom: 6pt;
 }
 .dish-desc {
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
-  font-size: 10.5pt;
+  font-size: 12pt;
   color: #333;
   line-height: 1.5;
-  max-width: 5.1in;
+  max-width: 4.8in;
+  margin: 0 auto;
   text-wrap: pretty;
 }
 
@@ -243,47 +257,47 @@ body {
 
 <div class="page">
 
-  <!-- HERO -->
-  <div class="hero">
+  <!-- HERO — only the price digits are editable; everything else is static chrome. -->
+  <div class="hero" data-section-id="hero">
     <div class="hero-title">
-      <span class="line1">Chef’s</span>
-      <span class="line2">
-        <span class="price">$<span data-text-id="price">45</span></span>
-        Three-Course Menu
-      </span>
+      <span>Chef’s Three-Course Menu</span>
+      <span class="price">$<span data-text-id="price">45</span></span>
     </div>
-    <div class="hero-sub">Suggestioni del Capo Cuoco · Prix Fixe</div>
+    <div class="hero-meta">Prix Fixe · Tuesdays &amp; Wednesdays</div>
   </div>
 
-  <!-- BODY — three fixed-cardinality courses -->
+  <!-- BODY — three fixed-cardinality courses. Each course is a pair of
+       flex children: a .course-rule (with the Roman numeral on the
+       gold rule) followed by a .course-body (dish name + desc). The
+       Roman numerals I/II/III are static template chrome. -->
   <div class="menu-body">
 
-    <div class="course" data-course-id="course-1">
-      <div class="course-num">I</div>
-      <div>
-        <span class="dish-name" data-text-id="course-1-title">Burrata e Fichi</span>
-        <div class="dish-desc" data-text-id="course-1-desc">Hand-pulled Puglian burrata, roasted black mission figs, prosciutto di Parma, aged balsamic, wood-grilled bread.</div>
-      </div>
+    <div class="course-rule" data-course-id="course-1">
+      <span class="course-num">I</span>
+    </div>
+    <div class="course-body" data-section-id="course-1">
+      <div class="dish-name" data-text-id="course-1-title">Burrata e Fichi</div>
+      <div class="dish-desc" data-text-id="course-1-desc">Hand-pulled Puglian burrata, roasted black mission figs, prosciutto di Parma, aged balsamic, wood-grilled bread.</div>
     </div>
 
-    <div class="course" data-course-id="course-2">
-      <div class="course-num">II</div>
-      <div>
-        <span class="dish-name" data-text-id="course-2-title">Risotto ai Funghi</span>
-        <div class="dish-desc" data-text-id="course-2-desc">Carnaroli rice, wild porcini and cremini mushrooms, Parmigiano Reggiano, fresh thyme, brown butter finish.</div>
-      </div>
+    <div class="course-rule" data-course-id="course-2">
+      <span class="course-num">II</span>
+    </div>
+    <div class="course-body" data-section-id="course-2">
+      <div class="dish-name" data-text-id="course-2-title">Risotto ai Funghi</div>
+      <div class="dish-desc" data-text-id="course-2-desc">Carnaroli rice, wild porcini and cremini mushrooms, Parmigiano Reggiano, fresh thyme, brown butter finish.</div>
     </div>
 
-    <div class="course" data-course-id="course-3">
-      <div class="course-num">III</div>
-      <div>
-        <span class="dish-name" data-text-id="course-3-title">Branzino al Forno</span>
-        <div class="dish-desc" data-text-id="course-3-desc">Whole-roasted Mediterranean branzino, lemon and herbs, Castelvetrano olives, Tuscan white beans, salsa verde.</div>
-      </div>
+    <div class="course-rule" data-course-id="course-3">
+      <span class="course-num">III</span>
+    </div>
+    <div class="course-body" data-section-id="course-3">
+      <div class="dish-name" data-text-id="course-3-title">Branzino al Forno</div>
+      <div class="dish-desc" data-text-id="course-3-desc">Whole-roasted Mediterranean branzino, lemon and herbs, Castelvetrano olives, Tuscan white beans, salsa verde.</div>
     </div>
 
-    <!-- ADD-ON (optional — toggles by addon.title presence) -->
-    <div class="addon" data-addon="">
+    <!-- ADD-ON (optional — whole block removed when addon.title empty) -->
+    <div class="addon" data-addon="" data-section-id="addon">
       <div class="addon-title">
         <span data-text-id="addon-title">Wine Pairing</span><span class="addon-price">Add $<span data-text-id="addon-price">25</span></span>
       </div>
@@ -292,8 +306,8 @@ body {
 
   </div><!-- /menu-body -->
 
-  <!-- WEEKLY SPECIALS FOOTER — fully static -->
-  <div class="weekly-wrap">
+  <!-- WEEKLY SPECIALS FOOTER — fully static, no data hooks -->
+  <div class="weekly-wrap" data-section-id="weekly">
     <div class="weekly-head">
       <span class="weekly-title">Throughout the Week at Siena</span>
     </div>
@@ -327,8 +341,8 @@ body {
     </div>
   </div>
 
-  <!-- Policy footnote (editable, optional) -->
-  <div class="footnotes" data-footnotes="">
+  <!-- Policy footnote (editable, optional — whole block removed when empty) -->
+  <div class="footnotes" data-footnotes="" data-section-id="footnotes">
     <div class="footnote" data-text-id="policy-line"><strong>No split checks.</strong>&nbsp;·&nbsp;<strong>Gratuity of 22% for parties of 6 or more.</strong></div>
   </div>
 

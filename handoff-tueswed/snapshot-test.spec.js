@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom';
 
 const HANDOFF = join(import.meta.dirname);
 
-describe('Tue–Wed menu snapshot', () => {
+describe('Tues/Wed Prix-Fixe menu snapshot', () => {
   it('renders seed data and matches expected-render.html', () => {
     const template = readFileSync(join(HANDOFF, 'template.html'), 'utf8');
     const renderSrc = readFileSync(join(HANDOFF, 'render.js'), 'utf8');
