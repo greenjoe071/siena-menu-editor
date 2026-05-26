@@ -80,24 +80,27 @@
     });
   }
 
-  // Promo headline: auto-detect a leading "$XX" or "$XX.XX" token and
-  // wrap it in <span class="price"> for the gold accent. Everything
-  // else is plain text.
+  // Promo headline: wrap ALL "$XX" or "$XX.XX" tokens in <span class="price">
+  // for the gold accent. Works whether there is one price token or several
+  // (e.g. "$5 house wines and $10 premium wines"). Everything between the
+  // price tokens renders as plain text.
   function setPromoHeadline(doc, value) {
     const el = doc.querySelector('[data-html-id="promo-headline"]');
     if (!el) return;
     while (el.firstChild) el.removeChild(el.firstChild);
 
     const str = String(value);
-    const m = str.match(/^(\$\d+(?:\.\d+)?)\s+(.+)$/);
-    if (m) {
-      const priceSpan = doc.createElement('span');
-      priceSpan.className = 'price';
-      priceSpan.textContent = m[1];
-      el.appendChild(priceSpan);
-      el.appendChild(doc.createTextNode(' ' + m[2]));
-    } else {
-      el.appendChild(doc.createTextNode(str));
+    // Split on every $XX / $XX.XX token; the capture group keeps the tokens.
+    const parts = str.split(/(\$\d+(?:\.\d+)?)/);
+    for (const part of parts) {
+      if (/^\$\d+(?:\.\d+)?$/.test(part)) {
+        const span = doc.createElement('span');
+        span.className = 'price';
+        span.textContent = part;
+        el.appendChild(span);
+      } else if (part) {
+        el.appendChild(doc.createTextNode(part));
+      }
     }
   }
 
