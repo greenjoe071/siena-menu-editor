@@ -137,6 +137,50 @@ export async function runOptionalDessertTest() {
   }
 }
 
+/**
+ * Coverage for the centered-orphan classes.
+ *
+ * An odd dish count (1 or 3) must stamp the grid with `cnt-1` / `cnt-3` so the
+ * lone dish centers instead of stranding in the left column. Even counts (2, 4)
+ * get a bare `dish-grid` class. This guards the orphan-centering contract.
+ */
+export async function runOrphanClassTest() {
+  const [template, dataRaw, renderer] = await Promise.all([
+    readFile(join(here, 'template.html'), 'utf8'),
+    readFile(join(here, 'menu-data.json'), 'utf8'),
+    loadRenderer(),
+  ]);
+  const base = JSON.parse(dataRaw);
+
+  const renderWith = (items) => {
+    const data = {
+      ...base,
+      sections: { ...base.sections, starters: { ...base.sections.starters, items } },
+    };
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, data);
+    return dom.window.document
+      .querySelector('[data-section-id="starters"] .dish-grid')
+      .className;
+  };
+
+  const cases = [
+    [1, 'dish-grid cnt-1'],
+    [2, 'dish-grid'],
+    [3, 'dish-grid cnt-3'],
+    [4, 'dish-grid'],
+  ];
+  for (const [n, expectedClass] of cases) {
+    const items = base.sections.starters.items.slice(0, n);
+    const got = renderWith(items);
+    if (got !== expectedClass) {
+      throw new Error(
+        `orphan class — ${n} dishes expected className ${JSON.stringify(expectedClass)}, got ${JSON.stringify(got)}.`
+      );
+    }
+  }
+}
+
 // Vitest / Jest style
 if (typeof globalThis.describe === 'function') {
   // eslint-disable-next-line no-undef
@@ -149,12 +193,16 @@ if (typeof globalThis.describe === 'function') {
     test('dessert section is fully removed when data.dessert is absent or null', async () => {
       await runOptionalDessertTest();
     });
+    // eslint-disable-next-line no-undef
+    test('odd dish counts (1, 3) stamp cnt-1 / cnt-3 for orphan centering', async () => {
+      await runOrphanClassTest();
+    });
   });
 }
 
 // node --test style (auto-detected when run directly)
 if (process.argv[1] && process.argv[1].endsWith(fileURLToPath(import.meta.url).split('/').pop())) {
-  Promise.all([runSnapshotTest(), runOptionalDessertTest()])
-    .then(() => { console.log('✓ Weekend menu snapshot + optional-dessert tests passed.'); })
+  Promise.all([runSnapshotTest(), runOptionalDessertTest(), runOrphanClassTest()])
+    .then(() => { console.log('✓ Weekend menu snapshot + optional-dessert + orphan-class tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

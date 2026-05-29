@@ -23,7 +23,15 @@
  *   The renderer clears each `.dish-grid`, then clones the
  *   `<template id="dish-template">` blueprint once per JSON item and
  *   appends in JSON order. The dish IDs live on the rendered DOM nodes
- *   (`data-dish-id`) so the editor can target them.
+ *   (`data-dish-id`) so the editor can target them. The grid is stamped
+ *   `cnt-1` / `cnt-3` for odd counts so a lone dish centers instead of
+ *   stranding in the left column.
+ *
+ *   Dish prices render INLINE on the name baseline (inside `.dish-head`).
+ *
+ *   NOTE: render.js only hydrates content. The auto-fit ladder that sheds
+ *   page chrome on dense configs lives in `settle.js` and runs in the
+ *   browser after layout — it is NOT part of this module or the snapshot.
  *
  *   An OPTIONAL third section, `dessert`, holds exactly one dish when
  *   `data.dessert` is present. When `data.dessert` is absent or null,
@@ -64,6 +72,11 @@
     );
     if (!grid) return;
     while (grid.firstChild) grid.removeChild(grid.firstChild);
+
+    // Orphan-centering class: an odd dish count (1 or 3) would otherwise strand
+    // a lone dish in the left column of the 2-col grid. cnt-1 / cnt-3 center it.
+    const n = sectionData.items.length;
+    grid.className = 'dish-grid' + (n === 1 ? ' cnt-1' : n === 3 ? ' cnt-3' : '');
 
     // Resolve the dish blueprint.
     const tpl = doc.getElementById('dish-template');

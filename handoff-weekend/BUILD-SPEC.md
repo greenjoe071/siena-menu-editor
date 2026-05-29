@@ -4,8 +4,15 @@ Read `README.md` first.
 
 This doc tells you exactly what the editor for the Weekend Specials menu
 (*Specialità del Capo Cuoco* — Chef's Suggestions, Thu–Sat) can and can't
-change, what character limits to enforce, and the JSON shape `render.js`
+change, the constraint model it enforces, and the JSON shape `render.js`
 reads.
+
+> **Redesign note (May 2026):** larger guest-readable type (dish names
+> 18pt, descriptions 11.5pt, prices 14pt **inline on the name baseline**),
+> a **centered-orphan fix** for odd dish counts, and an **auto-fit ladder**
+> (`settle.js`) that replaces the old rigid per-field character caps. See
+> "Constraint model" below — it is the most important change in this
+> revision.
 
 The Weekend menu is a **recurring template**. The chef changes the
 dishes every weekend. The hero/masthead and the weekly footer are stable;
@@ -25,6 +32,48 @@ the two dish sections are not.
 
 Don't copy/paste the Monday editor onto this menu — the cardinality
 contract is fundamentally different. See "Renderer behavior", below.
+
+---
+
+## Constraint model — auto-fit ladder (READ THIS FIRST)
+
+This menu does **not** use rigid per-field character caps to keep the page
+from overflowing (the old approach did, and it produced a stiff,
+one-line-everywhere look). Instead it uses a **hybrid**:
+
+**A. Horizontal fields — hard caps.** Fields that must stay on one line
+can still collide sideways, which no amount of vertical reflow fixes. These
+keep hard character caps: section title, section subtitle, **dish name**
+(now tighter — it shares its row with the inline price), dish price, weekly
+day label, weekly headline. Enforce them as hard caps in the editor.
+
+**B. Vertical growth — the auto-fit ladder.** Descriptions wrap to 1–2
+lines naturally, and the dish *count* varies 1–4 per section. Both grow the
+page vertically. Rather than cap them rigidly, the page **self-fits**:
+`settle.js` measures the rendered page and, while it would overflow, sheds
+chrome one step at a time in this owner-approved order:
+
+| Step | Class | What it drops |
+|---|---|---|
+| 1 | `v-eyebrow` | the "Chef's Suggestions" eyebrow |
+| 2 | `v-days` | the "Thursday ◆ Friday ◆ Saturday" line |
+| 3 | `v-tight` | tightens section / dish / footer spacing |
+| 4 | `v-weekly` | drops the "Throughout the Week" footer (last resort) |
+
+The page is **never hard-blocked**. The owner's explicit decision is to let
+the weekly footer auto-drop on the densest configs rather than restrict the
+chef. In practice only **dessert-on + both sections at 3–4 dishes** (and the
+all-long-description maximum) ever reach step 4.
+
+Descriptions therefore have **no hard character cap** — only a loose sanity
+guard (~180 chars) to stop a paste-a-paragraph accident that even the ladder
+can't absorb. The editor should show a soft counter, not a blocking cap, on
+descriptions.
+
+**This means the editor needs a live preview iframe** (it already does, per
+the UI sketch) so `settle.js` can run after each render and the manager sees
+exactly what will print. See "Renderer behavior" and "The auto-fit ladder
+(`settle.js`)" below.
 
 ---
 
@@ -159,12 +208,12 @@ section, rename either of them, or reorder them.
 
 ---
 
-## Editable fields & character limits
+## Editable fields & limits
 
-The editor must enforce these character limits as **hard caps**. They
-were tuned against the 8.5×11 single-page layout; exceeding them causes
-wrapping, column collision, or page overflow into the hard-cover
-inset.
+Per the constraint model above: **horizontal one-line fields keep hard
+caps**; **descriptions and dish counts are governed by the auto-fit ladder**
+and have only loose sanity guards. Caps below were tuned against the 8.5×11
+single-page layout at the new type sizes.
 
 ### Hero block
 
@@ -173,13 +222,13 @@ the editor must not surface any controls for it.
 
 ### Course sections (both `starters` and `entrees`)
 
-| Field | JSON path | Max chars | Notes |
+| Field | JSON path | Cap | Notes |
 |---|---|---|---|
-| Section title | `sections.<id>.title` | **20** | Italic Playfair 22pt. Shares a row with the subtitle; pushing past 20 squeezes the subtitle. |
-| Section subtitle | `sections.<id>.subtitle` | **16** | Uppercase Montserrat 8.5pt with 0.22em tracking. Won't wrap (`white-space: nowrap`). |
-| Dish name | `sections.<id>.items[*].name` | **30** | Italic Playfair 16pt. |
-| Dish description | `sections.<id>.items[*].desc` | **140** | Regular Montserrat 10pt, `text-wrap: pretty`. Two to three lines comfortably. Beyond ~140 starts pushing column heights and may visually crowd the weekly footer below. |
-| Dish price | `sections.<id>.items[*].price` | **8** | Italic Playfair 11pt, gold. Required, non-empty. Include the `$` glyph: `"$17"`. |
+| Section title | `sections.<id>.title` | **20** (hard) | Italic Playfair 22pt. Shares a row with the subtitle; pushing past 20 squeezes the subtitle. |
+| Section subtitle | `sections.<id>.subtitle` | **16** (hard) | Uppercase Montserrat 8.5pt with 0.22em tracking. Won't wrap (`white-space: nowrap`). |
+| Dish name | `sections.<id>.items[*].name` | **26** (hard) | Italic Playfair **18pt**. **Now shares its row with the inline price** (`.dish-head`, `justify-content: space-between`), so the cap dropped from 30 → 26 to keep the name from colliding with the price. The centered single-dish layout (`cnt-1`) is wider, but the 2-column case is the binding constraint. |
+| Dish description | `sections.<id>.items[*].desc` | **~180 (soft guard)** | Regular Montserrat **11.5pt**, `text-wrap: pretty`. Wraps to 1–2 lines naturally. **No hard cap** — the auto-fit ladder absorbs growth. The ~180 guard only stops a pasted paragraph. Show a soft counter, not a blocking cap. |
+| Dish price | `sections.<id>.items[*].price` | **8** (hard) | Italic Playfair **14pt**, gold, **inline on the name baseline**. Required, non-empty. Include the `$` glyph: `"$17"`. |
 
 ### Dessert (optional)
 
@@ -188,12 +237,12 @@ section is removed from the DOM and these fields are not editable.
 When the key is present, every field below is **required** and must
 respect its cap.
 
-| Field | JSON path | Max chars | Notes |
+| Field | JSON path | Cap | Notes |
 |---|---|---|---|
-| Section title | `dessert.title` | **20** | Italic Playfair 22pt. Same cap and styling as `sections.<id>.title`. Defaults to `"Dolci"`; common alternates are `"Sweet Endings"`, `"Dessert & Coffee"`. |
-| Dish name | `dessert.name` | **30** | Italic Playfair 16pt. Same cap as `sections.<id>.items[*].name`. |
-| Dish description | `dessert.desc` | **140** | Regular Montserrat 9.5pt, centered, `text-wrap: pretty`. Same cap as dish descriptions in starters/entrees. |
-| Dish price | `dessert.price` | **8** | Italic Playfair 11pt, gold. Required when the section is shown; include the `$` glyph (`"$12"`, never bare `"12"`). Same cap as dish prices in starters/entrees. |
+| Section title | `dessert.title` | **20** (hard) | Italic Playfair 22pt. Same cap and styling as `sections.<id>.title`. Defaults to `"Dolci"`; common alternates are `"Sweet Endings"`, `"Dessert & Coffee"`. |
+| Dish name | `dessert.name` | **26** (hard) | Italic Playfair 18pt. Same cap as `sections.<id>.items[*].name`. The dessert dish is centered, but keep the cap aligned with the course dishes. |
+| Dish description | `dessert.desc` | **~180 (soft guard)** | Regular Montserrat 11.5pt, centered, `text-wrap: pretty`. Ladder-governed, same as course dish descriptions. |
+| Dish price | `dessert.price` | **8** (hard) | Italic Playfair 14pt, gold, inline (centered with the name). Required when the section is shown; include the `$` glyph (`"$12"`, never bare `"12"`). |
 
 ### Weekly footer
 
@@ -265,11 +314,15 @@ What it does, in order:
    1. Update the section title (`[data-section-title-for]`) and
       subtitle (`[data-section-subtitle-for]`).
    2. Find the section's `.dish-grid` and clear it (removes all
-      children).
+      children). **Set the grid class** to `dish-grid cnt-1` when the
+      section has 1 item, `dish-grid cnt-3` when it has 3, plain
+      `dish-grid` for 2 or 4 — this drives the centered-orphan layout.
    3. For each dish in `items`, clone
-      `<template id="dish-template">`'s blueprint, set
-      `data-dish-id` and `data-section-id` on the clone, populate
-      `.dish-name` / `.dish-desc` / `.dish-price`, append to the grid.
+      `<template id="dish-template">`'s blueprint (note: the blueprint's
+      `.dish-name` + `.dish-price` live inside a `.dish-head` row for the
+      inline price), set `data-dish-id` and `data-section-id` on the
+      clone, populate `.dish-name` / `.dish-desc` / `.dish-price`, append
+      to the grid.
 3. **Dessert section** (`[data-section-id="dessert"]`):
    - If `data.dessert` is absent / `null` / falsy → `section.remove()`.
       The entire `<div>` is gone from the rendered HTML.
@@ -291,6 +344,53 @@ container itself.
 If you change `template.html`'s structure (e.g. add a new section, or
 change the dish blueprint), `render.js` must be updated in lockstep and
 `expected-render.html` regenerated.
+
+---
+
+## The auto-fit ladder (`settle.js`)
+
+`settle.js` is a separate UMD module (`SienaWeekendSettle`) that does the
+vertical fitting `render.js` deliberately does not. It runs **in the
+browser, after layout** — never in JSDOM.
+
+```js
+SienaWeekendSettle.settle();        // finds the first .page, fits it
+SienaWeekendSettle.settle(pageEl);  // or pass a specific .page / root
+// returns { applied: ['v-eyebrow', ...], fits: true }
+//      or { applied: [...all], fits: false, overflowPx: N }  // shouldn't happen in practice
+```
+
+What it does: clears any previously-applied `v-*` classes, then — while
+`page.scrollHeight > page.clientHeight` — adds `v-eyebrow`, `v-days`,
+`v-tight`, `v-weekly` one at a time until the page fits. The `.page.v-*`
+rules that actually hide/tighten things live in `template.html`'s CSS.
+
+Wiring:
+
+- **Preview iframe:** call `SienaWeekendSettle.settle()` after **every**
+  `render()` (debounced with the preview refresh). The manager must see
+  the settled page, because that's what prints.
+- **`/print` page:** call `settle()` **before** `window.print()` (see
+  below).
+- **Static serve:** `settle.js` also **auto-runs once** on load (after
+  `document.fonts.ready`) if it finds a `.page`, so just including the
+  `<script src="settle.js">` tag (already in `template.html`) makes a
+  statically-served page self-fit with no extra code.
+
+Key rules:
+
+- **Measure at `.page`**, never `.menu-body` or a column — those use
+  `flex: 1` and grow to fill, so they never report overflow. This is the
+  single most common way to break the ladder.
+- **Wait for `document.fonts.ready`** before measuring. Playfair is a
+  variable font; line heights shift several px when it swaps in, which is
+  enough to flip a fit/no-fit decision.
+- `settle()` is **idempotent** — it resets valves first, so calling it on
+  every keystroke-debounced re-render is safe.
+- It **cannot run in the snapshot test.** JSDOM has no layout engine.
+  `expected-render.html` is the **pre-settle** DOM (full content, no `v-*`
+  classes) and that is correct — the snapshot guards `render.js`, the
+  ladder is verified in a real browser.
 
 ---
 
@@ -408,8 +508,12 @@ Two-pane layout:
   before saving (or sets it to `null`) and the panel collapses to just
   the toggle. Toggled ON → the four dessert fields appear and are all
   required; an empty save is blocked.
-- Show the character counter for every text field, turning red as the
-  user nears the cap. **Block save** when any field exceeds its cap.
+- Show a character counter on every text field. For **hard-capped**
+  fields (titles, subtitles, dish names, prices, weekly day labels /
+  headlines) turn it red near the cap and **block save** when exceeded.
+  For **descriptions** (ladder-governed) show a soft counter only — do
+  **not** block; the page self-fits. Optionally warn past the ~180 sanity
+  guard.
 - Auto-save with ~1s debounce after last keystroke. Show a "Saved"
   indicator.
 - "Print Menu" opens `/print` in a new tab.
@@ -422,11 +526,13 @@ re-call `render()`.
 
 ## The `/print` page
 
-Identical to `/preview`, plus this script at the end of `<body>`:
+Identical to `/preview`, plus this script at the end of `<body>`
+(after `settle.js` has loaded):
 
 ```html
 <script>
   document.fonts.ready.then(() => {
+    SienaWeekendSettle.settle();           // fit the page BEFORE printing
     setTimeout(() => window.print(), 500);
   });
 </script>
@@ -435,7 +541,7 @@ Identical to `/preview`, plus this script at the end of `<body>`:
 Matches the other Siena menus' print behavior. The 500ms delay gives
 variable fonts time to settle. **Do not skip `document.fonts.ready`** —
 printing before fonts load is the most common way to ship a broken
-menu.
+menu, and printing before `settle()` would print an overflowing page.
 
 ---
 
@@ -541,6 +647,12 @@ become next weekend's), the workflow is:
   manager fills it in → preview updates.
 - Manager drags Dentice below Linguine al Limone → preview reflects new
   order → save → reload → new order persists.
+- Manager builds a dense config (e.g. dessert on + 4 starters + 4
+  entrees) → preview auto-fits via `settle.js`: eyebrow and the day line
+  disappear, spacing tightens, and "Throughout the Week" drops on the
+  very densest configs — exactly what will print. No save is blocked.
+- Manager sets a section to 1 or 3 dishes → the lone/third dish centers
+  (`cnt-1` / `cnt-3`) instead of stranding at the left.
 - Manager tries to add a 5th entree → button disabled.
 - Manager tries to remove the last entree → button disabled.
 - Manager clicks "Print Menu" → new tab → single-page menu loads →

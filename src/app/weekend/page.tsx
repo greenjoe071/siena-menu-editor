@@ -15,10 +15,7 @@ interface WeekendDish {
   id: string;
   name: string;
   desc: string;
-  price: string;
-  price_label?: string;
-  price2?: string;
-  price2_label?: string;
+  price: string;   // stored with $ glyph: "$17". Required, non-empty.
 }
 
 interface WeekendSection {
@@ -57,14 +54,16 @@ interface WeekendMenuData {
 type SectionId = 'starters' | 'entrees';
 
 // ── Char limits (must match BUILD-SPEC.md and weekend-schema.ts) ──────────
+// Horizontal one-line fields: hard caps (turn red + block save when exceeded).
+// Descriptions: soft guard only — the auto-fit ladder (settle.js) absorbs
+// vertical growth, so descriptions show a counter but are NOT save-blocked.
 
 const L = {
   sectionTitle:    20,
   sectionSubtitle: 16,
-  dishName:        30,
-  dishDesc:       140,
+  dishName:        26,   // hard — shares row with inline price
+  dishDesc:       180,   // soft guard only
   dishPrice:        8,
-  dishPriceLabel:   8,
   weeklyTitle:     42,
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
@@ -73,6 +72,8 @@ const L = {
 } as const;
 
 // ── Price helpers ─────────────────────────────────────────────────────────
+// Prices are stored WITH the $ glyph ("$17"). PriceInput strips $ for
+// display and re-adds it on change.
 
 function filterPrice(v: string): string {
   const digits = v.replace(/[^0-9.]/g, '');
@@ -82,26 +83,6 @@ function filterPrice(v: string): string {
 
 function stripDollar(v: string): string {
   return v.startsWith('$') ? v.slice(1) : v;
-}
-
-function combinedPrice(d: WeekendDish): string {
-  if (d.price2) {
-    const l1 = d.price_label  ? `${d.price_label} `  : '';
-    const l2 = d.price2_label ? `${d.price2_label} ` : '';
-    return `${l1}${d.price} / ${l2}${d.price2}`;
-  }
-  return d.price;
-}
-
-function toRendererData(data: WeekendMenuData) {
-  const mapItems = (items: WeekendDish[]) => items.map(d => ({ ...d, price: combinedPrice(d) }));
-  return {
-    ...data,
-    sections: {
-      starters: { ...data.sections.starters, items: mapItems(data.sections.starters.items) },
-      entrees:  { ...data.sections.entrees,  items: mapItems(data.sections.entrees.items) },
-    },
-  };
 }
 
 // ── ID generation ─────────────────────────────────────────────────────────
@@ -121,13 +102,14 @@ function useDebounce<T>(value: T, ms: number): T {
   return debounced;
 }
 
-function menuHasOverLimit(m: WeekendMenuData): boolean {
+// Hard-capped fields only — descriptions are excluded because they are
+// governed by the auto-fit ladder (settle.js), not a hard character cap.
+function menuHasHardLimitViolation(m: WeekendMenuData): boolean {
   if (m.weekly.title.length  > L.weeklyTitle)  return true;
   if (m.policy_line.length   > L.policyLine)   return true;
   if (m.dessert) {
     if (m.dessert.title.length > L.sectionTitle) return true;
     if (m.dessert.name.length  > L.dishName)     return true;
-    if (m.dessert.desc.length  > L.dishDesc)     return true;
     if (m.dessert.price.length > L.dishPrice)    return true;
   }
   for (const sid of ['starters', 'entrees'] as SectionId[]) {
@@ -135,12 +117,8 @@ function menuHasOverLimit(m: WeekendMenuData): boolean {
     if (s.title.length    > L.sectionTitle)    return true;
     if (s.subtitle.length > L.sectionSubtitle) return true;
     for (const d of s.items) {
-      if (d.name.length                    > L.dishName)       return true;
-      if (d.desc.length                    > L.dishDesc)       return true;
-      if (d.price.length                   > L.dishPrice)      return true;
-      if ((d.price_label  ?? '').length    > L.dishPriceLabel) return true;
-      if ((d.price2       ?? '').length    > L.dishPrice)      return true;
-      if ((d.price2_label ?? '').length    > L.dishPriceLabel) return true;
+      if (d.name.length  > L.dishName)  return true;
+      if (d.price.length > L.dishPrice) return true;
     }
   }
   for (const r of m.weekly.rows) {
@@ -152,7 +130,7 @@ function menuHasOverLimit(m: WeekendMenuData): boolean {
 }
 
 function blankDish(): WeekendDish {
-  return { id: newDishId(), name: '', desc: '', price: '' };
+  return { id: newDishId(), name: '', desc: '', price: '$' };
 }
 
 // ── CharCount ─────────────────────────────────────────────────────────────
@@ -196,21 +174,8 @@ function DishCard({
   onChange: (sectionId: SectionId, index: number, updated: WeekendDish) => void;
   onRemove: (sectionId: SectionId, index: number) => void;
 }) {
-  const [showDual, setShowDual] = useState(!!dish.price2);
-
   function set(field: keyof WeekendDish, value: string) {
     onChange(sectionId, index, { ...dish, [field]: value });
-  }
-
-  function enableDual() {
-    setShowDual(true);
-    onChange(sectionId, index, { ...dish, price_label: '', price2: '', price2_label: '' });
-  }
-
-  function disableDual() {
-    setShowDual(false);
-    const { price_label: _pl, price2: _p2, price2_label: _p2l, ...rest } = dish;
-    onChange(sectionId, index, rest as WeekendDish);
   }
 
   return (
@@ -238,61 +203,26 @@ function DishCard({
           </div>
 
           <div className="dish-fields">
-            <div className="field-group">
-              <div className="field-label-row">
-                <label>Dish name</label>
-                <CharCount value={dish.name} max={L.dishName} />
+            <div className="dish-field-row" style={{ alignItems: 'flex-end' }}>
+              <div className="field-group" style={{ flex: 1 }}>
+                <div className="field-label-row">
+                  <label>Dish name</label>
+                  <CharCount value={dish.name} max={L.dishName} />
+                </div>
+                <input
+                  value={dish.name}
+                  onChange={e => set('name', e.target.value)}
+                  placeholder="e.g. Burrata e Pèsca"
+                />
               </div>
-              <input
-                value={dish.name}
-                onChange={e => set('name', e.target.value)}
-                placeholder="e.g. Burrata e Pèsca"
-              />
+              <div className="field-group" style={{ width: '120px', flexShrink: 0, marginBottom: 0 }}>
+                <div className="field-label-row">
+                  <label>Price</label>
+                  <CharCount value={stripDollar(dish.price)} max={L.dishPrice} />
+                </div>
+                <PriceInput value={dish.price} onChange={v => set('price', v)} />
+              </div>
             </div>
-
-            {!showDual ? (
-              <div className="dish-field-row" style={{ alignItems: 'flex-end' }}>
-                <div className="field-group" style={{ width: '120px', flexShrink: 0, marginBottom: 0 }}>
-                  <div className="field-label-row">
-                    <label>Price</label>
-                    <CharCount value={stripDollar(dish.price)} max={L.dishPrice} />
-                  </div>
-                  <PriceInput value={dish.price} onChange={v => set('price', v)} />
-                </div>
-                <button className="btn-add-price" onClick={enableDual}>+ 2nd price</button>
-              </div>
-            ) : (
-              <div className="dual-price-wrap">
-                <div className="dual-price-label">Two prices (e.g. Bowl / Cup)</div>
-                <div className="dual-price-row">
-                  <div className="field-group" style={{ width: '80px', flexShrink: 0, marginBottom: 0 }}>
-                    <label>Label 1</label>
-                    <input value={dish.price_label ?? ''} onChange={e => set('price_label', e.target.value)} placeholder="Bowl" maxLength={L.dishPriceLabel} />
-                  </div>
-                  <div className="field-group" style={{ width: '110px', flexShrink: 0, marginBottom: 0 }}>
-                    <div className="field-label-row">
-                      <label>Price 1</label>
-                      <CharCount value={stripDollar(dish.price)} max={L.dishPrice} />
-                    </div>
-                    <PriceInput value={dish.price} onChange={v => set('price', v)} />
-                  </div>
-                </div>
-                <div className="dual-price-row">
-                  <div className="field-group" style={{ width: '80px', flexShrink: 0, marginBottom: 0 }}>
-                    <label>Label 2</label>
-                    <input value={dish.price2_label ?? ''} onChange={e => set('price2_label', e.target.value)} placeholder="Cup" maxLength={L.dishPriceLabel} />
-                  </div>
-                  <div className="field-group" style={{ width: '110px', flexShrink: 0, marginBottom: 0 }}>
-                    <div className="field-label-row">
-                      <label>Price 2</label>
-                      <CharCount value={stripDollar(dish.price2 ?? '')} max={L.dishPrice} />
-                    </div>
-                    <PriceInput value={dish.price2 ?? ''} onChange={v => set('price2', v)} />
-                  </div>
-                  <button className="btn-remove-price" onClick={disableDual}>× one price</button>
-                </div>
-              </div>
-            )}
 
             <div className="field-group" style={{ marginBottom: 0 }}>
               <div className="field-label-row">
@@ -645,7 +575,7 @@ export default function WeekendEditorPage() {
   useEffect(() => {
     if (previewDebounced && prevJsonRef.current !== '') {
       iframeRef.current?.contentWindow?.postMessage(
-        { type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(previewDebounced) }, '*'
+        { type: 'SIENA_WEEKEND_UPDATE', payload: (previewDebounced) }, '*'
       );
     }
   }, [previewDebounced]);
@@ -655,7 +585,7 @@ export default function WeekendEditorPage() {
     if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
 
-    if (menuHasOverLimit(data)) {
+    if (menuHasHardLimitViolation(data)) {
       setSaveStatus('error');
       setSaveMsg('Fix fields shown in red before saving');
       return;
@@ -867,7 +797,7 @@ export default function WeekendEditorPage() {
               setSaveStatus('saved');
               setSaveMsg('Restored');
               iframeRef.current?.contentWindow?.postMessage(
-                { type: 'SIENA_WEEKEND_UPDATE', payload: toRendererData(data) }, '*'
+                { type: 'SIENA_WEEKEND_UPDATE', payload: (data) }, '*'
               );
               setTimeout(() => setSaveStatus('idle'), 3000);
             }}

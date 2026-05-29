@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
 // ── Char limits (mirrors BUILD-SPEC.md) ───────────────────────────────────
+// Horizontal one-line fields keep hard caps; descriptions are ladder-governed
+// (auto-fit via settle.js) and only have a loose sanity guard.
 export const WEEKEND_CHAR_LIMITS = {
   sectionTitle:    20,
   sectionSubtitle: 16,
-  dishName:        30,
-  dishDesc:       140,
-  dishPrice:        8,
-  dishPriceLabel:   8,
+  dishName:        26,   // hard — shares row with inline price
+  dishDesc:       180,   // soft guard only — ladder absorbs vertical growth
+  dishPrice:        8,   // hard — required, include $ glyph: "$17"
   weeklyTitle:     42,
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
@@ -17,13 +18,10 @@ export const WEEKEND_CHAR_LIMITS = {
 
 // ── Dish ──────────────────────────────────────────────────────────────────
 const WeekendDishSchema = z.object({
-  id:          z.string(),
-  name:        z.string().min(1, 'Dish name is required').max(WEEKEND_CHAR_LIMITS.dishName),
-  desc:        z.string().min(1, 'Description is required').max(WEEKEND_CHAR_LIMITS.dishDesc),
-  price:       z.string().min(1, 'Price is required').max(WEEKEND_CHAR_LIMITS.dishPrice),
-  price_label: z.string().max(WEEKEND_CHAR_LIMITS.dishPriceLabel).optional(),
-  price2:      z.string().max(WEEKEND_CHAR_LIMITS.dishPrice).optional(),
-  price2_label:z.string().max(WEEKEND_CHAR_LIMITS.dishPriceLabel).optional(),
+  id:    z.string(),
+  name:  z.string().min(1, 'Dish name is required').max(WEEKEND_CHAR_LIMITS.dishName),
+  desc:  z.string().min(1, 'Description is required').max(WEEKEND_CHAR_LIMITS.dishDesc),
+  price: z.string().min(1, 'Price is required').max(WEEKEND_CHAR_LIMITS.dishPrice),
 });
 
 // ── Course section ────────────────────────────────────────────────────────

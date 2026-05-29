@@ -32,6 +32,7 @@ body {
 .page {
   width: 8.5in;
   height: 11in;
+  /* Asymmetric 0.7in bottom = hard-cover safe zone at max content. Do NOT normalize. */
   padding: 0.55in 0.65in 0.7in;
   display: flex;
   flex-direction: column;
@@ -63,7 +64,7 @@ body {
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: #b8821e;
-  margin-bottom: 10pt;
+  margin-bottom: 12pt;
 }
 .hero .title-row {
   display: flex;
@@ -94,21 +95,24 @@ body {
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: #b8821e;
-  margin-top: 10pt;
+  margin-top: 12pt;
 }
 .hero .meta .dot {
   margin: 0 9pt;
   color: #c9a87a;
 }
 
-/* ── Course sections ── */
+/* ── Course sections ──
+   space-evenly keeps sparse configs (e.g. 1+1) from bunching at the top with
+   dead space above the footer. The auto-fit ladder (settle.js) handles dense
+   configs by shedding chrome when the page would overflow. */
 .menu-body {
-  padding: 4pt 0 0;
+  padding: 8pt 0 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
-  gap: 10pt;
+  gap: 14pt;
 }
 
 .section {
@@ -117,7 +121,7 @@ body {
 }
 
 .section-head {
-  margin-bottom: 6pt;
+  margin-bottom: 8pt;
   padding-bottom: 6pt;
   border-bottom: 0.75pt solid #b8821e;
   display: flex;
@@ -146,13 +150,26 @@ body {
 .dish-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6pt 36pt;
+  gap: 12pt 36pt;
   align-items: start;
 }
+/* Centered-orphan fix: render.js stamps cnt-1 / cnt-3 by item count so an odd
+   dish is centered instead of stranded in the left column. */
+.dish-grid.cnt-1 { grid-template-columns: 1fr; justify-items: center; }
+.dish-grid.cnt-1 .dish { width: 3.7in; max-width: 100%; }
+.dish-grid.cnt-3 .dish:nth-child(3) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 18pt); }
 
 .dish {
   padding-top: 2pt;
   break-inside: avoid;
+}
+/* Price sits inline on the dish-name baseline. */
+.dish-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10pt;
+  margin-bottom: 4pt;
 }
 .dish-name {
   font-family: 'Playfair Display', serif;
@@ -160,9 +177,16 @@ body {
   font-weight: 700;
   font-size: 18pt;
   color: #111;
-  line-height: 1.15;
-  display: block;
-  margin-bottom: 4pt;
+  line-height: 1.12;
+}
+.dish-price {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 14pt;
+  color: #b8821e;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 .dish-desc {
   font-family: 'Montserrat', sans-serif;
@@ -171,15 +195,6 @@ body {
   color: #333;
   line-height: 1.4;
   text-wrap: pretty;
-  margin-bottom: 4pt;
-}
-.dish-price {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 14pt;
-  color: #111;
-  letter-spacing: 0.01em;
 }
 
 /* ── Dessert — single, centered, optional coda. Removed from DOM when data.dessert is absent. ── */
@@ -191,6 +206,8 @@ body {
   text-align: center;
   max-width: 4.6in;
 }
+.dessert-section .dish-head { justify-content: center; gap: 14pt; }
+.dessert-section .dish-desc { text-align: center; }
 
 /* ── Weekly footer — same pattern as Monday menu ── */
 .weekly-wrap {
@@ -199,7 +216,7 @@ body {
 }
 .weekly-head {
   text-align: center;
-  margin-bottom: 14pt;
+  margin-bottom: 12pt;
   padding-bottom: 6pt;
   border-bottom: 0.75pt solid #b8821e;
 }
@@ -262,6 +279,19 @@ body {
   color: #555;
 }
 .footnote strong { color: #111; font-weight: 700; }
+
+/* ── RELEASE-VALVE LADDER ──
+   settle.js adds these classes one at a time, in order, ONLY while the page
+   would overflow. Owner-approved order: eyebrow → Thu/Fri/Sat line → tighter
+   spacing → "Throughout the Week". A page is never blocked; the densest
+   configs simply shed the weekly footer. */
+.page.v-eyebrow .hero .eyebrow { display: none; }
+.page.v-days .hero .meta { display: none; }
+.page.v-tight .menu-body { gap: 8pt; padding-top: 4pt; }
+.page.v-tight .section-head { margin-bottom: 6pt; }
+.page.v-tight .dish-grid { gap: 8pt 36pt; }
+.page.v-tight .weekly-head { margin-bottom: 8pt; }
+.page.v-weekly .weekly-wrap { display: none; }
 </style>
 </head>
 <body>
@@ -308,9 +338,8 @@ body {
       </div>
       <div class="dish-grid">
         <div class="dish" data-dish-id="d-dessert" data-section-id="dessert">
-          <span class="dish-name"></span>
+          <div class="dish-head"><span class="dish-name"></span><span class="dish-price"></span></div>
           <div class="dish-desc"></div>
-          <div class="dish-price"></div>
         </div>
       </div>
     </div>
@@ -362,9 +391,14 @@ body {
 <!-- ────────────────────────────────────────────────────────────────────────
      Dish DOM blueprint. The renderer clones this once per item in
      sections.<id>.items and appends to the matching .dish-grid. Edit here
-     if and only if the dish layout itself changes.
+     if and only if the dish layout itself changes. NOTE the inline-price
+     structure: name + price share a row inside .dish-head.
      ──────────────────────────────────────────────────────────────────── -->
-<template id="dish-template"><div class="dish"><span class="dish-name"></span><div class="dish-desc"></div><div class="dish-price"></div></div></template>
+<template id="dish-template"><div class="dish"><div class="dish-head"><span class="dish-name"></span><span class="dish-price"></span></div><div class="dish-desc"></div></div></template>
+
+<!-- Auto-fit ladder. Runs after fonts load; re-call SienaWeekendSettle.settle()
+     after every live re-render in the editor preview. -->
+<script src="settle.js"></script>
 
 </body>
 </html>
