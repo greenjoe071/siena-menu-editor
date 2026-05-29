@@ -26,8 +26,14 @@ export async function GET() {
   // when the page would overflow (eyebrow → day line → spacing → footer).
   // It auto-runs once on load via its own autorun(); we also call it after
   // each postMessage update.
+  // The template contains <script src="settle.js"></script>. Embedding it
+  // raw inside a <script> block would cause the browser's HTML parser to
+  // terminate the outer script early. Escape the closing tag so the parser
+  // ignores it while JS still produces the correct string at runtime.
+  const safeTemplate = JSON.stringify(rawTemplate).replace(/<\/script/gi, '<\\/script');
+
   const liveScript = `<script>
-var _tpl = ${JSON.stringify(rawTemplate)};
+var _tpl = ${safeTemplate};
 ${renderSrc}
 ${settleSrc}
 var _R = window.SienaWeekendRender;
