@@ -56,7 +56,7 @@ export default function HomePage() {
     <div className="home-page">
       <header className="home-header">
         <div className="home-header-inner">
-          <h1 className="home-title">Menu Editor</h1>
+          <h1 className="home-title">Siena Menu Editor</h1>
           <p className="home-subtitle">Siena Ristorante Toscana</p>
         </div>
         <p className="home-tagline">Choose a menu below to make changes and print</p>
