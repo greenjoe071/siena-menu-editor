@@ -169,171 +169,26 @@ export async function restoreBackup(key: string): Promise<MenuData> {
   return data;
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-// Draft / Publish model (Dinner menu)
-// ══════════════════════════════════════════════════════════════════════════
-// The Dinner menu is PROTECTED: the current published menu (BLOB_CURRENT) only
-// changes via an explicit publish. Day-to-day editing happens on a separate
-// draft blob, so the current menu can never be altered inadvertently. When a
-// draft is published it becomes the new current, the outgoing current is moved
-// into a small "past menus" history (last 3), and the current-menu date is
-// stamped.
+// ── Draft / Publish model (shared factory — see draft-publish.ts) ─────────
 
-const BLOB_DRAFT            = 'menu-draft';
-const BLOB_META            = 'menu-meta';
-const BLOB_PUBLISHED_PREFIX = 'published-';
-const MAX_PUBLISHED         = 3;
-const KV_DIR               = join(process.cwd(), '.menu-kv');
+import { createDraftPublish } from './draft-publish';
 
-// "Current as of July 9, 2026" — the seed date shown until the first publish,
-// used when no meta record exists yet.
-const DEFAULT_PUBLISHED_AT = Date.parse('2026-07-09T12:00:00Z');
+export const dinnerDP = createDraftPublish<MenuData>({
+  currentKey:      'menu-data',
+  draftKey:        'menu-draft',
+  metaKey:         'menu-meta',
+  publishedPrefix: 'published-',
+  schema:          MenuSchema,
+  readCurrent:     readMenu,
+});
 
-export interface CurrentMeta { publishedAt: number }
-export interface PublishedEntry { key: string; ts: number; publishedAt: number; label: string }
-
-// ── Generic KV (Netlify Blobs in prod, file system in local dev) ──────────
-
-async function kvRead(key: string): Promise<string | null> {
-  const r = await blobsRead(key);
-  if (r !== BLOBS_UNAVAILABLE) return r;
-  const f = join(KV_DIR, key + '.json');
-  return existsSync(f) ? await readFile(f, 'utf8') : null;
-}
-
-async function kvWrite(key: string, value: string): Promise<void> {
-  const r = await blobsWrite(key, value);
-  if (r !== BLOBS_UNAVAILABLE) return;
-  if (!existsSync(KV_DIR)) await mkdir(KV_DIR, { recursive: true });
-  await writeFile(join(KV_DIR, key + '.json'), value, 'utf8');
-}
-
-async function kvDelete(key: string): Promise<void> {
-  await blobsDelete(key);
-  const f = join(KV_DIR, key + '.json');
-  if (existsSync(f)) {
-    const { unlink } = await import('node:fs/promises');
-    await unlink(f).catch(() => {});
-  }
-}
-
-async function kvList(prefix: string): Promise<string[]> {
-  const blobs = await blobsList(prefix);
-  if (blobs.length) return blobs.map((b) => b.key);
-  if (!existsSync(KV_DIR)) return [];
-  const files = await readdir(KV_DIR).catch(() => [] as string[]);
-  return files.filter((f) => f.startsWith(prefix) && f.endsWith('.json')).map((f) => f.replace(/\.json$/, ''));
-}
-
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-// ── Current-menu metadata (the "current as of" date) ──────────────────────
-
-export async function readCurrentMeta(): Promise<CurrentMeta> {
-  const raw = await kvRead(BLOB_META);
-  if (raw) {
-    try {
-      const m = JSON.parse(raw);
-      if (typeof m.publishedAt === 'number') return { publishedAt: m.publishedAt };
-    } catch { /* fall through to default */ }
-  }
-  return { publishedAt: DEFAULT_PUBLISHED_AT };
-}
-
-// ── Draft ──────────────────────────────────────────────────────────────────
-
-export async function hasDraft(): Promise<boolean> {
-  return (await kvRead(BLOB_DRAFT)) !== null;
-}
-
-// Returns the draft. If none exists yet, seed it from the current menu and
-// persist that copy so subsequent edits accumulate on the draft.
-export async function readDraft(): Promise<MenuData> {
-  const raw = await kvRead(BLOB_DRAFT);
-  if (raw) return MenuSchema.parse(JSON.parse(raw));
-  const current = await readMenu();
-  await kvWrite(BLOB_DRAFT, JSON.stringify(current, null, 2));
-  return current;
-}
-
-export async function writeDraft(data: MenuData): Promise<void> {
-  MenuSchema.parse(data);
-  await kvWrite(BLOB_DRAFT, JSON.stringify(data, null, 2));
-}
-
-export async function discardDraft(): Promise<void> {
-  await kvDelete(BLOB_DRAFT);
-}
-
-// ── Publish (draft → current, archive outgoing current) ───────────────────
-
-export async function publishDraft(): Promise<CurrentMeta> {
-  const draftRaw = await kvRead(BLOB_DRAFT);
-  if (!draftRaw) throw new Error('No draft to publish');
-  const draft = MenuSchema.parse(JSON.parse(draftRaw));
-
-  const ts = Date.now();
-
-  // Archive the outgoing current menu together with the date it had been
-  // current since, so "Past Menus" can label each version meaningfully.
-  const currentRaw = await kvRead(BLOB_CURRENT);
-  if (currentRaw) {
-    const meta = await readCurrentMeta();
-    const envelope = JSON.stringify({ publishedAt: meta.publishedAt, data: JSON.parse(currentRaw) });
-    await kvWrite(`${BLOB_PUBLISHED_PREFIX}${ts}`, envelope);
-
-    // Prune to the last MAX_PUBLISHED archived menus.
-    const keys = await kvList(BLOB_PUBLISHED_PREFIX);
-    const sorted = keys
-      .map((k) => ({ key: k, ts: parseInt(k.replace(BLOB_PUBLISHED_PREFIX, ''), 10) }))
-      .sort((a, b) => b.ts - a.ts);
-    for (const old of sorted.slice(MAX_PUBLISHED)) await kvDelete(old.key);
-  }
-
-  // The draft becomes the new current; stamp the date and clear the draft.
-  await kvWrite(BLOB_CURRENT, JSON.stringify(draft, null, 2));
-  await kvWrite(BLOB_META, JSON.stringify({ publishedAt: ts }));
-  await kvDelete(BLOB_DRAFT);
-
-  return { publishedAt: ts };
-}
-
-// ── Past menus (published history) ────────────────────────────────────────
-
-export async function listPublished(): Promise<PublishedEntry[]> {
-  const keys = await kvList(BLOB_PUBLISHED_PREFIX);
-  const entries: PublishedEntry[] = [];
-  for (const key of keys) {
-    const ts = parseInt(key.replace(BLOB_PUBLISHED_PREFIX, ''), 10);
-    let publishedAt = ts;
-    const raw = await kvRead(key);
-    if (raw) {
-      try {
-        const e = JSON.parse(raw);
-        if (typeof e.publishedAt === 'number') publishedAt = e.publishedAt;
-      } catch { /* keep ts fallback */ }
-    }
-    entries.push({ key, ts, publishedAt, label: formatDate(publishedAt) });
-  }
-  return entries.sort((a, b) => b.ts - a.ts).slice(0, MAX_PUBLISHED);
-}
-
-export async function readPublished(key: string): Promise<MenuData> {
-  const raw = await kvRead(key);
-  if (!raw) throw new Error('Published menu not found');
-  const parsed = JSON.parse(raw);
-  const data = parsed && parsed.data ? parsed.data : parsed; // envelope or bare
-  return MenuSchema.parse(data);
-}
-
-// ── Source resolver for preview / print routes ────────────────────────────
-// src: 'current' (default) | 'draft' | 'published-<ts>'
-
-export async function readMenuBySrc(src: string | null): Promise<MenuData> {
-  if (!src || src === 'current') return readMenu();
-  if (src === 'draft') return readDraft();
-  if (/^published-\d+$/.test(src)) return readPublished(src);
-  return readMenu();
-}
+// Named re-exports used by the landing page, API routes, and preview/print.
+export const readCurrentMeta = dinnerDP.readCurrentMeta;
+export const hasDraft        = dinnerDP.hasDraft;
+export const readDraft       = dinnerDP.readDraft;
+export const writeDraft      = dinnerDP.writeDraft;
+export const discardDraft    = dinnerDP.discardDraft;
+export const publishDraft    = dinnerDP.publishDraft;
+export const listPublished   = dinnerDP.listPublished;
+export const readPublished   = dinnerDP.readPublished;
+export const readMenuBySrc   = dinnerDP.readMenuBySrc;

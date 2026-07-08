@@ -1,15 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readHappyhourMenu } from '@/lib/happyhour-menu-store';
+import { readMenuBySrc } from '@/lib/happyhour-menu-store';
 import { renderHappyhourMenu } from '@/lib/render-happyhour-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-happyhour');
 
-export async function GET() {
+export async function GET(request: Request) {
+  const src = new URL(request.url).searchParams.get('src');
   const [data, renderSrc] = await Promise.all([
-    readHappyhourMenu(),
+    readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
   ]);
 

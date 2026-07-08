@@ -1316,3 +1316,20 @@ button {
 }
 .btn-publish:hover:not(:disabled) { background: #9a7a20; }
 .btn-publish:disabled { opacity: 0.6; cursor: default; }
+
+/* Dedicated publish bar above each editor's own footer */
+.editor-footer--publish {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  background: #fbf4e0;
+}
+.publish-hint {
+  flex: 1;
+  min-width: 140px;
+  font-size: 12.5px;
+  color: #6b5410;
+  line-height: 1.4;
+}

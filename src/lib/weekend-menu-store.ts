@@ -143,3 +143,26 @@ export async function restoreWeekendBackup(key: string): Promise<WeekendMenuData
   await writeWeekendMenu(data);
   return data;
 }
+
+// ── Draft / Publish model (shared factory — see draft-publish.ts) ─────────
+
+import { createDraftPublish } from './draft-publish';
+
+export const weekendDP = createDraftPublish<WeekendMenuData>({
+  currentKey:      'weekend-menu-data',
+  draftKey:        'weekend-menu-draft',
+  metaKey:         'weekend-menu-meta',
+  publishedPrefix: 'weekend-published-',
+  schema:          WeekendMenuSchema,
+  readCurrent:     readWeekendMenu,
+});
+
+export const readCurrentMeta = weekendDP.readCurrentMeta;
+export const hasDraft        = weekendDP.hasDraft;
+export const readDraft       = weekendDP.readDraft;
+export const writeDraft      = weekendDP.writeDraft;
+export const discardDraft    = weekendDP.discardDraft;
+export const publishDraft    = weekendDP.publishDraft;
+export const listPublished   = weekendDP.listPublished;
+export const readPublished   = weekendDP.readPublished;
+export const readMenuBySrc   = weekendDP.readMenuBySrc;

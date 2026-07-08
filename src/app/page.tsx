@@ -74,7 +74,7 @@ export default function HomePage() {
                 <h2 className="menu-card-title">{menu.label}</h2>
                 <p className="menu-card-desc">{menu.description}</p>
               </div>
-              <div className="menu-card-action">{menu.action ?? 'Open Editor →'}</div>
+              <div className="menu-card-action">{menu.action ?? 'Open →'}</div>
             </Link>
           ) : (
             <div key={menu.id} className="menu-card menu-card--soon">

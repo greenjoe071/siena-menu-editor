@@ -143,3 +143,26 @@ export async function restoreTuewedBackup(key: string): Promise<TuewedMenuData> 
   await writeTuewedMenu(data);
   return data;
 }
+
+// ── Draft / Publish model (shared factory — see draft-publish.ts) ─────────
+
+import { createDraftPublish } from './draft-publish';
+
+export const tueswedDP = createDraftPublish<TuewedMenuData>({
+  currentKey:      'tueswed-menu-data',
+  draftKey:        'tueswed-menu-draft',
+  metaKey:         'tueswed-menu-meta',
+  publishedPrefix: 'tueswed-published-',
+  schema:          TuewedMenuSchema,
+  readCurrent:     readTuewedMenu,
+});
+
+export const readCurrentMeta = tueswedDP.readCurrentMeta;
+export const hasDraft        = tueswedDP.hasDraft;
+export const readDraft       = tueswedDP.readDraft;
+export const writeDraft      = tueswedDP.writeDraft;
+export const discardDraft    = tueswedDP.discardDraft;
+export const publishDraft    = tueswedDP.publishDraft;
+export const listPublished   = tueswedDP.listPublished;
+export const readPublished   = tueswedDP.readPublished;
+export const readMenuBySrc   = tueswedDP.readMenuBySrc;

@@ -1,15 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readTuewedMenu } from '@/lib/tueswed-menu-store';
+import { readMenuBySrc } from '@/lib/tueswed-menu-store';
 import { renderTuewedMenu } from '@/lib/render-tueswed-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-tueswed');
 
-export async function GET() {
+export async function GET(request: Request) {
+  const src = new URL(request.url).searchParams.get('src');
   const [data, renderSrc, validateSrc, templateSrc] = await Promise.all([
-    readTuewedMenu(),
+    readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'validate.js'), 'utf8'),
     readFile(join(HANDOFF, 'template.html'), 'utf8'),

@@ -143,3 +143,26 @@ export async function restoreMondayBackup(key: string): Promise<MondayMenuData> 
   await writeMondayMenu(data);
   return data;
 }
+
+// ── Draft / Publish model (shared factory — see draft-publish.ts) ─────────
+
+import { createDraftPublish } from './draft-publish';
+
+export const mondayDP = createDraftPublish<MondayMenuData>({
+  currentKey:      'monday-menu-data',
+  draftKey:        'monday-menu-draft',
+  metaKey:         'monday-menu-meta',
+  publishedPrefix: 'monday-published-',
+  schema:          MondayMenuSchema,
+  readCurrent:     readMondayMenu,
+});
+
+export const readCurrentMeta = mondayDP.readCurrentMeta;
+export const hasDraft        = mondayDP.hasDraft;
+export const readDraft       = mondayDP.readDraft;
+export const writeDraft      = mondayDP.writeDraft;
+export const discardDraft    = mondayDP.discardDraft;
+export const publishDraft    = mondayDP.publishDraft;
+export const listPublished   = mondayDP.listPublished;
+export const readPublished   = mondayDP.readPublished;
+export const readMenuBySrc   = mondayDP.readMenuBySrc;

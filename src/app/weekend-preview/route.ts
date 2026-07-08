@@ -1,15 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readWeekendMenu } from '@/lib/weekend-menu-store';
+import { readMenuBySrc } from '@/lib/weekend-menu-store';
 import { renderWeekendMenu } from '@/lib/render-weekend-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-weekend');
 
-export async function GET() {
+export async function GET(request: Request) {
+  const src = new URL(request.url).searchParams.get('src');
   const [data, rawTemplate, renderSrc, settleSrc] = await Promise.all([
-    readWeekendMenu(),
+    readMenuBySrc(src),
     readFile(join(HANDOFF, 'template.html'), 'utf8'),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'settle.js'), 'utf8'),

@@ -1,15 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readMondayMenu } from '@/lib/monday-menu-store';
+import { readMenuBySrc } from '@/lib/monday-menu-store';
 import { renderMondayMenu } from '@/lib/render-monday-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-monday');
 
-export async function GET() {
+export async function GET(request: Request) {
+  const src = new URL(request.url).searchParams.get('src');
   const [data, renderSrc] = await Promise.all([
-    readMondayMenu(),
+    readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
   ]);
 

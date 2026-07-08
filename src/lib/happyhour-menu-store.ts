@@ -134,3 +134,26 @@ export async function restoreHappyhourBackup(key: string): Promise<HappyhourMenu
   await writeHappyhourMenu(data);
   return data;
 }
+
+// ── Draft / Publish model (shared factory — see draft-publish.ts) ─────────
+
+import { createDraftPublish } from './draft-publish';
+
+export const happyhourDP = createDraftPublish<HappyhourMenuData>({
+  currentKey:      'happyhour-menu-data',
+  draftKey:        'happyhour-menu-draft',
+  metaKey:         'happyhour-menu-meta',
+  publishedPrefix: 'happyhour-published-',
+  schema:          HappyhourMenuSchema,
+  readCurrent:     readHappyhourMenu,
+});
+
+export const readCurrentMeta = happyhourDP.readCurrentMeta;
+export const hasDraft        = happyhourDP.hasDraft;
+export const readDraft       = happyhourDP.readDraft;
+export const writeDraft      = happyhourDP.writeDraft;
+export const discardDraft    = happyhourDP.discardDraft;
+export const publishDraft    = happyhourDP.publishDraft;
+export const listPublished   = happyhourDP.listPublished;
+export const readPublished   = happyhourDP.readPublished;
+export const readMenuBySrc   = happyhourDP.readMenuBySrc;
