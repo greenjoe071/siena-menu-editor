@@ -1,15 +1,17 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readMenu } from '@/lib/menu-store';
+import { readMenuBySrc } from '@/lib/menu-store';
 import { renderMenu } from '@/lib/render-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff');
 
-export async function GET() {
+// ?src=current (default) | draft | published-<ts>
+export async function GET(request: Request) {
+  const src = new URL(request.url).searchParams.get('src');
   const [data, renderSrc] = await Promise.all([
-    readMenu(),
+    readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
   ]);
 

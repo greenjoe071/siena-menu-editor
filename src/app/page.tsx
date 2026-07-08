@@ -4,10 +4,11 @@ const MENUS = [
   {
     id: 'dinner',
     label: 'Dinner Menu',
-    description: 'Edit dishes, descriptions, and prices for the main dinner menu',
+    description: 'View or print the current menu, or start a new draft',
     icon: '🍽️',
     ready: true,
     href: '/dinner',
+    action: 'Open →',
   },
   {
     id: 'happyhour',
@@ -73,7 +74,7 @@ export default function HomePage() {
                 <h2 className="menu-card-title">{menu.label}</h2>
                 <p className="menu-card-desc">{menu.description}</p>
               </div>
-              <div className="menu-card-action">Open Editor →</div>
+              <div className="menu-card-action">{menu.action ?? 'Open Editor →'}</div>
             </Link>
           ) : (
             <div key={menu.id} className="menu-card menu-card--soon">
