@@ -76,7 +76,8 @@ The editor pane on the right is simply `<iframe src="/preview">` — re-load it 
 ## Out of scope for v1
 
 - Authentication / per-user accounts (owner will add later if needed)
-- Adding/removing dishes (layout cannot accept extra dishes safely)
+- Adding/removing **dishes** (layout cannot accept extra dishes safely). The pasta add-on **items** are a separate, variable-cardinality list and CAN be edited — see BUILD-SPEC.
+- Adding/removing **salad or steak add-on items** — those cardinalities are fixed. (Their toggles + prices are editable, but the set of items is locked.)
 - Adding/removing sections (each section's page placement is part of the design)
 - Moving dishes between sections (a Pasta in the Secondi column would mis-frame)
 - Editing the CSS, fonts, or page-break structure of `template.html`

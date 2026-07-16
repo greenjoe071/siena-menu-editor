@@ -20,9 +20,38 @@ The menu data is a single JSON object. Its top-level shape:
     "title": "Fresh Baked Bread",
     "body": "Each day at Siena we bake all of our bread from scratch…"
   },
-  "raw_warning_full":  "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness, especially if you have certain medical conditions.",
-  "raw_warning_short": "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness.",
+  "raw_warning_main":      "* Consuming raw or undercooked beef, poultry, or seafood may increase your risk of foodborne illness,",
+  "raw_warning_qualifier": "especially if you have certain medical conditions.",
   "policy_line": "<strong>No split checks.</strong>  ·  <strong>Gratuity of 22% for parties of 6 or more.</strong>",
+  "salad_addons": {
+    "enabled": true,
+    "label": "Add to any Salad",
+    "items": [
+      { "id": "sa-chicken", "name": "Grilled Chicken", "price": "8",  "enabled": true },
+      { "id": "sa-salmon",  "name": "Grilled Salmon",  "price": "12", "enabled": true }
+    ]
+  },
+  "pasta_addons": {
+    "enabled": true,
+    "label": "Add to any pasta",
+    "items": [
+      { "id": "a-chicken",   "name": "Chicken",   "price": "6.25", "enabled": true },
+      { "id": "a-shrimp",    "name": "Shrimp",    "price": "8",    "enabled": true },
+      { "id": "a-scallops",  "name": "Scallops",  "price": "12",   "enabled": true },
+      { "id": "a-mushrooms", "name": "Mushrooms", "price": "6",    "enabled": true },
+      { "id": "a-sausage",   "name": "Sausage",   "price": "4",    "enabled": true }
+    ],
+    "tail": "— or ask your server for other options."
+  },
+  "steak_addons": {
+    "enabled": true,
+    "label": "Add to any steak",
+    "items": [
+      { "id": "ta-mushrooms", "name": "Sautéed Mushrooms", "price": "6",  "enabled": true },
+      { "id": "ta-shrimp",    "name": "Grilled Shrimp",    "price": "9",  "enabled": true },
+      { "id": "ta-scallops",  "name": "Seared Scallops",   "price": "12", "enabled": true }
+    ]
+  },
   "sections": {
     "antipasti":       { "title": "Antipasti",            "items": [ /* 10 dishes */ ] },
     "zuppa-insalate":  { "title": "Zuppa e Insalate",     "items": [ /* 4 dishes */ ] },
@@ -33,6 +62,91 @@ The menu data is a single JSON object. Its top-level shape:
   }
 }
 ```
+
+### Add-on blocks shape — pasta, salad, steak
+
+There are now **three** add-on lines on the printed menu, each rendered
+identically (gold italic Playfair label + Montserrat items with bold names
+and middle-dot separators). They sit at the bottom of their respective
+sections:
+
+| Block | Page | Sits below | Default items |
+|---|---|---|---|
+| `salad_addons` | 1 | Zuppa e Insalate grid | Grilled Chicken, Grilled Salmon |
+| `pasta_addons` | 2 | Pasta grid | Chicken, Shrimp, Scallops, Mushrooms, Sausage (+ optional tail) |
+| `steak_addons` | 3 | Secondi grid | Sautéed Mushrooms, Grilled Shrimp, Seared Scallops |
+
+Each block has the same JSON shape:
+
+```json
+{
+  "enabled": true,
+  "label": "Add to any Salad",
+  "items": [
+    { "id": "sa-chicken", "name": "Grilled Chicken", "price": "8",  "enabled": true },
+    { "id": "sa-salmon",  "name": "Grilled Salmon",  "price": "12", "enabled": true }
+  ],
+  "tail": "— or ask your server for other options."
+}
+```
+
+#### Per-item editor controls (the headline requirement)
+
+For each add-on item, the editor controls **two and only two** things:
+
+1. **`enabled`** — boolean toggle. When false, that item is hidden from the
+   printed line. The other items in the same block render normally.
+2. **`price`** — plain text, no `$`. Bold name stays in place to the left.
+
+The `name` is **NOT editor-controlled for the salad and steak blocks** —
+those items are anchored to the kitchen's standard offerings (Grilled Chicken,
+Grilled Salmon for salads; Sautéed Mushrooms, Grilled Shrimp, Seared Scallops
+for steaks) and the printed line was tuned for those exact words. The pasta
+block is the legacy exception (see "Pasta block specifics" below).
+
+#### Block-level enabled
+
+The block itself also has an `enabled` boolean — toggling it false hides the
+entire line, regardless of how many items are enabled. Use this for the
+"turn the whole line off for now" case (e.g., a kitchen-out situation that
+affects every protein in the block).
+
+#### Hide behavior — both pathways
+
+The renderer **removes the block from the DOM entirely** when:
+- `block.enabled === false`, OR
+- every item has `enabled === false` (no surviving items to render).
+
+"Remove from DOM" means no leftover empty `<div>`, no `display: none`, no
+residual whitespace — the printed page reflows so the next section moves up.
+This matches the design intent: the line is either present and full, or
+gone. No half-states.
+
+#### Pasta block specifics — legacy variable-cardinality
+
+The pasta block predates the salad/steak blocks and has two carry-overs:
+
+1. **`label` and `name` ARE editable** for the pasta block — the kitchen
+   rotates pasta additions seasonally and the framing copy changes with them.
+   The editor UI should expose pasta item `name` as a text input. For salad
+   and steak, the editor UI shows `name` as a read-only label next to the
+   `price` and `enabled` controls.
+2. **Variable cardinality** — the editor can add and remove pasta items.
+   The salad and steak blocks have **fixed cardinality** (2 and 3 items
+   respectively). Do not expose add/remove for those.
+3. **`tail`** — only the pasta block has a tail (`tail` field). The renderer
+   removes the tail slot if the data omits it or sets it to empty. Salad
+   and steak blocks have no tail — their JSON omits the `tail` key.
+
+**Single-line fit constraint** still applies to the pasta block: total
+characters across all enabled `name + price` pairs ≤ 70 keeps the items
+on one printed line at 9pt Montserrat. Validation should warn (not block)
+above that threshold.
+
+### Pasta add-ons shape (legacy section — kept for reference)
+
+See "Add-on blocks shape" above. The pasta block's `items` array is the
+only variable-cardinality list on this menu.
 
 ### Dish shapes
 
@@ -70,9 +184,25 @@ Detected by `price_format === "dual"`.
 | About blurb (page 1) | `about_blurb` | Plain text. |
 | Bread note title | `bread_note.title` | Plain text. |
 | Bread note body | `bread_note.body` | Plain text. |
-| Raw-food warning (long) | `raw_warning_full` | Used on pages 1 and 3 footers. |
-| Raw-food warning (short) | `raw_warning_short` | Used on page 2 footer. Owner may want to merge these later. |
+| Raw-food warning (line 1) | `raw_warning_main` | Plain text. The bottom of every page. Renders above an explicit line break. |
+| Raw-food warning (line 2) | `raw_warning_qualifier` | Plain text. Sits below the break. Together with `raw_warning_main` forms the full disclaimer. |
 | Policy line | `policy_line` | HTML allowed (the `<strong>` tags around "No split checks" and the gratuity clause). |
+| **Salad add-on item price** | `salad_addons.items[*].price` | Plain text, no `$`. The headline editable field for this block. |
+| **Salad add-on item enabled** | `salad_addons.items[*].enabled` | Boolean toggle. Hides the item from the printed line. |
+| **Salad add-ons block enabled** | `salad_addons.enabled` | Boolean. Hides the entire line. |
+| Salad add-ons label | `salad_addons.label` | Plain text. Italic gold eyebrow. Rarely edited but allowed. |
+| **Pasta add-on item price** | `pasta_addons.items[*].price` | Plain text, no `$`. |
+| **Pasta add-on item enabled** | `pasta_addons.items[*].enabled` | Boolean. Hide one item. |
+| Pasta add-on item name | `pasta_addons.items[*].name` | Plain text. Renders bold. **Pasta only** — salad/steak names are static. |
+| Pasta add-on item add/remove | `pasta_addons.items` array length | **Variable cardinality.** See add-on blocks shape for the single-line fit constraint. |
+| Pasta add-on item order | `pasta_addons.items` array order | Drag-to-reorder. |
+| Pasta add-ons label | `pasta_addons.label` | Plain text. Italic gold eyebrow. |
+| Pasta add-ons tail | `pasta_addons.tail` | Plain text. The trailing italic line below the items. Empty string removes the tail slot. |
+| **Pasta add-ons block enabled** | `pasta_addons.enabled` | Boolean. Hides the entire line. |
+| **Steak add-on item price** | `steak_addons.items[*].price` | Plain text, no `$`. |
+| **Steak add-on item enabled** | `steak_addons.items[*].enabled` | Boolean toggle. |
+| **Steak add-ons block enabled** | `steak_addons.enabled` | Boolean. Hides the entire line. |
+| Steak add-ons label | `steak_addons.label` | Plain text. Italic gold eyebrow. Rarely edited. |
 | Section title | `sections.<id>.title` | E.g. "Antipasti" → "Antipasti & Stuzzichini". Be conservative — long titles can wrap. |
 | Dish name | `sections.<id>.items[*].name` | Plain text. |
 | Dish description | `sections.<id>.items[*].desc` | Plain text. **Watch length** — longer descriptions push column heights. |
@@ -83,9 +213,15 @@ Detected by `price_format === "dual"`.
 ## What the editor CANNOT change
 
 - The set of section IDs (`antipasti`, `zuppa-insalate`, `pasta`, `contorni`, `secondi`, `non-alcoholic`)
-- The number of dishes in each section (cardinality is fixed: 10 / 4 / 7 / 6 / 8 / 7)
+- The number of dishes in each section (cardinality is fixed: 10 / 4 / 7 / 6 / 8 / 7) — the **pasta** add-ons row is the only variable-cardinality list on this menu
+- **Salad add-on item names** (`salad_addons.items[*].name`) — fixed at Grilled Chicken and Grilled Salmon. Editor UI shows them as read-only labels next to the price + enabled controls.
+- **Salad add-on cardinality** — always exactly 2 items. No add/remove.
+- **Steak add-on item names** (`steak_addons.items[*].name`) — fixed at Sautéed Mushrooms, Grilled Shrimp, Seared Scallops. Read-only in the editor.
+- **Steak add-on cardinality** — always exactly 3 items. No add/remove.
+- Salad and steak add-on `id` values (the opaque keys `sa-chicken`, `sa-salmon`, `ta-mushrooms`, `ta-shrimp`, `ta-scallops`) — the renderer matches on these.
 - Which section a dish belongs to (no cross-section moves)
 - The `price_format` of a dish (only Tomato Bisque is dual; this is locked)
+- The structural line break between `raw_warning_main` and `raw_warning_qualifier` — the template hardcodes a `<br>` between the two text slots; the editor only edits the two text contents, not their relationship
 - Anything visual: CSS, fonts, page breaks, colors, spacing
 - The number of pages (3) or which sections appear on which page
 
@@ -183,6 +319,16 @@ When the seed JSON is intentionally updated (e.g., the owner asks to change a di
 - **Description length:** the layout was tuned for descriptions of roughly 6–14 words. Much longer descriptions can push column heights past their balance point and create awkward gaps. The editor should warn (not block) when a description exceeds ~120 characters.
 
 - **Section title length:** roughly 25 characters is the safe upper bound. Beyond that, the gold rule beside it gets squeezed. Warn at 22+.
+
+- **The pasta add-ons row** sits between Pasta and Contorni on page 2. It's a single inline list — `<strong>Name</strong> price` pairs joined by `&nbsp;·&nbsp;`. The renderer rewrites `.addons-items` `innerHTML` from the JSON array each time; opaque item IDs (`a-chicken`, etc.) are kept in the data for the editor's list-key purposes but do NOT appear in the rendered DOM. Reorder, add, and remove all work via JSON array mutation. Watch the single-line constraint (see "Add-on blocks shape").
+
+- **The salad add-ons row** sits below the Zuppa e Insalate grid on page 1, between the salad dishes and the Fresh Baked Bread note. Same rendering treatment as pasta, minus the tail. Fixed at 2 items. **Editor controls per item are toggle + price only** — names are static.
+
+- **The steak add-ons row** sits below the Secondi grid on page 3, between the dishes and the Non-Alcoholic Beverages drinks panel. Same rendering treatment, no tail. Fixed at 3 items. Editor controls per item are toggle + price only.
+
+- **Add-on hide behavior is whole-block:** if every item in a block is disabled (or `block.enabled === false`), the renderer removes the entire block element from the DOM — not just blanks it. The printed page reflows. There is no "empty add-ons row" intermediate state.
+
+- **Snapshot regeneration when add-on data changes:** if you flip an `enabled` flag or change a price in the seed JSON for testing, the snapshot test will fail until you regenerate `expected-render.html`. Workflow: load `template.html` into JSDOM, run `SienaRender.render(doc, newData)`, write `dom.serialize()` to `expected-render.html`, commit all three (data, expected, test) together.
 
 - **Reorder must be persistent:** when the manager drags Dish A above Dish B and saves, the new order is the new canonical order. The next preview, the next print, the next edit session — all see the new order.
 
