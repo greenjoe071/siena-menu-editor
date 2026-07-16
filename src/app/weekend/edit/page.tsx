@@ -700,6 +700,7 @@ export default function WeekendEditorPage() {
           <div className="editor-header">
             <Link href="/weekend" className="btn-back">← Back</Link>
             <h1>Weekend Specials</h1>
+            <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
           <div className="draft-banner">

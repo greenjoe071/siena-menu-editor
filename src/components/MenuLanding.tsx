@@ -22,7 +22,7 @@ export default function MenuLanding({
     <div className="dinner-landing">
       <header className="dl-header">
         <div className="dl-header-inner">
-          <Link href="/" className="dl-back">← All Menus</Link>
+          <Link href="/" className="dl-back">🏠 Home</Link>
           <h1 className="dl-title">{menuName}</h1>
           <p className="dl-subtitle">View or print the current menu, or start a new draft.</p>
         </div>

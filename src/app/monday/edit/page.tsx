@@ -550,6 +550,7 @@ export default function MondayEditorPage() {
           <div className="editor-header">
             <Link href="/monday" className="btn-back">← Back</Link>
             <h1>Monday $26 Specials</h1>
+            <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
           <div className="draft-banner">

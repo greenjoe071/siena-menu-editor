@@ -306,6 +306,7 @@ export default function TuewedEditorPage() {
         <div className="editor-header">
           <Link href="/tueswed" className="btn-back">← Back</Link>
           <h1>Tue–Wed $45 Prix Fixe</h1>
+            <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
         {validationFits === false && (

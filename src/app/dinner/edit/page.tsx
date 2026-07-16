@@ -591,6 +591,7 @@ export default function DinnerDraftEditorPage() {
           <div className="editor-header">
             <Link href="/dinner" className="btn-back">← Dinner Menu</Link>
             <h1>Editing a Draft</h1>
+            <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
           <div className="draft-banner">

@@ -405,6 +405,23 @@ button {
   color: #fff;
 }
 
+.btn-home {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-home:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
 /* ── Full-width editor (Weekend Specials) ────────────── */
 .app-wide {
   min-height: 100vh;

@@ -469,6 +469,7 @@ export default function HappyhourEditorPage() {
         <div className="editor-header">
           <Link href="/happyhour" className="btn-back">← Back</Link>
           <h1>Happy Hour Menu</h1>
+            <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
         {/* Overflow warning banner */}
