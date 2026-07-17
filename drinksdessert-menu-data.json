@@ -1,0 +1,102 @@
+{
+  "cocktails": [
+    { "id": "ck-1", "name": "Godfather", "desc": "Maker's Mark Bourbon and Amaretto Disaronno. Brando's drink on set!", "price": "14.00" },
+    { "id": "ck-2", "name": "Aperol Spritz", "desc": "Aperol, Italy's popular aperitif, with sparkling Prosecco, served over ice.", "price": "13.00" },
+    { "id": "ck-3", "name": "Italian Sangria", "desc": "Sangiovese, Malbec, Prosecco, Limoncello, orange, pineapple and cranberry juice.", "price": "13.00" },
+    { "id": "ck-4", "name": "Gold Rush Manhattan", "desc": "Redemption Rye Whiskey, Licor 43, and a dash of orange bitters. Shaken, served up with a Luxardo cherry.", "price": "15.00" },
+    { "id": "ck-5", "name": "Negroni Sbagliato", "desc": "Campari, Sweet Vermouth and Prosecco, orange garnish.", "price": "14.00" },
+    { "id": "ck-6", "name": "Tuscan Affair", "desc": "St. Germain Elderflower, Prosecco, rose sugar rim.", "price": "15.00" },
+    { "id": "ck-7", "name": "Siena Margarita", "desc": "LunAzul Blue Agave Tequila with Cointreau, fresh lime juice & a splash of syrup. Served on the rocks with a salted rim.", "price": "15.00", "note": "Add a floater of Grand Marnier or Herradura Reposado — $3.00" },
+    { "id": "ck-8", "name": "Italian Paloma", "desc": "Contratto Aperitif Liqueur, LunAzul Blanco Tequila, grapefruit juice, club soda.", "price": "15.00" }
+  ],
+  "spirits": {
+    "bourbon": [
+      { "id": "sp-b1", "name": "Bulleit Bourbon", "price": "13.00" },
+      { "id": "sp-b2", "name": "Bulleit 75 Rye", "price": "13.00" },
+      { "id": "sp-b3", "name": "Four Roses Small Batch", "price": "18.00" },
+      { "id": "sp-b4", "name": "Redemption Rye", "price": "11.00" },
+      { "id": "sp-b5", "name": "Weller Special Reserve", "price": "15.00" },
+      { "id": "sp-b6", "name": "Basil Hayden", "price": "13.00" },
+      { "id": "sp-b7", "name": "Maker's Mark", "price": "12.00" },
+      { "id": "sp-b8", "name": "Garrison Brothers Single Barrel", "price": "28.00" },
+      { "id": "sp-b9", "name": "Buffalo Trace", "price": "12.00" },
+      { "id": "sp-b10", "name": "Woodford Reserve", "price": "13.00" },
+      { "id": "sp-b11", "name": "Knob Creek 9 Years", "price": "14.00" }
+    ],
+    "scotch": [
+      { "id": "sp-s1", "name": "Cragganmore 12 Years", "price": "14.00" },
+      { "id": "sp-s2", "name": "Dalmore 12 Years", "price": "13.00" },
+      { "id": "sp-s3", "name": "Glenfiddich 12 Years", "price": "14.00" },
+      { "id": "sp-s4", "name": "Glenlivet 12 Years", "price": "14.00" },
+      { "id": "sp-s5", "name": "Glenmorangie 10 Years", "price": "16.00" },
+      { "id": "sp-s6", "name": "Lagavulin 16 Years", "price": "20.00" },
+      { "id": "sp-s7", "name": "Laphroaig 10 Years", "price": "14.00" },
+      { "id": "sp-s8", "name": "Macallan 12 Years", "price": "16.00" },
+      { "id": "sp-s9", "name": "Oban 14 Years", "price": "18.00" },
+      { "id": "sp-s10", "name": "Singleton 10 Years", "price": "14.00" },
+      { "id": "sp-s11", "name": "Talisker 10 Years", "price": "14.00" }
+    ],
+    "beer": [
+      { "id": "sp-be1", "name": "Bud Light", "price": "6.50" },
+      { "id": "sp-be2", "name": "McConauhaze Hazy IPA", "price": "7.00" },
+      { "id": "sp-be3", "name": "Dos Equis Lager", "price": "7.00" },
+      { "id": "sp-be4", "name": "Fireman's 4", "price": "7.00" },
+      { "id": "sp-be5", "name": "Non-Alcoholic Beer", "price": "7.00" },
+      { "id": "sp-be6", "name": "Menabrea Bionda (Italia)", "price": "8.00" },
+      { "id": "sp-be7", "name": "Menabrea Ambrata (Italia)", "price": "8.00" },
+      { "id": "sp-be8", "name": "Michelob Ultra", "price": "6.50" },
+      { "id": "sp-be9", "name": "Miller Lite", "price": "6.50" },
+      { "id": "sp-be10", "name": "Peroni (Italia)", "price": "7.50" },
+      { "id": "sp-be11", "name": "Shiner Bock", "price": "7.00" },
+      { "id": "sp-be12", "name": "Stella Artois", "price": "7.50" }
+    ]
+  },
+  "dopaCena": {
+    "digestivo": [
+      { "id": "dc-d1", "name": "Aperol", "price": "8.00" },
+      { "id": "dc-d2", "name": "Fernet-Branca", "price": "8.25" },
+      { "id": "dc-d3", "name": "Campari", "price": "9.25" },
+      { "id": "dc-d4", "name": "Cynar", "price": "9.50" },
+      { "id": "dc-d5", "name": "Pernod", "price": "8.00" },
+      { "id": "dc-d6", "name": "Amaro Nonino", "price": "12.00" }
+    ],
+    "grappa": [
+      { "id": "dc-g1", "name": "Marolo Camomile", "price": "14.00" },
+      { "id": "dc-g2", "name": "Marolo Barolo", "price": "17.00" },
+      { "id": "dc-g3", "name": "Il Poggione \u201cPaganelli\u201d", "price": "25.00", "desc": "Brunello Riserva di Montalcino" },
+      { "id": "dc-g4", "name": "Nonino Merlot", "price": "19.00" },
+      { "id": "dc-g5", "name": "Marolo Moscato", "price": "19.00" },
+      { "id": "dc-g6", "name": "Sassicaia Cab & Cab Franc 2016", "price": "35.00" }
+    ],
+    "ports": [
+      { "id": "dc-p1", "name": "Taylor Ruby Port", "price": "10.00" },
+      { "id": "dc-p2", "name": "Fonseca 10 Yr Tawny", "price": "14.00" },
+      { "id": "dc-p3", "name": "Fonseca 20 Yr Tawny", "price": "18.00" },
+      { "id": "dc-p4", "name": "2017 Warre's Vintage Port", "price": "20.00" }
+    ],
+    "cognac": [
+      { "id": "dc-c1", "name": "Hennessey VS", "price": "12.00" },
+      { "id": "dc-c2", "name": "Hennessey VSOP", "price": "14.00" },
+      { "id": "dc-c3", "name": "Courvoisier VS", "price": "12.00" },
+      { "id": "dc-c4", "name": "Courvoisier VSOP", "price": "14.00" },
+      { "id": "dc-c5", "name": "Daron Calvados Pays d'Auge", "price": "13.00" },
+      { "id": "dc-c6", "name": "Pierre Ferrand Selection des Anges", "price": "18.00" }
+    ],
+    "traditionalItalian": [
+      { "id": "dc-t1", "name": "House-Made \u201cSiena\u201d Limoncello", "price": "10.00" },
+      { "id": "dc-t2", "name": "Caravella Limoncello", "price": "10.00" },
+      { "id": "dc-t3", "name": "2024 \u201cFelice\u201d Moscato D'Asti", "price": "6.50" },
+      { "id": "dc-t4", "name": "2022 Firriato L'Ecru Passito", "price": "8.00" },
+      { "id": "dc-t5", "name": "2018 Chateau Cantegril Sauternes", "price": "12.00" },
+      { "id": "dc-t6", "name": "2018 Volpaia Vin Santo", "price": "25.00" }
+    ]
+  },
+  "dolci": [
+    { "id": "dl-1", "name": "Sorbetti di Frutta", "price": "11", "desc": "Mango, Raspberry, Lemon" },
+    { "id": "dl-2", "name": "Torta Cioccolato e Pistacchio", "price": "12", "desc": "Rich chocolate torte studded with roasted pistachios, orange marmalade, whipped cream" },
+    { "id": "dl-3", "name": "Cr\u00e8me Br\u00fbl\u00e9e", "price": "11", "desc": "Vanilla bean custard, whipped cream, fresh berries" },
+    { "id": "dl-4", "name": "Tiramisu", "price": "10", "desc": "Liqueur-soaked genoise, mascarpone, chocolate sauce, toasted almonds" },
+    { "id": "dl-5", "name": "Affogato", "price": "8", "desc": "Teo's vanilla gelato, with a shot of espresso poured over" },
+    { "id": "dl-6", "name": "Budino di Pane", "price": "12", "desc": "Baked peach and vanilla bread pudding, topped with Teo's vanilla gelato" }
+  ]
+}

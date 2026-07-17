@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Drinks &amp; Dessert Menu</title>
+<style>
+/* ── Self-hosted fonts ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/*
+  PHYSICAL PRODUCT — read this before touching layout.
+  ======================================================
+  This menu is four narrow 4.25in × 11in insert cards that slide into a
+  hard menu holder (corners hold each card in place). They are produced
+  from TWO physical 8.5×11 sheets, each cut in half top-to-bottom (i.e. a
+  single vertical cut down the middle):
+
+    Sheet A  =  [ Signature Cocktails | Spirits ]        → cut → 2 cards
+    Sheet B  =  [ Siena Dopa Cena     | Dolci    ]        → cut → 2 cards
+
+  Each <div class="sheet"> below is one physical 8.5×11 print page holding
+  two <div class="page"> halves (4.25in each) side by side, with a dashed
+  cut-guide down the middle. This split is deliberate: if only the Dolci
+  page changes, the shop reprints Sheet B only — Sheet A (Cocktails +
+  Spirits) doesn't have to be reprinted. See BUILD-SPEC.md "Printing &
+  reprints".
+*/
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #3a1a06;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sheet {
+  width: 8.5in;
+  height: 11in;
+  display: flex;
+  page-break-after: always;
+  position: relative;
+  background: #fff;
+}
+.sheet:last-child { page-break-after: auto; }
+
+.cut-guide {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed #c9a87a;
+  pointer-events: none;
+}
+
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  .sheet { box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
+}
+@media print {
+  body { background: #fff; padding: 0; display: block; }
+  .sheet { box-shadow: none; }
+  /* Editor sets one of these classes on <body> before window.print() to
+     reprint a single sheet. Default (neither class) prints both. */
+  body.print-sheet-a-only .sheet[data-sheet-id="b"] { display: none; }
+  body.print-sheet-b-only .sheet[data-sheet-id="a"] { display: none; }
+}
+
+.page {
+  width: 4.25in;
+  height: 11in;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.page[data-page-id="cocktails"], .page[data-page-id="dolci"] { padding: 0.55in 0.42in 0.4in; }
+.page[data-page-id="spirits"], .page[data-page-id="dopacena"] { padding: 0.5in 0.4in 0.35in; }
+
+.page-title {
+  text-align: center;
+  flex-shrink: 0;
+}
+.page-title-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.page-title-rule { height: 1px; width: 28px; background: #b8821e; opacity: 0.6; }
+.page-title-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  color: #3a1a06;
+  white-space: nowrap;
+}
+.page[data-page-id="cocktails"] .page-title,
+.page[data-page-id="spirits"]   .page-title { margin-bottom: 20px; }
+.page[data-page-id="dolci"]     .page-title { margin-bottom: 26px; }
+.page[data-page-id="dopacena"]  .page-title { margin-bottom: 12px; }
+.page[data-page-id="cocktails"] .page-title-text,
+.page[data-page-id="spirits"]   .page-title-text,
+.page[data-page-id="dolci"]     .page-title-text { font-size: 22pt; }
+.page[data-page-id="dopacena"]  .page-title-text { font-size: 19pt; }
+
+.subsection-title {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 10.5pt;
+  color: #b8821e;
+}
+.page[data-page-id="spirits"] .subsection-title { margin: 6px 0 4px; }
+.page[data-page-id="spirits"] .subsection-title:first-of-type { margin-top: 2px; }
+.page[data-page-id="dopacena"] .subsection-title { margin: 6px 0 3px; }
+.page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 1px; }
+
+.item-list { display: flex; flex-direction: column; }
+
+/* ── Cocktails — name/price row + wrapping description + optional note ── */
+.item-list[data-list-id="cocktails"] .item { margin-bottom: 20px; }
+.item-list[data-list-id="cocktails"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cocktail-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 16pt; color: #3a1a06; line-height: 1.15; }
+.cocktail-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 13.5pt; color: #b8821e; white-space: nowrap; }
+.cocktail-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.38; margin-top: 3px; text-wrap: pretty; }
+.cocktail-note { font-family: 'Playfair Display', serif; font-style: italic; font-size: 10pt; color: #6b4c2a; margin-top: 3px; }
+
+/* ── Spirits (name + price only, no description) ── */
+.item-list[data-list-id^="spirits-"] .item { margin-bottom: 4px; }
+.item-list[data-list-id^="spirits-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.item-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; font-size: 12pt; color: #3a1a06; line-height: 1.15; }
+.item-price { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11pt; color: #b8821e; white-space: nowrap; }
+
+/* ── Dopa Cena (name + price, any item MAY carry an optional one-line description) ── */
+.item-list[data-list-id^="dopacena-"] .item { margin-bottom: 4px; }
+.item-list[data-list-id^="dopacena-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.item-desc { font-family: 'Montserrat', sans-serif; font-size: 9.5pt; color: #6b4c2a; margin-top: -1px; }
+
+/* ── Dolci — centered, name/price + required description ── */
+.item-list[data-list-id="dolci"] .item { text-align: center; margin-bottom: 26px; }
+.item-list[data-list-id="dolci"] .row-center { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
+.dolci-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 16.5pt; color: #3a1a06; }
+.dolci-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 14pt; color: #b8821e; }
+.dolci-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.4; margin-top: 6px; padding: 0 8px; text-wrap: pretty; }
+
+/*
+  ── THE ONLY SIZE FLEX THIS LAYOUT ALLOWS ──
+  validate.js measures each .page. If content overflows at normal size, it
+  adds "shrink-1pt" to THAT page only and re-measures. Every dynamic
+  (data-driven) text run below drops by exactly 1pt — static chrome
+  (page titles, subsection titles, cut-guide) is NEVER touched. If the
+  page still overflows after this one step, validate.js reports it and the
+  editor blocks the save. There is no second shrink step.
+*/
+.page.shrink-1pt .cocktail-name  { font-size: 15pt; }
+.page.shrink-1pt .cocktail-price { font-size: 12.5pt; }
+.page.shrink-1pt .cocktail-desc  { font-size: 11pt; }
+.page.shrink-1pt .cocktail-note  { font-size: 9pt; }
+.page.shrink-1pt .item-name      { font-size: 11pt; }
+.page.shrink-1pt .item-price     { font-size: 10pt; }
+.page.shrink-1pt .item-desc      { font-size: 8.5pt; }
+.page.shrink-1pt .dolci-name     { font-size: 15.5pt; }
+.page.shrink-1pt .dolci-price    { font-size: 13pt; }
+.page.shrink-1pt .dolci-desc     { font-size: 11pt; }
+</style>
+</head>
+<body>
+
+<!-- SHEET A — Signature Cocktails | Spirits -->
+<div class="sheet" data-sheet-id="a">
+
+  <div class="page" data-page-id="cocktails">
+    <div class="page-title">
+      <div class="page-title-row">
+        <div class="page-title-rule"></div>
+        <div class="page-title-text">Signature Cocktails</div>
+        <div class="page-title-rule"></div>
+      </div>
+    </div>
+    <div class="item-list" data-list-id="cocktails"></div>
+  </div>
+
+  <div class="cut-guide"></div>
+
+  <div class="page" data-page-id="spirits">
+    <div class="page-title">
+      <div class="page-title-row">
+        <div class="page-title-rule"></div>
+        <div class="page-title-text">Spirits</div>
+        <div class="page-title-rule"></div>
+      </div>
+    </div>
+    <div class="subsection-title">Rye / Whiskey / Bourbon</div>
+    <div class="item-list" data-list-id="spirits-bourbon"></div>
+    <div class="subsection-title">Single Malt Scotch Whisky</div>
+    <div class="item-list" data-list-id="spirits-scotch"></div>
+    <div class="subsection-title">Bottled Beer</div>
+    <div class="item-list" data-list-id="spirits-beer"></div>
+  </div>
+
+</div>
+
+<!-- SHEET B — Siena Dopa Cena | Dolci -->
+<div class="sheet" data-sheet-id="b">
+
+  <div class="page" data-page-id="dopacena">
+    <div class="page-title">
+      <div class="page-title-row">
+        <div class="page-title-rule"></div>
+        <div class="page-title-text">Siena Dopa Cena</div>
+        <div class="page-title-rule"></div>
+      </div>
+    </div>
+    <div class="subsection-title">Digestivo</div>
+    <div class="item-list" data-list-id="dopacena-digestivo"></div>
+    <div class="subsection-title">Grappa &middot; 2.5 oz</div>
+    <div class="item-list" data-list-id="dopacena-grappa"></div>
+    <div class="subsection-title">Ports &middot; 2.5 oz</div>
+    <div class="item-list" data-list-id="dopacena-ports"></div>
+    <div class="subsection-title">Cognac &amp; Calvados</div>
+    <div class="item-list" data-list-id="dopacena-cognac"></div>
+    <div class="subsection-title">Traditional Italian &middot; 2.5 oz</div>
+    <div class="item-list" data-list-id="dopacena-traditionalItalian"></div>
+  </div>
+
+  <div class="cut-guide"></div>
+
+  <div class="page" data-page-id="dolci">
+    <div class="page-title">
+      <div class="page-title-row">
+        <div class="page-title-rule"></div>
+        <div class="page-title-text">Dolci</div>
+        <div class="page-title-rule"></div>
+      </div>
+    </div>
+    <div class="item-list" data-list-id="dolci"></div>
+  </div>
+
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     Item DOM blueprints. render.js clones one of these per JSON item and
+     appends it into the matching [data-list-id] container.
+     ───────────────────────────────────────────────────────────────────── -->
+
+<template id="cocktail-item-template"><div class="item"><div class="row"><span class="cocktail-name"></span><span class="cocktail-price"></span></div><div class="cocktail-desc"></div><div class="cocktail-note"></div></div></template>
+
+<template id="plain-item-template"><div class="item"><div class="row"><span class="item-name"></span><span class="item-price"></span></div></div></template>
+
+<template id="descriptive-item-template"><div class="item"><div class="row"><span class="item-name"></span><span class="item-price"></span></div><div class="item-desc"></div></div></template>
+
+<template id="dolci-item-template"><div class="item"><div class="row-center"><span class="dolci-name"></span><span class="dolci-price"></span></div><div class="dolci-desc"></div></div></template>
+
+<script src="validate.js"></script>
+
+</body>
+</html>

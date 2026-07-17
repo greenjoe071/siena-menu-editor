@@ -43,11 +43,13 @@ const MENUS = [
     href: '/weekend',
   },
   {
-    id: 'misc2',
-    label: 'Coming Soon',
-    description: 'New menu — in progress',
-    icon: '📋',
-    ready: false,
+    id: 'drinksdessert',
+    label: 'Drinks & Dessert',
+    description: 'Cocktails, spirits, Dopa Cena, and Dolci — four cards',
+    icon: '🍸',
+    ready: true,
+    href: '/drinksdessert',
+    action: 'Open →',
   },
 ];
 
