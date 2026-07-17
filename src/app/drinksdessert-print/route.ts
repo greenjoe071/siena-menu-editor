@@ -46,7 +46,9 @@ ${validateSrc}
 })();
 </script>`;
 
-  html = html.replace('</body>', printScript + '\n</body>');
+  // Function replacer: `$` sequences in the injected JS ("'$' + it.price") must
+  // be inserted literally, not interpreted as String.replace patterns.
+  html = html.replace('</body>', () => printScript + '\n</body>');
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

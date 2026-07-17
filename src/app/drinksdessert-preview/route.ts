@@ -45,7 +45,9 @@ window.addEventListener('message', function (e) {
 document.fonts.ready.then(function () { _dd_runValidate(); });
 </script>`;
 
-  html = html.replace('</body>', liveScript + '\n</body>');
+  // Use a function replacer so `$` sequences in the injected JS (e.g. render.js's
+  // "'$' + it.price") are inserted literally, not treated as replacement patterns.
+  html = html.replace('</body>', () => liveScript + '\n</body>');
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
