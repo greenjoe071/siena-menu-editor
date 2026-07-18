@@ -18,9 +18,11 @@
  *   render(dom.window.document, menuData);
  *
  * Price convention: JSON prices are bare strings WITHOUT the `$` glyph
- * (e.g. "13.00", "11"). The renderer prepends `$` at render time for every
- * price except none — do not store "$13.00" in the JSON, it would render
- * "$$13.00".
+ * (e.g. "13.00", "11") — the menu never prints a `$` anywhere. The
+ * renderer also formats for display: a trailing ".00" is dropped ("13.00"
+ * → "13"), any other cents are kept as-is ("6.50" stays "6.50"). Do not
+ * pre-strip ".00" in the JSON yourself — store full precision, let
+ * `formatPrice()` below handle display.
  *
  * Optional fields:
  *   - cocktails[i].note        — empty/missing → the note line is removed.
@@ -49,6 +51,12 @@
     return typeof v === 'string' && v.trim().length > 0;
   }
 
+  function formatPrice(raw) {
+    var s = String(raw == null ? '' : raw).trim().replace(/^\$/, '');
+    if (/\.00$/.test(s)) s = s.slice(0, -3);
+    return s;
+  }
+
   function renderCocktails(doc, items) {
     const list = clearList(doc, 'cocktails');
     if (!list) return;
@@ -59,7 +67,7 @@
       const node = blueprint.cloneNode(true);
       node.setAttribute('data-item-id', it.id);
       node.querySelector('.cocktail-name').textContent = it.name;
-      node.querySelector('.cocktail-price').textContent = '$' + it.price;
+      node.querySelector('.cocktail-price').textContent = formatPrice(it.price);
       node.querySelector('.cocktail-desc').textContent = it.desc || '';
       const noteEl = node.querySelector('.cocktail-note');
       if (isFilled(it.note)) {
@@ -81,7 +89,7 @@
       const node = blueprint.cloneNode(true);
       node.setAttribute('data-item-id', it.id);
       node.querySelector('.item-name').textContent = it.name;
-      node.querySelector('.item-price').textContent = '$' + it.price;
+      node.querySelector('.item-price').textContent = formatPrice(it.price);
       list.appendChild(node);
     });
   }
@@ -96,7 +104,7 @@
       const node = blueprint.cloneNode(true);
       node.setAttribute('data-item-id', it.id);
       node.querySelector('.item-name').textContent = it.name;
-      node.querySelector('.item-price').textContent = '$' + it.price;
+      node.querySelector('.item-price').textContent = formatPrice(it.price);
       const descEl = node.querySelector('.item-desc');
       if (isFilled(it.desc)) {
         descEl.textContent = it.desc;
@@ -117,7 +125,7 @@
       const node = blueprint.cloneNode(true);
       node.setAttribute('data-item-id', it.id);
       node.querySelector('.dolci-name').textContent = it.name;
-      node.querySelector('.dolci-price').textContent = '$' + it.price;
+      node.querySelector('.dolci-price').textContent = formatPrice(it.price);
       node.querySelector('.dolci-desc').textContent = it.desc || '';
       list.appendChild(node);
     });

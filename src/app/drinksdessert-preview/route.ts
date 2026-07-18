@@ -40,6 +40,11 @@ window.addEventListener('message', function (e) {
       clearTimeout(_dd_timer);
       _dd_timer = setTimeout(_dd_runValidate, 120);
     } catch (err) { console.warn('Drinks & Dessert render error', err); }
+  } else if (e.data && e.data.type === 'SIENA_DRINKSDESSERT_EDITING') {
+    // Tighter Dopa Cena subsection spacing while a field in that panel has
+    // focus (template.html's is-editing rules). validate.js always strips
+    // this class before measuring, so it never affects the fit check.
+    document.body.classList.toggle('is-editing', !!e.data.editing);
   }
 });
 document.fonts.ready.then(function () { _dd_runValidate(); });

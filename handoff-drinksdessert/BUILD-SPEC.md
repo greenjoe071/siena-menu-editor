@@ -19,7 +19,7 @@ corners that grip each card individually.
 The four cards, in holder order:
 
 1. **Signature Cocktails**
-2. **Spirits** (Rye/Whiskey/Bourbon, Single Malt Scotch Whisky, Bottled Beer)
+2. **Spirits & Beer** (Rye/Whiskey/Bourbon, Single Malt Scotch Whisky, Bottled Beer)
 3. **Siena Dopa Cena** (Digestivo, Grappa, Ports, Cognac &amp; Calvados, Traditional Italian)
 4. **Dolci**
 
@@ -28,7 +28,7 @@ They are produced from **two physical 8.5×11 sheets**, each cut with a
 
 | Sheet | Left half | Right half |
 |---|---|---|
-| **Sheet A** | Signature Cocktails | Spirits |
+| **Sheet A** | Signature Cocktails | Spirits & Beer |
 | **Sheet B** | Siena Dopa Cena | Dolci |
 
 `template.html` models this directly: two `<div class="sheet">` elements
@@ -44,7 +44,7 @@ reason the two sheets are independent print units instead of one 4-page
 job. Build the print UI so a manager can choose:
 
 - **Print both sheets** (default — full new menu set)
-- **Print Sheet A only** (Cocktails + Spirits changed)
+- **Print Sheet A only** (Cocktails + Spirits & Beer changed)
 - **Print Sheet B only** (Dopa Cena + Dolci changed)
 
 `template.html` already supports this: add `print-sheet-a-only` or
@@ -154,16 +154,19 @@ SienaDrinksDessertValidate.validate(document);       // measures & reports; need
 
 ### Price convention
 
-**Prices never include the `$` glyph in the JSON.** Store `"13.00"`,
-`"7.50"`, `"11"` — the renderer prepends `$` at render time for every
-price on the page. `"$13.00"` in the JSON would render `"$$13.00"`.
+**Prices never include the `$` glyph, anywhere.** Store `"13.00"`,
+`"7.50"`, `"11"` in the JSON. The card never prints a dollar sign, and
+the renderer also formats for display: a trailing `".00"` is dropped
+(`"13.00"` → `"13"`); any other cents are kept (`"6.50"` stays
+`"6.50"`). Store full-precision values in the JSON — let `render.js`'s
+`formatPrice()` handle the display trim; don't pre-strip `.00` yourself.
 
 ### Item shape by list
 
 | List | Fields | Notes |
 |---|---|---|
 | `cocktails[i]` | `id`, `name`, `desc` (required), `price` (required), `note` (optional) | `note` is the small italic line under the description — e.g. the Siena Margarita's floater upsell. Empty/missing → line removed entirely. |
-| `spirits.bourbon\|scotch\|beer[i]` | `id`, `name`, `price` (required) | **No description field exists for Spirits, by design** — these are name+price only, matching the current printed list. Don't add a `desc` key here; `render.js` doesn't read one. |
+| `spirits.bourbon\|scotch\|beer[i]` | `id`, `name`, `price` (required) | **No description field exists for Spirits & Beer, by design** — these are name+price only, matching the current printed list. Don't add a `desc` key here; `render.js` doesn't read one. |
 | `dopaCena.<subsection>[i]` | `id`, `name`, `price` (required), `desc` (optional) | **Any item in any Dopa Cena subsection may carry `desc`** — it is not reserved for a particular item (the seed happens to put one on "Il Poggione \"Paganelli\"" → Brunello Riserva di Montalcino, but that's just today's content). Empty/missing → line removed. Per the constraint model, adding descriptions eats vertical budget — validate.js will tell the manager when a card runs out of room (see §1). |
 | `dolci[i]` | `id`, `name`, `price` (required), `desc` (required) | Every dolci item has a description in the current design; treat it as required — don't allow an empty save. |
 
@@ -179,17 +182,23 @@ slot.
 
 | Field | JSON path | Required? | Notes |
 |---|---|---|---|
+**Font system:** page titles, subsection titles, all prices, and the two
+"title" name fields — cocktail name and dolci name — are set in Playfair
+Display italic. Spirits & Beer and Dopa Cena item names, plus every
+description, are set in Montserrat. Don't reintroduce Montserrat on
+cocktail/dolci names, or Playfair on spirits/dopa-cena names.
+
 | Cocktail name | `cocktails[i].name` | required | Playfair italic 16pt (shrinks to 15pt). |
 | Cocktail description | `cocktails[i].desc` | required | Montserrat 12pt (shrinks to 11pt), wraps freely. |
-| Cocktail price | `cocktails[i].price` | required | No `$` in the data. |
-| Cocktail note | `cocktails[i].note` | optional | Empty/missing removes the line. |
-| Spirits item name | `spirits.<sub>[i].name` | required | Playfair italic 12pt (shrinks to 11pt). |
-| Spirits item price | `spirits.<sub>[i].price` | required | No `$` in the data. |
-| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Playfair italic 12pt (shrinks to 11pt). |
-| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | No `$` in the data. |
+| Cocktail price | `cocktails[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
+| Cocktail note | `cocktails[i].note` | optional | Montserrat. Empty/missing removes the line. |
+| Spirits & Beer item name | `spirits.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). |
+| Spirits & Beer item price | `spirits.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
+| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). |
+| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
 | Dopa Cena item description | `dopaCena.<sub>[i].desc` | optional | **Available on every item, every subsection.** Empty/missing removes the line. Governed entirely by validate.js — see §1. |
 | Dolci name | `dolci[i].name` | required | Playfair italic 16.5pt (shrinks to 15.5pt). |
-| Dolci price | `dolci[i].price` | required | No `$`. Dolci prices in the current menu have no decimals (`"11"`, not `"11.00"`) — either convention renders fine, but stay consistent with the seed. |
+| Dolci price | `dolci[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. Dolci prices in the current menu have no decimals (`"11"`, not `"11.00"`) — either convention renders fine. |
 | Dolci description | `dolci[i].desc` | required | Montserrat 12pt (shrinks to 11pt), centered, wraps freely. |
 
 ### Add / remove / reorder
@@ -210,16 +219,17 @@ printed maximum (see §1). The editor:
 
 Baked into `template.html`, no data hooks, not surfaced in the editor:
 
-- The four page titles: "Signature Cocktails", "Spirits", "Siena Dopa
-  Cena", "Dolci" — plus their flanking gold rules.
+- The four page titles: "Signature Cocktails", "Spirits & Beer", "Siena
+  Dopa Cena", "Dolci" — plus their flanking dark rules.
 - The eight subsection titles: "Rye / Whiskey / Bourbon", "Single Malt
-  Scotch Whisky", "Bottled Beer" (on the Spirits card); "Digestivo",
+  Scotch Whisky", "Bottled Beer" (on the Spirits & Beer card); "Digestivo",
   "Grappa · 2.5 oz", "Ports · 2.5 oz", "Cognac &amp; Calvados",
   "Traditional Italian · 2.5 oz" (on the Dopa Cena card).
-- The number and order of subsections on Spirits (always 3, in that
-  order) and Dopa Cena (always 5, in that order). The editor cannot add
-  a 4th Spirits category or a 6th Dopa Cena category, rename any of them,
-  or reorder them. **Only the items within a subsection are editable.**
+- The number and order of subsections on Spirits & Beer (always 3, in
+  that order) and Dopa Cena (always 5, in that order). The editor cannot
+  add a 4th Spirits & Beer category or a 6th Dopa Cena category, rename
+  any of them, or reorder them. **Only the items within a subsection are
+  editable.**
 - The order of the four cards themselves, and which two share a sheet.
 - The `.cut-guide` dashed line, all typography, colors, and page padding.
 - Fonts, page size (4.25×11in per card / 8.5×11in per printed sheet).
@@ -236,6 +246,7 @@ as a request, don't build it into the editor.
 |---|---|---|
 | Card container | `[data-page-id="cocktails\|spirits\|dopacena\|dolci"]` | validate.js measures this |
 | Sheet container | `[data-sheet-id="a\|b"]` | print-scope toggle target |
+| Editing-mode flag | `body.is-editing` | see "Dopa Cena editing spacing" below |
 | Any list | `[data-list-id="…"]` | render.js clears + repopulates; validate.js's `worstList` diagnostic |
 | List IDs | `cocktails`, `spirits-bourbon`, `spirits-scotch`, `spirits-beer`, `dopacena-digestivo`, `dopacena-grappa`, `dopacena-ports`, `dopacena-cognac`, `dopacena-traditionalItalian`, `dolci` | maps 1:1 to the JSON paths in §3 |
 | Item | `[data-item-id="…"]` | one per JSON item, opaque stable ID |
@@ -320,6 +331,15 @@ that re-renders and re-validates on every edit:
 - **Reprints:** always ask "which sheet(s) changed?" before printing —
   see §0. Printing both sheets on every small edit works but wastes
   paper on the unchanged half.
+- **Dopa Cena editing spacing:** the five subsection titles on that card
+  carry generous margins by default (that's the printed/preview look).
+  Add the `is-editing` class to `<body>` while the manager is actively
+  editing that panel to tighten those same gaps for a denser editing
+  view; remove it when the panel loses focus / on save. `validate.js`
+  ignores this class automatically (it strips it before measuring and
+  restores it after) — the fit check always applies to the spread-out
+  print spacing, never the tightened editing spacing, so you can't
+  accidentally validate a layout that wouldn't actually fit on paper.
 - **Special characters:** preserve curly quotes (`'`, `"…"`), en/em
   dashes (`–`, `—`), middle dots (`·`), and accented letters (`è`, `à`).
   Don't ASCII-fold on save.

@@ -1,6 +1,6 @@
 # Siena Drinks &amp; Dessert Menu — Developer Handoff
 
-Four insert cards (Signature Cocktails, Spirits, Siena Dopa Cena, Dolci)
+Four insert cards (Signature Cocktails, Spirits & Beer, Siena Dopa Cena, Dolci)
 produced from two physical 8.5×11 sheets, each cut in half. Same brand
 and font stack as the other Siena menu handoffs in this project
 (`../handoff/`, `../handoff-happyhour-v2/`, `../handoff-monday/`,

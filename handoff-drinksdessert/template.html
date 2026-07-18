@@ -27,7 +27,7 @@
   from TWO physical 8.5×11 sheets, each cut in half top-to-bottom (i.e. a
   single vertical cut down the middle):
 
-    Sheet A  =  [ Signature Cocktails | Spirits ]        → cut → 2 cards
+    Sheet A  =  [ Signature Cocktails | Spirits & Beer ]  → cut → 2 cards
     Sheet B  =  [ Siena Dopa Cena     | Dolci    ]        → cut → 2 cards
 
   Each <div class="sheet"> below is one physical 8.5×11 print page holding
@@ -63,7 +63,7 @@ body {
   top: 0;
   bottom: 0;
   width: 0;
-  border-left: 1px dashed #c9a87a;
+  border-left: 1px dashed #3a1a06;
   pointer-events: none;
 }
 
@@ -100,7 +100,7 @@ body {
   flex-shrink: 0;
 }
 .page-title-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
-.page-title-rule { height: 1px; width: 28px; background: #b8821e; opacity: 0.6; }
+.page-title-rule { height: 1px; width: 28px; background: #3a1a06; opacity: 0.75; }
 .page-title-text {
   font-family: 'Playfair Display', serif;
   font-style: italic;
@@ -123,12 +123,21 @@ body {
   font-style: italic;
   font-weight: 600;
   font-size: 10.5pt;
-  color: #b8821e;
+  color: #3a1a06;
 }
 .page[data-page-id="spirits"] .subsection-title { margin: 6px 0 4px; }
 .page[data-page-id="spirits"] .subsection-title:first-of-type { margin-top: 2px; }
-.page[data-page-id="dopacena"] .subsection-title { margin: 6px 0 3px; }
-.page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 1px; }
+
+/* Dopa Cena categories get generous breathing room in the print/preview
+   state. While the editor is in an active edit session it adds `is-editing`
+   to <body>, which tightens these same gaps back down so the panel doesn't
+   jump around while a manager is typing. validate.js always measures with
+   `is-editing` temporarily stripped — the spread spacing below is the only
+   one that has to fit the physical card. */
+.page[data-page-id="dopacena"] .subsection-title { margin: 20px 0 5px; }
+.page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 2px; }
+body.is-editing .page[data-page-id="dopacena"] .subsection-title { margin: 6px 0 3px; }
+body.is-editing .page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 1px; }
 
 .item-list { display: flex; flex-direction: column; }
 
@@ -136,15 +145,15 @@ body {
 .item-list[data-list-id="cocktails"] .item { margin-bottom: 20px; }
 .item-list[data-list-id="cocktails"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .cocktail-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 16pt; color: #3a1a06; line-height: 1.15; }
-.cocktail-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 13.5pt; color: #b8821e; white-space: nowrap; }
+.cocktail-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 13.5pt; color: #3a1a06; line-height: 1.15; white-space: nowrap; }
 .cocktail-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.38; margin-top: 3px; text-wrap: pretty; }
-.cocktail-note { font-family: 'Playfair Display', serif; font-style: italic; font-size: 10pt; color: #6b4c2a; margin-top: 3px; }
+.cocktail-note { font-family: 'Montserrat', sans-serif; font-size: 10pt; color: #6b4c2a; margin-top: 3px; }
 
 /* ── Spirits (name + price only, no description) ── */
 .item-list[data-list-id^="spirits-"] .item { margin-bottom: 4px; }
 .item-list[data-list-id^="spirits-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.item-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; font-size: 12pt; color: #3a1a06; line-height: 1.15; }
-.item-price { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 11pt; color: #b8821e; white-space: nowrap; }
+.item-name { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 12pt; color: #3a1a06; line-height: 1.15; }
+.item-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 11pt; color: #3a1a06; white-space: nowrap; }
 
 /* ── Dopa Cena (name + price, any item MAY carry an optional one-line description) ── */
 .item-list[data-list-id^="dopacena-"] .item { margin-bottom: 4px; }
@@ -155,7 +164,7 @@ body {
 .item-list[data-list-id="dolci"] .item { text-align: center; margin-bottom: 26px; }
 .item-list[data-list-id="dolci"] .row-center { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
 .dolci-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 16.5pt; color: #3a1a06; }
-.dolci-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 14pt; color: #b8821e; }
+.dolci-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 14pt; color: #3a1a06; line-height: 1.15; }
 .dolci-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.4; margin-top: 6px; padding: 0 8px; text-wrap: pretty; }
 
 /*
@@ -181,7 +190,7 @@ body {
 </head>
 <body>
 
-<!-- SHEET A — Signature Cocktails | Spirits -->
+<!-- SHEET A — Signature Cocktails | Spirits & Beer -->
 <div class="sheet" data-sheet-id="a">
 
   <div class="page" data-page-id="cocktails">
@@ -201,7 +210,7 @@ body {
     <div class="page-title">
       <div class="page-title-row">
         <div class="page-title-rule"></div>
-        <div class="page-title-text">Spirits and Beer</div>
+        <div class="page-title-text">Spirits &amp; Beer</div>
         <div class="page-title-rule"></div>
       </div>
     </div>

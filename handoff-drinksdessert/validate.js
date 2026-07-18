@@ -79,6 +79,21 @@
     return worstId;
   }
 
+  // validate() always measures the spread-out print spacing, never the
+  // editor's tightened `is-editing` state (see template.html's Dopa Cena
+  // subsection-title rules) — that's a live-editing convenience, not what
+  // ends up on the physical card.
+  function withEditingSuspended(doc, fn) {
+    const body = doc && doc.body;
+    const wasEditing = !!(body && body.classList && body.classList.contains('is-editing'));
+    if (wasEditing) body.classList.remove('is-editing');
+    try {
+      return fn();
+    } finally {
+      if (wasEditing) body.classList.add('is-editing');
+    }
+  }
+
   function validatePage(page) {
     const id = page.getAttribute('data-page-id');
 
@@ -104,7 +119,10 @@
     const pageEls = scope.querySelectorAll('.page');
     if (!pageEls.length) return { fits: false, error: '.page elements not found', pages: [] };
 
-    const pages = Array.from(pageEls).map(validatePage);
+    const doc = scope.nodeType === 9 ? scope : scope.ownerDocument;
+    const pages = withEditingSuspended(doc, function () {
+      return Array.from(pageEls).map(validatePage);
+    });
     return { fits: pages.every(function (p) { return p.fits; }), pages: pages };
   }
 

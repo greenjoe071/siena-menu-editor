@@ -66,7 +66,7 @@ const LIST_LABELS: Record<string, string> = {
 };
 
 const CARD_LABELS: Record<string, string> = {
-  cocktails: 'Cocktails', spirits: 'Spirits', dopacena: 'Dopa Cena', dolci: 'Dolci',
+  cocktails: 'Cocktails', spirits: 'Spirits & Beer', dopacena: 'Dopa Cena', dolci: 'Dolci',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -284,6 +284,21 @@ export default function DrinksDessertEditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   const pendingSaveRef = useRef<DrinksDessertMenuData | null>(null);
+  const dopaCenaRef = useRef<HTMLDivElement>(null);
+
+  // Dopa Cena editing-mode hook: tells the preview to tighten subsection-title
+  // spacing while a field in that panel has focus (template.html's `is-editing`
+  // class). validate.js always ignores this and measures the print spacing.
+  function handleDopaFocus() {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_EDITING', editing: true }, '*');
+  }
+  function handleDopaBlur() {
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (dopaCenaRef.current && active && dopaCenaRef.current.contains(active)) return; // focus moved within the panel
+      iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_EDITING', editing: false }, '*');
+    });
+  }
 
   useEffect(() => {
     fetch('/api/drinksdessert/draft')
@@ -434,7 +449,7 @@ export default function DrinksDessertEditorPage() {
 
           <div className="editor-scroll chef-mode">
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
-              <p>Four cards, printed on <strong>two sheets</strong> (A: Cocktails + Spirits · B: Dopa Cena + Dolci). Add or remove items freely — a card will tell you if it runs out of room.</p>
+              <p>Four cards, printed on <strong>two sheets</strong> (A: Cocktails + Spirits & Beer · B: Dopa Cena + Dolci). Add or remove items freely — a card will tell you if it runs out of room.</p>
             </div>
 
             {/* Cocktails */}
@@ -452,7 +467,7 @@ export default function DrinksDessertEditorPage() {
             {/* Spirits */}
             <div className="page-group">
               <div className="page-group-label">Sheet A · Right card</div>
-              <CardPanel title="Spirits" pageId="spirits" report={report}>
+              <CardPanel title="Spirits & Beer" pageId="spirits" report={report}>
                 {SPIRIT_SUBS.map(sub => (
                   <div key={sub.key} className="dd-subsection">
                     <div className="dd-subsection-title">{sub.title}</div>
@@ -470,16 +485,22 @@ export default function DrinksDessertEditorPage() {
             <div className="page-group">
               <div className="page-group-label">Sheet B · Left card</div>
               <CardPanel title="Siena Dopa Cena" pageId="dopacena" report={report}>
-                {DOPA_SUBS.map(sub => (
-                  <div key={sub.key} className="dd-subsection">
-                    <div className="dd-subsection-title">{sub.title}</div>
-                    <EditableList
-                      listId={sub.listId} items={menu.dopaCena[sub.key]} descMode="optional" note={false}
-                      addLabel="+ Add" namePlaceholder="e.g. Amaro Nonino"
-                      onItemsChange={items => setDopa(sub.key, items)}
-                    />
-                  </div>
-                ))}
+                {/* While a field in this panel has focus, the preview switches to a
+                    tighter "is-editing" spacing on the subsection titles so the card
+                    doesn't jump around while typing. The printed/validated layout
+                    always uses the spread-out spacing — see template.html. */}
+                <div ref={dopaCenaRef} onFocus={handleDopaFocus} onBlur={handleDopaBlur}>
+                  {DOPA_SUBS.map(sub => (
+                    <div key={sub.key} className="dd-subsection">
+                      <div className="dd-subsection-title">{sub.title}</div>
+                      <EditableList
+                        listId={sub.listId} items={menu.dopaCena[sub.key]} descMode="optional" note={false}
+                        addLabel="+ Add" namePlaceholder="e.g. Amaro Nonino"
+                        onItemsChange={items => setDopa(sub.key, items)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </CardPanel>
             </div>
 
@@ -514,7 +535,7 @@ export default function DrinksDessertEditorPage() {
             </span>
             <span className="dd-print-label">Print:</span>
             <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : 'Print both sheets'} onClick={() => printSheets('both')}>Both</button>
-            <button className="btn-print btn-print--ghost" disabled={anyOverflow} title="Cocktails + Spirits" onClick={() => printSheets('a')}>Sheet A</button>
+            <button className="btn-print btn-print--ghost" disabled={anyOverflow} title="Cocktails + Spirits & Beer" onClick={() => printSheets('a')}>Sheet A</button>
             <button className="btn-print btn-print--ghost" disabled={anyOverflow} title="Dopa Cena + Dolci" onClick={() => printSheets('b')}>Sheet B</button>
           </div>
         </div>
