@@ -24,6 +24,11 @@ export default async function DrinksDessertLandingPage() {
       currentDate={formatDate(meta.publishedAt)}
       draftExists={draftExists}
       published={published.map((p) => ({ key: p.key, label: p.label }))}
+      printVariants={[
+        { label: 'Print Both' },
+        { label: 'Sheet A only', query: '&sheet=a' },
+        { label: 'Sheet B only', query: '&sheet=b' },
+      ]}
     />
   );
 }

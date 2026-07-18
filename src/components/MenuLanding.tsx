@@ -4,6 +4,14 @@ import DraftActions from './DraftActions';
 // Shared landing page for every menu: view/print the protected current menu,
 // start/continue a draft, and view/print the last 3 past menus.
 
+// A print option other than the plain single "Print" button — e.g. Drinks &
+// Dessert's "print just one sheet" choice. `query` is appended verbatim to
+// the print URL (e.g. "&sheet=a").
+export interface PrintVariant {
+  label: string;
+  query?: string;
+}
+
 export interface MenuLandingProps {
   menuName:    string;   // "Happy Hour"  → badge "Current Happy Hour Menu"
   editHref:    string;   // "/happyhour/edit"
@@ -13,10 +21,42 @@ export interface MenuLandingProps {
   currentDate: string;   // formatted "July 9, 2026"
   draftExists: boolean;
   published:   { key: string; label: string }[];
+  // When set, the Print button becomes a row of these options instead of a
+  // single "Print" link (both for the current menu and each past menu).
+  printVariants?: PrintVariant[];
+}
+
+function PrintLinks({
+  printHref, src, variants, size,
+}: {
+  printHref: string;
+  src: string;
+  variants?: PrintVariant[];
+  size: 'solid' | 'small';
+}) {
+  const cls = size === 'solid' ? 'dl-btn dl-btn--solid' : 'dl-btn dl-btn--small';
+  if (!variants) {
+    return <a className={cls} href={`${printHref}?src=${src}`} target="_blank" rel="noopener noreferrer">Print</a>;
+  }
+  return (
+    <>
+      {variants.map((v) => (
+        <a
+          key={v.label}
+          className={cls}
+          href={`${printHref}?src=${src}${v.query ?? ''}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {v.label}
+        </a>
+      ))}
+    </>
+  );
 }
 
 export default function MenuLanding({
-  menuName, editHref, apiBase, previewHref, printHref, currentDate, draftExists, published,
+  menuName, editHref, apiBase, previewHref, printHref, currentDate, draftExists, published, printVariants,
 }: MenuLandingProps) {
   return (
     <div className="dinner-landing">
@@ -41,7 +81,7 @@ export default function MenuLanding({
           </p>
           <div className="dl-actions">
             <a className="dl-btn dl-btn--solid" href={`${previewHref}?src=current`} target="_blank" rel="noopener noreferrer">View</a>
-            <a className="dl-btn dl-btn--solid" href={`${printHref}?src=current`} target="_blank" rel="noopener noreferrer">Print</a>
+            <PrintLinks printHref={printHref} src="current" variants={printVariants} size="solid" />
           </div>
         </section>
 
@@ -70,7 +110,7 @@ export default function MenuLanding({
                   <span className="dl-past-label">Current as of {p.label}</span>
                   <div className="dl-past-actions">
                     <a className="dl-btn dl-btn--small" href={`${previewHref}?src=${p.key}`} target="_blank" rel="noopener noreferrer">View</a>
-                    <a className="dl-btn dl-btn--small" href={`${printHref}?src=${p.key}`} target="_blank" rel="noopener noreferrer">Print</a>
+                    <PrintLinks printHref={printHref} src={p.key} variants={printVariants} size="small" />
                   </div>
                 </div>
               ))}

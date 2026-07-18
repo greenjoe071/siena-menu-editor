@@ -8,8 +8,12 @@ export const dynamic = 'force-dynamic';
 const HANDOFF = join(process.cwd(), 'handoff-drinksdessert');
 
 // ?src=current (default) | draft | drinksdessert-published-<ts>
+// ?sheet=a | b (omit for both) — lets a plain link choose the print scope
+// without going through the editor's localStorage-based flow.
 export async function GET(request: Request) {
-  const src = new URL(request.url).searchParams.get('src');
+  const url = new URL(request.url);
+  const src = url.searchParams.get('src');
+  const sheetParam = url.searchParams.get('sheet'); // 'a' | 'b' | null
   const [data, renderSrc, validateSrc] = await Promise.all([
     readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
@@ -26,8 +30,11 @@ export async function GET(request: Request) {
 ${renderSrc}
 ${validateSrc}
 (function () {
-  var raw   = localStorage.getItem('siena-drinksdessert-print-data');
-  var scope = localStorage.getItem('siena-drinksdessert-print-scope') || 'both';
+  var raw = localStorage.getItem('siena-drinksdessert-print-data');
+  // Query param (from a plain landing-page link) takes priority; otherwise
+  // fall back to the editor's localStorage-set scope; default to both.
+  var sheetParam = ${JSON.stringify(sheetParam)};
+  var scope = sheetParam || localStorage.getItem('siena-drinksdessert-print-scope') || 'both';
   if (raw) {
     try { (window.SienaDrinksDessertRender).render(document, JSON.parse(raw)); } catch (_) {}
     localStorage.removeItem('siena-drinksdessert-print-data');
