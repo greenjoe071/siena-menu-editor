@@ -50,6 +50,7 @@ const MENUS = [
     ready: true,
     href: '/drinksdessert',
     action: 'Open →',
+    isNew: true,
   },
 ];
 
@@ -68,6 +69,7 @@ export default function HomePage() {
         {MENUS.map((menu) =>
           menu.ready ? (
             <Link key={menu.id} href={menu.href!} className="menu-card menu-card--active">
+              {menu.isNew && <span className="menu-card-new">NEW</span>}
               <div className="menu-card-icon">{menu.icon}</div>
               <div className="menu-card-body">
                 <h2 className="menu-card-title">{menu.label}</h2>

@@ -869,6 +869,23 @@ button {
   flex-direction: column;
   gap: 14px;
   text-decoration: none;
+  position: relative;
+}
+
+/* "NEW" badge (top-right corner of a card) */
+.menu-card-new {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 5px 11px;
+  border-radius: 20px;
+  box-shadow: 0 3px 10px rgba(192, 57, 43, 0.4);
+  z-index: 2;
 }
 
 /* ── Active card (ready to use) ─────────────────────── */
