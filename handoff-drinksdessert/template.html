@@ -72,8 +72,11 @@ body {
   .sheet { box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
 }
 @media print {
-  body { background: #fff; padding: 0; display: block; }
-  .sheet { box-shadow: none; }
+  html, body { width: 8.5in; margin: 0; padding: 0; }
+  body { background: #fff; display: block; }
+  .sheet { box-shadow: none; margin: 0; overflow: hidden; }
+  /* The dashed cut-guide is a screen/editor aid only — never print it. */
+  .cut-guide { display: none; }
   /* Editor sets one of these classes on <body> before window.print() to
      reprint a single sheet. Default (neither class) prints both. */
   body.print-sheet-a-only .sheet[data-sheet-id="b"] { display: none; }
@@ -198,7 +201,7 @@ body {
     <div class="page-title">
       <div class="page-title-row">
         <div class="page-title-rule"></div>
-        <div class="page-title-text">Spirits</div>
+        <div class="page-title-text">Spirits and Beer</div>
         <div class="page-title-rule"></div>
       </div>
     </div>
