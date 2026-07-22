@@ -35,6 +35,14 @@ export async function GET(request: Request) {
 ${renderSrc}
 ${validateSrc}
 (function () {
+  // ?resethelp=1 — one-click way to reset the "first-run print help" counter
+  // on this device (e.g. after testing burns through the first-10 count).
+  // Does not print; just resets and shows a confirmation.
+  if (new URLSearchParams(location.search).get('resethelp')) {
+    localStorage.removeItem('siena-drinksdessert-print-help-count');
+    document.body.innerHTML = '<div style="font-family:sans-serif;padding:60px 40px;font-size:20px;color:#3a1a06;">Print tip counter reset — the next 10 prints on this device will show the reminder again. You can close this tab.</div>';
+    return;
+  }
   var raw = localStorage.getItem('siena-drinksdessert-print-data');
   // Query params (set by the editor and the landing page alike) drive the
   // print scope; the old localStorage scope key is only a fallback for any
