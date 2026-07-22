@@ -148,8 +148,8 @@ body:not(.print-sheet-a-only):not(.print-sheet-b-only):not(.print-only-cocktails
   font-size: 10.5pt;
   color: #3a1a06;
 }
-.page[data-page-id="spirits"] .subsection-title { margin: 6px 0 4px; }
-.page[data-page-id="spirits"] .subsection-title:first-of-type { margin-top: 2px; }
+.page[data-page-id="spirits"] .subsection-title { margin: 5px 0 3px; }
+.page[data-page-id="spirits"] .subsection-title:first-of-type { margin-top: 1px; }
 
 /* Dopa Cena categories get generous breathing room in the print/preview
    state. While the editor is in an active edit session it adds `is-editing`
@@ -157,8 +157,8 @@ body:not(.print-sheet-a-only):not(.print-sheet-b-only):not(.print-only-cocktails
    jump around while a manager is typing. validate.js always measures with
    `is-editing` temporarily stripped — the spread spacing below is the only
    one that has to fit the physical card. */
-.page[data-page-id="dopacena"] .subsection-title { margin: 20px 0 5px; }
-.page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 2px; }
+.page[data-page-id="dopacena"] .subsection-title { margin: 16px 0 4px; }
+.page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 1px; }
 body.is-editing .page[data-page-id="dopacena"] .subsection-title { margin: 6px 0 3px; }
 body.is-editing .page[data-page-id="dopacena"] .subsection-title:first-of-type { margin-top: 1px; }
 
@@ -173,13 +173,13 @@ body.is-editing .page[data-page-id="dopacena"] .subsection-title:first-of-type {
 .cocktail-note { font-family: 'Montserrat', sans-serif; font-size: 10pt; color: #6b4c2a; margin-top: 3px; }
 
 /* ── Spirits (name + price only, no description) ── */
-.item-list[data-list-id^="spirits-"] .item { margin-bottom: 4px; }
+.item-list[data-list-id^="spirits-"] .item { margin-bottom: 3px; }
 .item-list[data-list-id^="spirits-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .item-name { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 12pt; color: #3a1a06; line-height: 1.15; }
 .item-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 11pt; color: #3a1a06; white-space: nowrap; }
 
 /* ── Dopa Cena (name + price, any item MAY carry an optional one-line description) ── */
-.item-list[data-list-id^="dopacena-"] .item { margin-bottom: 4px; }
+.item-list[data-list-id^="dopacena-"] .item { margin-bottom: 3px; }
 .item-list[data-list-id^="dopacena-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .item-desc { font-family: 'Montserrat', sans-serif; font-size: 9.5pt; color: #6b4c2a; margin-top: -1px; }
 
