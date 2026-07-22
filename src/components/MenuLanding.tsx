@@ -1,15 +1,18 @@
 import Link from 'next/link';
 import DraftActions from './DraftActions';
+import PrintPicker from './PrintPicker';
 
 // Shared landing page for every menu: view/print the protected current menu,
 // start/continue a draft, and view/print the last 3 past menus.
 
 // A print option other than the plain single "Print" button — e.g. Drinks &
-// Dessert's "print just one sheet" choice. `query` is appended verbatim to
-// the print URL (e.g. "&sheet=a").
+// Dessert's "print just one sheet/page" choices. `query` is appended verbatim
+// to the print URL (e.g. "&sheet=a" or "&page=cocktails"). `group` is an
+// optional <optgroup> label when there are enough variants to organize.
 export interface PrintVariant {
   label: string;
   query?: string;
+  group?: string;
 }
 
 export interface MenuLandingProps {
@@ -38,21 +41,7 @@ function PrintLinks({
   if (!variants) {
     return <a className={cls} href={`${printHref}?src=${src}`} target="_blank" rel="noopener noreferrer">Print</a>;
   }
-  return (
-    <>
-      {variants.map((v) => (
-        <a
-          key={v.label}
-          className={cls}
-          href={`${printHref}?src=${src}${v.query ?? ''}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {v.label}
-        </a>
-      ))}
-    </>
-  );
+  return <PrintPicker printHref={printHref} src={src} variants={variants} size={size} />;
 }
 
 export default function MenuLanding({

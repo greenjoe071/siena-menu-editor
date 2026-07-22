@@ -51,11 +51,16 @@ body {
   width: 8.5in;
   height: 11in;
   display: flex;
-  page-break-after: always;
+  page-break-after: auto;
   position: relative;
   background: #fff;
 }
-.sheet:last-child { page-break-after: auto; }
+/* A forced break between the two sheets is only needed when BOTH sheets
+   are actually printing (the "entire menu" case). Any single-sheet or
+   single-page print must NOT force a break, or the printer sends a
+   trailing blank page. See the print-scope classes in @media print. */
+body:not(.print-sheet-a-only):not(.print-sheet-b-only):not(.print-only-cocktails):not(.print-only-spirits):not(.print-only-dopacena):not(.print-only-dolci)
+  .sheet[data-sheet-id="a"] { page-break-after: always; }
 
 .cut-guide {
   position: absolute;
@@ -81,6 +86,25 @@ body {
      reprint a single sheet. Default (neither class) prints both. */
   body.print-sheet-a-only .sheet[data-sheet-id="b"] { display: none; }
   body.print-sheet-b-only .sheet[data-sheet-id="a"] { display: none; }
+
+  /* Single-page prints: show only ONE of the four physical cards — hide
+     that card's sibling on the same sheet, and hide the other sheet
+     entirely so only one physical page comes out of the printer.
+     Hiding the sibling collapses the flex row, so the remaining card
+     renders flush against the left edge automatically (`.sheet`'s
+     default `justify-content` is flex-start) — this is the "left
+     aligned to save ink" single-page layout. */
+  body.print-only-cocktails .sheet[data-sheet-id="b"],
+  body.print-only-cocktails .page[data-page-id="spirits"] { display: none; }
+
+  body.print-only-spirits .sheet[data-sheet-id="b"],
+  body.print-only-spirits .page[data-page-id="cocktails"] { display: none; }
+
+  body.print-only-dopacena .sheet[data-sheet-id="a"],
+  body.print-only-dopacena .page[data-page-id="dolci"] { display: none; }
+
+  body.print-only-dolci .sheet[data-sheet-id="a"],
+  body.print-only-dolci .page[data-page-id="dopacena"] { display: none; }
 }
 
 .page {

@@ -285,6 +285,7 @@ export default function DrinksDessertEditorPage() {
   const prevJsonRef = useRef<string>('');
   const pendingSaveRef = useRef<DrinksDessertMenuData | null>(null);
   const dopaCenaRef = useRef<HTMLDivElement>(null);
+  const printSelectRef = useRef<HTMLSelectElement>(null);
 
   // Dopa Cena editing-mode hook: tells the preview to tighten subsection-title
   // spacing while a field in that panel has focus (template.html's `is-editing`
@@ -381,11 +382,11 @@ export default function DrinksDessertEditorPage() {
     finally { window.location.href = '/drinksdessert'; }
   }
 
-  function printSheets(scope: 'both' | 'a' | 'b') {
+  function handlePrint() {
     if (!menu) return;
     localStorage.setItem('siena-drinksdessert-print-data', JSON.stringify(menu));
-    localStorage.setItem('siena-drinksdessert-print-scope', scope);
-    window.open('/drinksdessert-print?src=draft', '_blank');
+    const q = printSelectRef.current?.value ?? '';
+    window.open(`/drinksdessert-print?src=draft${q}`, '_blank');
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -534,9 +535,22 @@ export default function DrinksDessertEditorPage() {
               {saveStatus === 'error' ? `⚠ ${saveMsg}` : (saveMsg || 'Auto-saves as you type')}
             </span>
             <span className="dd-print-label">Print:</span>
-            <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : 'Print both sheets'} onClick={() => printSheets('both')}>Both</button>
-            <button className="btn-print btn-print--ghost" disabled={anyOverflow} title="Cocktails + Spirits & Beer" onClick={() => printSheets('a')}>Sheet A</button>
-            <button className="btn-print btn-print--ghost" disabled={anyOverflow} title="Dopa Cena + Dolci" onClick={() => printSheets('b')}>Sheet B</button>
+            <select ref={printSelectRef} className="dd-print-select" disabled={anyOverflow} defaultValue="">
+              <optgroup label="Full menu">
+                <option value="">Entire menu (all 4 pages)</option>
+              </optgroup>
+              <optgroup label="By sheet (2 pages)">
+                <option value="&sheet=a">Cocktails &amp; Spirits and Beer</option>
+                <option value="&sheet=b">Dopa Cena &amp; Desserts</option>
+              </optgroup>
+              <optgroup label="Single page">
+                <option value="&page=cocktails">Signature Cocktails only</option>
+                <option value="&page=spirits">Spirits and Beer only</option>
+                <option value="&page=dopacena">Siena Dopa Cena only</option>
+                <option value="&page=dolci">Desserts only</option>
+              </optgroup>
+            </select>
+            <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : undefined} onClick={handlePrint}>Print</button>
           </div>
         </div>
 

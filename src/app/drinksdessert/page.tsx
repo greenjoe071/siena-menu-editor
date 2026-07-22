@@ -25,9 +25,13 @@ export default async function DrinksDessertLandingPage() {
       draftExists={draftExists}
       published={published.map((p) => ({ key: p.key, label: p.label }))}
       printVariants={[
-        { label: 'Print Both' },
-        { label: 'Sheet A only', query: '&sheet=a' },
-        { label: 'Sheet B only', query: '&sheet=b' },
+        { label: 'Entire menu (all 4 pages)', group: 'Full menu' },
+        { label: 'Cocktails & Spirits and Beer', query: '&sheet=a', group: 'By sheet (2 pages)' },
+        { label: 'Dopa Cena & Desserts', query: '&sheet=b', group: 'By sheet (2 pages)' },
+        { label: 'Signature Cocktails only', query: '&page=cocktails', group: 'Single page' },
+        { label: 'Spirits and Beer only', query: '&page=spirits', group: 'Single page' },
+        { label: 'Siena Dopa Cena only', query: '&page=dopacena', group: 'Single page' },
+        { label: 'Desserts only', query: '&page=dolci', group: 'Single page' },
       ]}
     />
   );

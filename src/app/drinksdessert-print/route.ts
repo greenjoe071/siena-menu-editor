@@ -7,13 +7,18 @@ export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-drinksdessert');
 
+const ALLOWED_PAGES = ['cocktails', 'spirits', 'dopacena', 'dolci'];
+
 // ?src=current (default) | draft | drinksdessert-published-<ts>
-// ?sheet=a | b (omit for both) — lets a plain link choose the print scope
-// without going through the editor's localStorage-based flow.
+// ?sheet=a | b (omit for both) — print one of the two physical sheets.
+// ?page=cocktails|spirits|dopacena|dolci — print a single card only,
+// left-aligned on the sheet. Takes priority over ?sheet if both are given.
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const src = url.searchParams.get('src');
   const sheetParam = url.searchParams.get('sheet'); // 'a' | 'b' | null
+  const pageParamRaw = url.searchParams.get('page');
+  const pageParam = pageParamRaw && ALLOWED_PAGES.includes(pageParamRaw) ? pageParamRaw : null;
   const [data, renderSrc, validateSrc] = await Promise.all([
     readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
@@ -31,8 +36,10 @@ ${renderSrc}
 ${validateSrc}
 (function () {
   var raw = localStorage.getItem('siena-drinksdessert-print-data');
-  // Query param (from a plain landing-page link) takes priority; otherwise
-  // fall back to the editor's localStorage-set scope; default to both.
+  // Query params (set by the editor and the landing page alike) drive the
+  // print scope; the old localStorage scope key is only a fallback for any
+  // stale/cached link. ?page= (single card) takes priority over ?sheet=.
+  var pageParam  = ${JSON.stringify(pageParam)};
   var sheetParam = ${JSON.stringify(sheetParam)};
   var scope = sheetParam || localStorage.getItem('siena-drinksdessert-print-scope') || 'both';
   if (raw) {
@@ -40,8 +47,13 @@ ${validateSrc}
     localStorage.removeItem('siena-drinksdessert-print-data');
     localStorage.removeItem('siena-drinksdessert-print-scope');
   }
-  if (scope === 'a')      document.body.classList.add('print-sheet-a-only');
-  else if (scope === 'b') document.body.classList.add('print-sheet-b-only');
+  if (pageParam) {
+    document.body.classList.add('print-only-' + pageParam);
+  } else if (scope === 'a') {
+    document.body.classList.add('print-sheet-a-only');
+  } else if (scope === 'b') {
+    document.body.classList.add('print-sheet-b-only');
+  }
 
   // First-run print help: for the first 10 prints, show a reminder to set
   // Margins: None and Scale: 100% (full-bleed 8.5x11 otherwise scales to a

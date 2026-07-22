@@ -1427,3 +1427,39 @@ button {
   border: 1px solid var(--border);
 }
 .btn-print--ghost:hover:not(:disabled) { border-color: var(--navy); background: rgba(26,58,92,0.06); }
+
+/* Editor's print-scope dropdown (Drinks & Dessert) */
+.dd-print-select {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  max-width: 220px;
+}
+.dd-print-select:disabled { opacity: 0.6; }
+
+/* Landing-page print picker (dropdown + Print button) */
+.dl-print-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dl-print-select {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 11px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+  max-width: 260px;
+}
+.dl-print-select--small {
+  font-size: 12.5px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  max-width: 190px;
+}
