@@ -888,6 +888,24 @@ button {
   z-index: 2;
 }
 
+/* "IN PROGRESS" badge — same spot as NEW, amber instead of red to signal
+   "changes pending, don't rely on this yet" rather than "just launched" */
+.menu-card-inprogress {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #b8821e;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 5px 11px;
+  border-radius: 20px;
+  box-shadow: 0 3px 10px rgba(184, 130, 30, 0.4);
+  z-index: 2;
+  white-space: nowrap;
+}
+
 /* ── Active card (ready to use) ─────────────────────── */
 .menu-card--active {
   background: var(--navy);
