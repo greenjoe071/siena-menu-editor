@@ -50,6 +50,15 @@ const MENUS = [
     ready: true,
     href: '/drinksdessert',
     action: 'Open →',
+  },
+  {
+    id: 'privatedining',
+    label: 'Private Dining',
+    description: 'San Gimignano, Firenze, and Siena menus, plus saved alternates for events',
+    icon: '🥂',
+    ready: true,
+    href: '/privatedining',
+    action: 'Open →',
     isNew: true,
   },
 ];

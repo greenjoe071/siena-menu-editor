@@ -1,6 +1,7 @@
 .next/
 node_modules/
 backups/
+.menu-kv/
 dev-server.log
 *.local
 .env*

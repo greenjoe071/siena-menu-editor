@@ -1463,3 +1463,91 @@ button {
   border-radius: 7px;
   max-width: 190px;
 }
+
+/* ── Private Dining ──────────────────────────────────────── */
+.pd-home {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+}
+.pd-home-header { margin-bottom: 28px; }
+.pd-home-header h1 { font-size: 26px; margin: 14px 0 6px; color: var(--navy); }
+.pd-home-hint { color: var(--muted); font-size: 13px; }
+
+.pd-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.pd-menu-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-decoration: none;
+  color: var(--text);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.pd-menu-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.08); border-color: var(--gold); }
+.pd-menu-card-label { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.pd-menu-card-ref { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.pd-menu-card-courses { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+.pd-menu-card-action { font-size: 13px; font-weight: 600; color: var(--gold); }
+
+.pd-landing-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.pd-landing-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.pd-landing-section-header h2 { font-size: 15px; color: var(--navy); }
+
+.pd-empty-hint { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
+
+.pd-alt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pd-alt-row-main { display: flex; flex-direction: column; gap: 2px; }
+.pd-alt-name { font-weight: 600; font-size: 13.5px; }
+.pd-alt-count { font-size: 11.5px; color: var(--muted); }
+.pd-alt-row-actions { display: flex; align-items: center; gap: 12px; }
+
+.pd-alt-new-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.pd-alt-new-row input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.pd-cap-note {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--warn);
+  margin-bottom: 12px;
+}
+
+.pd-course-label-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  padding: 2px 4px;
+}
+.pd-course-label-input:focus { outline: 1px dashed var(--gold); border-radius: 4px; }

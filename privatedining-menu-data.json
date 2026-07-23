@@ -1,0 +1,139 @@
+{
+  "menus": [
+    {
+      "id": "san-gimignano",
+      "label": "San Gimignano",
+      "internalPriceRef": "$55",
+      "courses": [
+        {
+          "label": "Antipasto",
+          "dishes": [
+            { "name": "Insalata di Campo", "desc": "Assorted young greens with black truffle balsamic vinaigrette" }
+          ]
+        },
+        {
+          "label": "Secondi Piatti · Choice of One",
+          "dishes": [
+            { "name": "Filetto di Salmone con Gamberi", "desc": "Wood grilled salmon with mashed potatoes, grilled shrimp, crabmeat, lemon butter sauce" },
+            { "name": "Pollo Parmigiano", "desc": "Crisp chicken breast, parmesan, fresh buffalo mozzarella, served with fresh linguine al pomodoro" },
+            { "name": "Pappardelle al Cinghiale", "desc": "Pappardelle pasta with red wine braised wild boar ragu" },
+            { "name": "Tagliatelle al Funghi (Vegetarian)", "desc": "Fresh pasta with cremini mushrooms, white truffle oil, Grana Padano cheese and cream" }
+          ]
+        },
+        {
+          "label": "Dolci",
+          "dishes": [
+            { "name": "Chocolate Tort", "desc": "" }
+          ]
+        }
+      ],
+      "alternates": [
+        {
+          "id": "alt-sg-1",
+          "name": "Sample Alt — Steak Add-On",
+          "extraItems": [
+            { "courseIndex": 1, "name": "Bistecca al Ferri", "desc": "Wood grilled 6oz sirloin, herb butter, roasted potatoes" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "firenze",
+      "label": "Firenze",
+      "internalPriceRef": "$75",
+      "courses": [
+        {
+          "label": "Antipasti · Family Style",
+          "dishes": [
+            { "name": "Calamari Fritti", "desc": "Fried calamari with fresh pomodoro sauce and maionese rosso" }
+          ]
+        },
+        {
+          "label": "Primi Piatti · Choice of One",
+          "dishes": [
+            { "name": "Insalata di Campo", "desc": "Assorted young greens with black truffle balsamic vinaigrette" },
+            { "name": "Zuppa Toscana", "desc": "Soup of the day" }
+          ]
+        },
+        {
+          "label": "Secondi Piatti · Choice of One",
+          "dishes": [
+            { "name": "Petto di Pollo al Funghi", "desc": "Wood grilled chicken breast with lemon butter, smoked provolone on balsamic roasted portabella mushroom, prosciutto di Parma and sauteed spinach" },
+            { "name": "Pappardelle al Cinghiale", "desc": "Pappardelle pasta with red wine braised wild boar ragu" },
+            { "name": "Trota in Crosta di Noci", "desc": "Walnut crusted rainbow trout, sauteed shrimp, fresh tarragon-lemon beurre blanc and sauteed spinach" },
+            { "name": "Bistecca di Manzo", "desc": "Wood grilled 8oz N.Y. strip, red wine demi-glace sauce, mashed potatoes, grilled asparagus" },
+            { "name": "Fettuccine al Funghi", "desc": "Fresh pasta with cremini mushrooms, white truffle oil, cream, and Grana Padano cheese" }
+          ]
+        },
+        {
+          "label": "Dolci · Choice of One",
+          "dishes": [
+            { "name": "Chocolate Tort or Tiramisu", "desc": "" }
+          ]
+        }
+      ],
+      "alternates": [
+        {
+          "id": "alt-fi-1",
+          "name": "Sample Alt — Veal Add-On",
+          "extraItems": [
+            { "courseIndex": 2, "name": "Costoletta di Vitello", "desc": "Wood grilled veal chop, sage brown butter, roasted fingerlings" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "siena",
+      "label": "Siena",
+      "internalPriceRef": "$85",
+      "courses": [
+        {
+          "label": "Antipasti · Family Style",
+          "dishes": [
+            { "name": "Calamari Fritti", "desc": "Fried calamari with fresh pomodoro sauce and maionese rosso" },
+            { "name": "Bruschetta con Cinghiale alla Toscana", "desc": "Grilled Tuscan bread with red wine braised Texas wild boar ragu" }
+          ]
+        },
+        {
+          "label": "Primi Piatti · Choice of One",
+          "dishes": [
+            { "name": "Insalata di Campo", "desc": "Assorted young greens with black truffle balsamic vinaigrette" },
+            { "name": "Zuppa Toscana", "desc": "Soup of the day" },
+            { "name": "Tagliatelle al Ragu Bolognese", "desc": "Fresh pasta with the traditional meat sauce of Bologna" },
+            { "name": "Penne con Pomodoro", "desc": "Quill pen pasta with pomodoro, fresh basil and Grana Padano cheese" }
+          ]
+        },
+        {
+          "label": "Secondi Piatti · Choice of One",
+          "dishes": [
+            { "name": "Filetto di Salmone con Gamberi", "desc": "Wood grilled salmon with mashed potatoes, grilled shrimp, crabmeat, lemon butter sauce" },
+            { "name": "Fettuccine al Funghi", "desc": "Fresh pasta with cremini mushrooms, white truffle oil, cream, and Grana Padano cheese" },
+            { "name": "Filetto di Manzo", "desc": "6oz wood grilled beef tenderloin filet with red wine demi-glace sauce, mashed potatoes and grilled asparagus" },
+            { "name": "Petto di Pollo al Funghi", "desc": "Wood grilled chicken breast with lemon butter, smoked provolone on balsamic roasted portabella mushroom, prosciutto di Parma and sauteed spinach" }
+          ]
+        },
+        {
+          "label": "Dolci · Choice of One",
+          "dishes": [
+            { "name": "Chocolate Tort or Tiramisu", "desc": "" }
+          ]
+        }
+      ],
+      "alternates": [
+        {
+          "id": "alt-si-1",
+          "name": "Sample Alt — Lobster Add-On",
+          "extraItems": [
+            { "courseIndex": 2, "name": "Astice alla Griglia", "desc": "Wood grilled Maine lobster tail, lemon butter, grilled asparagus" }
+          ]
+        }
+      ]
+    }
+  ],
+  "_notes": {
+    "prices": "No prices are shown anywhere on the printed menu. internalPriceRef ('$55' etc.) and the menu label ('San Gimignano') are for the STAFF picking a menu in the editor only — never render either on the printed page.",
+    "eventFields": "eventTitle / eventDate / logoUrl are entered fresh per print, not stored as part of a menu or alternate — see BUILD-SPEC.md.",
+    "alternates": "Each menu's 'alternates' array holds ZERO OR MORE named, saved variants (a library), not a single fixed alt. extraItems across ALL courses in one alternate must total 2 or fewer.",
+    "extraItems.courseIndex": "0-based index into the parent menu's courses array — identifies which course group the extra dish is appended to."
+  }
+}

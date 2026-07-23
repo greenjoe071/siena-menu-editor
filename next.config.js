@@ -16,6 +16,8 @@ const nextConfig = {
       '/happyhour-print':    ['./handoff-happyhour/**'],
       '/drinksdessert-preview': ['./handoff-drinksdessert/**'],
       '/drinksdessert-print':   ['./handoff-drinksdessert/**'],
+      '/privatedining-preview': ['./handoff-privatedining/**'],
+      '/privatedining-print':   ['./handoff-privatedining/**'],
     },
   },
 };

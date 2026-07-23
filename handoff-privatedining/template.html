@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Private Dining Menu</title>
+<style>
+/* ── Self-hosted fonts (matches handoff-drinksdessert's convention) ── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/*
+  PHYSICAL PRODUCT — one 8.5x11in printed page per event. Staff pick one of
+  3 menu templates (San Gimignano / Firenze / Siena) in the editor, then
+  optionally pick one of that menu's saved named alternates instead of the
+  default. The menu label ("Firenze") and internalPriceRef ("$75") are for
+  the STAFF picking a menu in the editor only — neither is ever rendered on
+  this page. Event title/date/logo are filled in fresh per event; they are
+  not part of the saved menu/alternate data. See BUILD-SPEC.md.
+*/
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #2a1408;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media screen {
+  body { background: #d8d2c4; padding: 40px 20px; display: flex; justify-content: center; }
+  .menu-page { box-shadow: 0 6px 20px rgba(58,26,6,0.18); }
+}
+@media print {
+  html, body { width: 8.5in; margin: 0; padding: 0; }
+  body { background: #fff; }
+  .menu-page { box-shadow: none; }
+}
+
+/*
+  Page box is FIXED — never grows with content (overflow: hidden). A box
+  that grows with content hides real overflow bugs; see BUILD-SPEC.md
+  "Page box is fixed" for why every spacing value below is already tight
+  at tier 0, not just at tier 2.
+*/
+.menu-page {
+  width: 8.5in;
+  height: 11in;
+  /* Never shrink below the fixed page size — body is a row-flex container in
+     screen mode (justify-content: center), so WIDTH is the main axis and
+     flex-shrink applies to it by default. Without flex-shrink:0, embedding
+     this page in a narrower container (e.g. the editor's preview iframe
+     column) silently shrank the page's width while padding/font-sizes
+     stayed fixed, forcing severe text wrapping and wildly inflated content
+     height — exactly the kind of false "overflow" this file's own
+     validate.js exists to catch, except here the box itself was wrong, not
+     the content. */
+  flex-shrink: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #faf6ef;
+  padding: 40px 70px 22px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.menu-header { display: flex; flex-direction: column; align-items: flex-start; flex-shrink: 0; }
+.header-row { display: flex; align-items: center; gap: 18px; }
+
+/*
+  64x64 fixed logo slot. Stays this exact size whether empty or filled —
+  never resize regardless of upload. The dashed outline some design mockups
+  show is an EDITOR-ONLY affordance to help staff see where to drop a logo;
+  it must never appear here (this file is what actually prints).
+*/
+.logo-slot { width: 64px; height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.logo-slot img { width: 100%; height: 100%; object-fit: contain; }
+
+.title-block { flex: 1 1 auto; min-width: 0; max-width: 560px; }
+.event-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 19px;
+  color: #6b4c2a;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+}
+.event-date {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #8a6a44;
+  margin-top: 5px;
+}
+
+.course-list { display: flex; flex-direction: column; align-items: flex-start; margin-top: 24px; }
+/* Set by applyTitleWrapAdjustment() in render.js after a real-browser measurement
+   detects the title wrapped to 2 lines — JSDOM cannot measure this reliably. */
+.menu-page.title-wrapped .course-list { margin-top: 14px; }
+
+.alt-warning {
+  font-family: 'Montserrat', sans-serif;
+  font-style: italic;
+  font-size: 12px;
+  color: #8a5a10;
+  margin-bottom: 14px;
+  display: none;
+}
+.menu-page[data-extra-count="1"] .alt-warning,
+.menu-page[data-extra-count="2"] .alt-warning { display: block; }
+
+.course-group + .course-group { margin-top: 7px; padding-top: 7px; border-top: 1px solid #c9a87a; }
+.course-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.16em;
+  color: #3a1a06;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.dish + .dish { margin-top: 2px; }
+.dish-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; color: #2a1408; font-size: 20px; }
+.dish-desc { font-family: 'Montserrat', sans-serif; color: #4a2f14; max-width: 560px; margin: 4px 0 0; line-height: 1.4; font-size: 14px; }
+
+/*
+  ── THE 2 SHRINK TIERS ──
+  Tier is set purely by extra-item COUNT on the current alternate (0/1/2 —
+  2 is the hard cap), never by a live fit measurement — see BUILD-SPEC.md.
+  Only dish name/description type size steps down; course-group spacing,
+  rules, header, and footer stay fixed at every tier.
+*/
+.menu-page[data-tier="1"] .dish-name { font-size: 18px; }
+.menu-page[data-tier="1"] .dish-desc { font-size: 12.5px; }
+.menu-page[data-tier="2"] .dish-name { font-size: 16px; }
+.menu-page[data-tier="2"] .dish-desc { font-size: 11.5px; }
+
+.menu-footer { text-align: left; margin-top: 10px; flex-shrink: 0; }
+.footer-wordmark {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: #c9a87a;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="menu-page" data-tier="0" data-extra-count="0">
+  <div class="menu-header">
+    <div class="header-row">
+      <div class="logo-slot"></div>
+      <div class="title-block">
+        <div class="event-title"></div>
+        <div class="event-date"></div>
+      </div>
+    </div>
+  </div>
+  <div class="course-list">
+    <div class="alt-warning">Adding items shrinks the type to fit &mdash; 2 max.</div>
+  </div>
+  <div class="menu-footer">
+    <div class="footer-wordmark">Siena Ristorante Toscana</div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     Item DOM blueprints. render.js clones one of these per course/dish and
+     appends it into .course-list.
+     ───────────────────────────────────────────────────────────────────── -->
+
+<template id="course-group-template"><div class="course-group"><div class="course-label"></div></div></template>
+
+<template id="dish-template"><div class="dish"><div class="dish-name"></div><div class="dish-desc"></div></div></template>
+
+<script src="validate.js"></script>
+
+</body>
+</html>
