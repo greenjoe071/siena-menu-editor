@@ -77,8 +77,16 @@ async function kvList(prefix: string): Promise<string[]> {
   return files.filter((f) => f.startsWith(prefix) && f.endsWith('.json')).map((f) => f.replace(/\.json$/, ''));
 }
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+// Restaurant timezone — Austin, TX. MUST be explicit: this code runs in a
+// Netlify server function, which defaults to UTC, not Austin's local time.
+// Without an explicit timeZone, a menu published in the evening Central time
+// (already "tomorrow" in UTC) gets stamped with the wrong date. Every date
+// shown to Joe (the "Current as of" badge and Past Menus labels) must go
+// through this function — never call toLocaleDateString() directly.
+const RESTAURANT_TZ = 'America/Chicago';
+
+export function formatMenuDate(ts: number): string {
+  return new Date(ts).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: RESTAURANT_TZ });
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -188,7 +196,7 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
           if (typeof e.publishedAt === 'number') publishedAt = e.publishedAt;
         } catch { /* keep ts */ }
       }
-      entries.push({ key, ts, publishedAt, label: formatDate(publishedAt) });
+      entries.push({ key, ts, publishedAt, label: formatMenuDate(publishedAt) });
     }
     return entries.sort((a, b) => b.ts - a.ts).slice(0, MAX_PUBLISHED);
   }
