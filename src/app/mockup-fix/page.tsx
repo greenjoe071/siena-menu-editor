@@ -4,11 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 // MOCKUP — for Joe's review only. Not wired to real data or real save
-// actions. Demonstrates the proposed 4-option landing page (adds "Fix a
-// Mistake") and the past-menus "add a note" idea. Delete this route once
-// the real version is built and approved.
+// actions. Demonstrates the proposed 3-option landing page (View/Print/Fix
+// grouped into the current-menu card) and the past-menus "add a note" idea.
+// Delete this route once the real version is built and approved.
 
-type SectionKey = 'current' | 'fix' | 'new' | 'past';
+type SectionKey = 'current' | 'new' | 'past';
 
 const PAST_MENUS = [
   { key: 'p1', label: 'Current as of July 21, 2026', note: '' },
@@ -23,8 +23,7 @@ export default function MockupFixPage() {
   const [editingNote, setEditingNote] = useState<string | null>(null);
 
   const navItems: { key: SectionKey; label: string; hint?: string }[] = [
-    { key: 'current', label: 'View & Print Current Menu', hint: 'Current as of August 1, 2026' },
-    { key: 'fix', label: 'Fix a Mistake', hint: 'Correct a typo or price' },
+    { key: 'current', label: 'View, Print, or Fix Current Menu', hint: 'Current as of August 1, 2026' },
     { key: 'new', label: 'Work on a New Menu', hint: undefined },
     { key: 'past', label: 'Past Menus', hint: `${PAST_MENUS.length} saved` },
   ];
@@ -70,32 +69,20 @@ export default function MockupFixPage() {
               </div>
               <p className="dl-card-note">
                 This is the menu in use. It stays locked so it can&rsquo;t be changed by accident —
-                it only updates when you publish a new draft, or use &ldquo;Fix a Mistake.&rdquo;
+                it only updates when you publish a new menu, or use the fix option below.
               </p>
               <div className="dl-actions">
                 <a className="dl-btn dl-btn--solid">View</a>
                 <a className="dl-btn dl-btn--solid">Print</a>
               </div>
-            </div>
-          )}
 
-          {active === 'fix' && (
-            <div className="dl-pane dl-pane--fix">
-              <div className="dl-card-top">
-                <span className="dl-badge dl-badge--fix">Fix a Mistake</span>
-              </div>
-              <h2 className="dl-card-title">Correct the Live Menu</h2>
-              <p className="dl-card-note">
-                Use this when you spot a typo, a wrong price, or a small mistake on the menu that&rsquo;s
-                already out. It opens the live menu for editing and <strong>saves right away</strong> —
-                there&rsquo;s no draft and no publish button.
-              </p>
-              <p className="dl-card-note">
-                For planning next week&rsquo;s specials, use &ldquo;Work on a New Menu&rdquo; instead — that one
-                lets you take your time and keeps the live menu untouched until you&rsquo;re ready.
-              </p>
-              <div className="dl-actions">
-                <a className="dl-btn dl-btn--primary">Open &amp; Fix →</a>
+              <div className="dl-fix-row">
+                <a className="dl-btn dl-btn--fix">✏️ Fix a Mistake</a>
+                <span className="dl-fix-hint">
+                  Spot a typo or wrong price? This opens the live menu, and saves the second you make a
+                  change — no draft, no publish button. For planning next week&rsquo;s specials instead,
+                  use &ldquo;Work on a New Menu.&rdquo;
+                </span>
               </div>
             </div>
           )}
@@ -162,8 +149,28 @@ export default function MockupFixPage() {
           letter-spacing: 0.04em;
           padding: 8px;
         }
-        .dl-pane--fix { border: 2px solid #b8272c; box-shadow: 0 6px 24px rgba(184, 39, 44, 0.14); }
-        .dl-badge--fix { background: #b8272c; }
+        .dl-fix-row {
+          margin-top: 20px;
+          padding-top: 16px;
+          border-top: 1px dashed var(--border);
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+        .dl-btn--fix {
+          font-size: 13.5px;
+          font-weight: 700;
+          padding: 8px 16px;
+          background: transparent;
+          color: #b8272c;
+          border: 2px solid #b8272c;
+          border-radius: 10px;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .dl-btn--fix:hover { background: rgba(184, 39, 44, 0.08); }
+        .dl-fix-hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; max-width: 380px; }
         .dl-past-row--note { align-items: flex-start; }
         .dl-past-main { display: flex; flex-direction: column; gap: 4px; }
         .dl-note-text, .dl-note-add {
