@@ -1168,7 +1168,7 @@ button {
   padding: 30px 48px 26px;
 }
 .dl-header-inner {
-  max-width: 760px;
+  max-width: 900px;
   margin: 0 auto;
   width: 100%;
 }
@@ -1191,17 +1191,82 @@ button {
   margin-top: 4px;
 }
 
-.dl-main {
-  max-width: 760px;
+/* ── Two-column landing: numbered nav left, selected pane right ── */
+.dl-split {
+  max-width: 900px;
   margin: 0 auto;
   width: 100%;
   padding: 32px 48px 60px;
   display: flex;
-  flex-direction: column;
-  gap: 22px;
+  align-items: flex-start;
+  gap: 0;
 }
 
-.dl-card {
+.dl-nav {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 28px;
+}
+
+.dl-nav-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dl-nav-item:hover { background: rgba(184, 150, 42, 0.08); }
+.dl-nav-item.active { background: rgba(184, 150, 42, 0.14); }
+
+.dl-nav-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.dl-nav-item.active .dl-nav-num { background: var(--gold); color: #fff; }
+
+.dl-nav-text { display: flex; flex-direction: column; gap: 2px; }
+.dl-nav-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.dl-nav-item.active .dl-nav-label { color: var(--navy); }
+.dl-nav-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.dl-divider {
+  align-self: stretch;
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.dl-content {
+  flex: 1;
+  min-width: 0;
+  padding-left: 32px;
+}
+
+.dl-pane {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -1209,11 +1274,12 @@ button {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Current menu card — gold-accented, most prominent */
-.dl-card--current {
+/* Current-menu pane — gold-accented, most prominent */
+.dl-pane--current {
   border: 2px solid var(--gold);
   box-shadow: 0 6px 24px rgba(184, 150, 42, 0.16);
 }
+
 .dl-card-top {
   display: flex;
   align-items: center;
