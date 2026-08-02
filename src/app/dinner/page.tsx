@@ -15,12 +15,13 @@ export default async function DinnerLandingPage() {
     <MenuLanding
       menuName="Dinner"
       editHref="/dinner/edit"
+      fixHref="/dinner/fix"
       apiBase="/api/dinner"
       previewHref="/preview"
       printHref="/print"
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label }))}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
     />
   );
 }

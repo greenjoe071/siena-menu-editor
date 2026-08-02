@@ -15,12 +15,13 @@ export default async function DrinksDessertLandingPage() {
     <MenuLanding
       menuName="Drinks & Dessert"
       editHref="/drinksdessert/edit"
+      fixHref="/drinksdessert/fix"
       apiBase="/api/drinksdessert"
       previewHref="/drinksdessert-preview"
       printHref="/drinksdessert-print"
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label }))}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
       printVariants={[
         { label: 'Entire menu (all 4 pages)', group: 'Full menu' },
         { label: 'Cocktails & Spirits and Beer', query: '&sheet=a', group: 'By sheet (2 pages)' },

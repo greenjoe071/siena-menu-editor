@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DragDropContext,
@@ -382,23 +383,30 @@ function WeeklyBlock({
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function MondayEditorPage() {
+  // "Fix a Mistake" (/monday/fix) reuses this exact editor — same fields,
+  // same validation, same live preview — but reads/writes the LIVE menu
+  // directly instead of a draft, and hides the publish/discard footer.
+  const pathname = usePathname();
+  const isFix = pathname?.endsWith('/fix') ?? false;
+  const apiPath = isFix ? '/api/monday/fix' : '/api/monday/draft';
+
   const [menu, setMenu]           = useState<MondayMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]     = useState('');
-  const [previewUrl, setPreviewUrl] = useState('/monday-preview?src=draft');
+  const [previewUrl, setPreviewUrl] = useState(`/monday-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
 
   // Load initial data
   useEffect(() => {
-    fetch('/api/monday/draft')
+    fetch(apiPath)
       .then(r => r.json())
       .then(data => {
         setMenu(data);
         prevJsonRef.current = JSON.stringify(data);
       })
       .catch(() => setSaveStatus('error'));
-  }, []);
+  }, [apiPath]);
 
   // Debounced save + live preview update
   const debouncedMenu = useDebounce(menu, 800);
@@ -417,7 +425,7 @@ export default function MondayEditorPage() {
     setSaveStatus('saving');
     setSaveMsg('Saving…');
     try {
-      const res = await fetch('/api/monday/draft', {
+      const res = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: json,
@@ -441,7 +449,7 @@ export default function MondayEditorPage() {
       setSaveStatus('error');
       setSaveMsg('Network error');
     }
-  }, []);
+  }, [apiPath]);
 
   useEffect(() => {
     if (debouncedMenu && prevJsonRef.current !== '') saveAndRefresh(debouncedMenu);
@@ -553,9 +561,15 @@ export default function MondayEditorPage() {
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
-          </div>
+          {isFix ? (
+            <div className="draft-banner fix-banner">
+              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+            </div>
+          ) : (
+            <div className="draft-banner">
+              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+            </div>
+          )}
           <div className="editor-scroll chef-mode">
 
             {/* Hero */}
@@ -653,18 +667,20 @@ export default function MondayEditorPage() {
           </div>{/* end editor-scroll */}
 
 
-          <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
-            <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
-          </div>
+          {!isFix && (
+            <div className="editor-footer editor-footer--publish">
+              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
+              <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
+            </div>
+          )}
           <div className="editor-footer">
             <span className={saveStatusClass}>{saveMsg || 'Auto-saves as you type'}</span>
             <button
               className="btn-print"
               onClick={() => {
                 if (menu) localStorage.setItem('siena-monday-print-data', JSON.stringify(menu));
-                window.open('/monday-print?src=draft', '_blank');
+                window.open(`/monday-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
               }}
             >
               Print Menu
@@ -679,7 +695,7 @@ export default function MondayEditorPage() {
             <button
               className="btn-ghost"
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-              onClick={() => setPreviewUrl('/monday-preview?src=draft&' + Date.now())}
+              onClick={() => setPreviewUrl(`/monday-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
             >
               ↺ Reload from server
             </button>

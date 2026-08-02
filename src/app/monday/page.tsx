@@ -15,12 +15,13 @@ export default async function MondayLandingPage() {
     <MenuLanding
       menuName="Monday $26 Specials"
       editHref="/monday/edit"
+      fixHref="/monday/fix"
       apiBase="/api/monday"
       previewHref="/monday-preview"
       printHref="/monday-print"
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label }))}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
     />
   );
 }

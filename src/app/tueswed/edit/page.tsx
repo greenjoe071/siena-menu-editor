@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -136,10 +137,17 @@ function CourseCard({ course, index, onChange }: {
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function TuewedEditorPage() {
+  // "Fix a Mistake" (/tueswed/fix) reuses this exact editor — same fields,
+  // same validation, same live preview — but reads/writes the LIVE menu
+  // directly instead of a draft, and hides the publish/discard/New-Week footer.
+  const pathname = usePathname();
+  const isFix = pathname?.endsWith('/fix') ?? false;
+  const apiPath = isFix ? '/api/tueswed/fix' : '/api/tueswed/draft';
+
   const [menu, setMenu]                 = useState<TuewedMenuData | null>(null);
   const [saveStatus, setSaveStatus]     = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]           = useState('');
-  const [previewUrl, setPreviewUrl]     = useState('/tueswed-preview?src=draft');
+  const [previewUrl, setPreviewUrl]     = useState(`/tueswed-preview?src=${isFix ? 'current' : 'draft'}`);
   const [validationFits, setValidationFits] = useState<boolean | null>(null);
   const [worstSection, setWorstSection]     = useState<string | null>(null);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
@@ -147,7 +155,7 @@ export default function TuewedEditorPage() {
   const pendingSaveRef = useRef<TuewedMenuData | null>(null);
 
   useEffect(() => {
-    fetch('/api/tueswed/draft')
+    fetch(apiPath)
       .then(r => r.json())
       .then(data => {
         const normalized = { ...data, policy_line: data.policy_line ?? '' };
@@ -155,7 +163,7 @@ export default function TuewedEditorPage() {
         prevJsonRef.current = JSON.stringify(normalized);
       })
       .catch(() => setSaveStatus('error'));
-  }, []);
+  }, [apiPath]);
 
   const debouncedMenu = useDebounce(menu, 800);
 
@@ -167,7 +175,7 @@ export default function TuewedEditorPage() {
     setSaveStatus('saving');
     setSaveMsg('Saving…');
     try {
-      const res = await fetch('/api/tueswed/draft', {
+      const res = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: json,
@@ -188,7 +196,7 @@ export default function TuewedEditorPage() {
       setSaveStatus('error');
       setSaveMsg('Network error');
     }
-  }, []);
+  }, [apiPath]);
 
   // ── Validation listener ─────────────────────────────────────────────────
   useEffect(() => {
@@ -316,9 +324,15 @@ export default function TuewedEditorPage() {
           </div>
         )}
 
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
-          </div>
+          {isFix ? (
+            <div className="draft-banner fix-banner">
+              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+            </div>
+          ) : (
+            <div className="draft-banner">
+              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+            </div>
+          )}
         <div className="editor-scroll chef-mode">
 
           {/* Price */}
@@ -440,13 +454,15 @@ export default function TuewedEditorPage() {
         </div>{/* end editor-scroll */}
 
 
-          <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
-            <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
-          </div>
+          {!isFix && (
+            <div className="editor-footer editor-footer--publish">
+              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
+              <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
+            </div>
+          )}
         <div className="editor-footer">
-          <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>
+          {!isFix && <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>}
           <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>
             {saveStatus === 'saved'  ? '✓ Saved' :
              saveStatus === 'saving' ? 'Saving…' :
@@ -459,7 +475,7 @@ export default function TuewedEditorPage() {
             title={validationFits === false ? 'Menu overflows — shorten text before printing' : undefined}
             onClick={() => {
               if (menu) localStorage.setItem('siena-tueswed-print-data', JSON.stringify(menu));
-              window.open('/tueswed-print?src=draft', '_blank');
+              window.open(`/tueswed-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
             }}
           >
             Print Menu
@@ -474,7 +490,7 @@ export default function TuewedEditorPage() {
           <button
             className="btn-ghost"
             style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-            onClick={() => setPreviewUrl('/tueswed-preview?src=draft&' + Date.now())}
+            onClick={() => setPreviewUrl(`/tueswed-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
           >
             ↺ Reload from server
           </button>

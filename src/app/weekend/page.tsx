@@ -15,12 +15,13 @@ export default async function WeekendLandingPage() {
     <MenuLanding
       menuName="Weekend Specials"
       editHref="/weekend/edit"
+      fixHref="/weekend/fix"
       apiBase="/api/weekend"
       previewHref="/weekend-preview"
       printHref="/weekend-print"
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label }))}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
     />
   );
 }

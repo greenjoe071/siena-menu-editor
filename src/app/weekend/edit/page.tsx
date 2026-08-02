@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DragDropContext,
@@ -500,19 +501,26 @@ function DessertBlock({ dessert, onChange }: {
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function WeekendEditorPage() {
+  // "Fix a Mistake" (/weekend/fix) reuses this exact editor — same fields,
+  // same validation, same live preview — but reads/writes the LIVE menu
+  // directly instead of a draft, and hides the publish/discard/New-Week footer.
+  const pathname = usePathname();
+  const isFix = pathname?.endsWith('/fix') ?? false;
+  const apiPath = isFix ? '/api/weekend/fix' : '/api/weekend/draft';
+
   const [menu, setMenu]             = useState<WeekendMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]       = useState('');
-  const [previewUrl, setPreviewUrl] = useState('/weekend-preview?src=draft');
+  const [previewUrl, setPreviewUrl] = useState(`/weekend-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
 
   useEffect(() => {
-    fetch('/api/weekend/draft')
+    fetch(apiPath)
       .then(r => r.json())
       .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
       .catch(() => setSaveStatus('error'));
-  }, []);
+  }, [apiPath]);
 
   const debouncedMenu    = useDebounce(menu, 800);
   const previewDebounced = useDebounce(menu, 300);
@@ -539,7 +547,7 @@ export default function WeekendEditorPage() {
     setSaveStatus('saving');
     setSaveMsg('Saving…');
     try {
-      const res = await fetch('/api/weekend/draft', {
+      const res = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: json,
@@ -560,7 +568,7 @@ export default function WeekendEditorPage() {
       setSaveStatus('error');
       setSaveMsg('Network error');
     }
-  }, []);
+  }, [apiPath]);
 
   useEffect(() => {
     if (debouncedMenu && prevJsonRef.current !== '') saveAndRefresh(debouncedMenu);
@@ -703,9 +711,15 @@ export default function WeekendEditorPage() {
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
-          </div>
+          {isFix ? (
+            <div className="draft-banner fix-banner">
+              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+            </div>
+          ) : (
+            <div className="draft-banner">
+              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+            </div>
+          )}
           <div className="editor-scroll chef-mode">
 
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
@@ -760,13 +774,15 @@ export default function WeekendEditorPage() {
           </div>{/* end editor-scroll */}
 
 
-          <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
-            <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
-          </div>
+          {!isFix && (
+            <div className="editor-footer editor-footer--publish">
+              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
+              <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
+            </div>
+          )}
           <div className="editor-footer">
-            <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>
+            {!isFix && <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>}
             <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>
               {saveStatus === 'saved'  ? '✓ Saved' :
                saveStatus === 'saving' ? 'Saving…' :
@@ -777,7 +793,7 @@ export default function WeekendEditorPage() {
               className="btn-print"
               onClick={() => {
                 if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
-                window.open('/weekend-print?src=draft', '_blank');
+                window.open(`/weekend-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
               }}
             >
               Print Menu
@@ -792,7 +808,7 @@ export default function WeekendEditorPage() {
             <button
               className="btn-ghost"
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-              onClick={() => setPreviewUrl('/weekend-preview?src=draft&' + Date.now())}
+              onClick={() => setPreviewUrl(`/weekend-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
             >
               ↺ Reload from server
             </button>

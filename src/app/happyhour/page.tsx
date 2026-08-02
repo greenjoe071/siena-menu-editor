@@ -15,12 +15,13 @@ export default async function HappyhourLandingPage() {
     <MenuLanding
       menuName="Happy Hour"
       editHref="/happyhour/edit"
+      fixHref="/happyhour/fix"
       apiBase="/api/happyhour"
       previewHref="/happyhour-preview"
       printHref="/happyhour-print"
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label }))}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
     />
   );
 }

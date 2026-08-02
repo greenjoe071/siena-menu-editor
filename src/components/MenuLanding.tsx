@@ -5,10 +5,10 @@ import Link from 'next/link';
 import DraftActions from './DraftActions';
 import PrintPicker from './PrintPicker';
 
-// Shared landing page for every menu: view/print the protected current menu,
-// start/continue a draft, and view/print the last 3 past menus. Two-column
-// layout — a numbered nav on the left, the selected section's content on
-// the right, separated by a light divider.
+// Shared landing page for every menu: view/print/fix the protected current
+// menu, start/continue a draft, and view/print the last 3 past menus.
+// Two-column layout — a numbered nav on the left, the selected section's
+// content on the right, separated by a light divider.
 
 // A print option other than the plain single "Print" button — e.g. Drinks &
 // Dessert's "print just one sheet/page" choices. `query` is appended verbatim
@@ -20,15 +20,22 @@ export interface PrintVariant {
   group?: string;
 }
 
+export interface PublishedMenuEntry {
+  key: string;
+  label: string;
+  note?: string;
+}
+
 export interface MenuLandingProps {
   menuName:    string;   // "Happy Hour"  → badge "Current Happy Hour Menu"
   editHref:    string;   // "/happyhour/edit"
+  fixHref?:    string;   // "/happyhour/fix" — omit to hide "Fix a Mistake" (not built yet for this menu)
   apiBase:     string;   // "/api/happyhour"
   previewHref: string;   // "/happyhour-preview"
   printHref:   string;   // "/happyhour-print"
   currentDate: string;   // formatted "July 9, 2026"
   draftExists: boolean;
-  published:   { key: string; label: string }[];
+  published:   PublishedMenuEntry[];
   // When set, the Print button becomes a row of these options instead of a
   // single "Print" link (both for the current menu and each past menu).
   printVariants?: PrintVariant[];
@@ -49,17 +56,66 @@ function PrintLinks({
   return <PrintPicker printHref={printHref} src={src} variants={variants} size={size} />;
 }
 
+// Inline, click-to-edit note on a past-menu row. Saves on blur; no separate
+// save button, matching the app's autosave feel elsewhere.
+function PastMenuNote({
+  apiBase, menuKey, initialNote,
+}: {
+  apiBase: string;
+  menuKey: string;
+  initialNote?: string;
+}) {
+  const [note, setNote] = useState(initialNote ?? '');
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function save(value: string) {
+    setNote(value);
+    setEditing(false);
+    if (value === (initialNote ?? '')) return;
+    setSaving(true);
+    try {
+      await fetch(`${apiBase}/note`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: menuKey, note: value }),
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        className="dl-note-input"
+        defaultValue={note}
+        placeholder="What changed on this menu? (optional)"
+        onBlur={(e) => save(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+      />
+    );
+  }
+
+  return (
+    <button type="button" className={note ? 'dl-note-text' : 'dl-note-add'} onClick={() => setEditing(true)} disabled={saving}>
+      {saving ? 'Saving…' : note ? `📝 ${note}` : '+ Add a note'}
+    </button>
+  );
+}
+
 type SectionKey = 'current' | 'new' | 'past';
 
 export default function MenuLanding({
-  menuName, editHref, apiBase, previewHref, printHref, currentDate, draftExists, published, printVariants,
+  menuName, editHref, fixHref, apiBase, previewHref, printHref, currentDate, draftExists, published, printVariants,
 }: MenuLandingProps) {
   const [active, setActive] = useState<SectionKey>('current');
 
   const navItems: { key: SectionKey; label: string; hint?: string }[] = [
-    { key: 'current', label: 'Work on current menu', hint: `Current as of ${currentDate}` },
-    { key: 'new', label: 'Work on a new menu', hint: draftExists ? 'Draft in progress' : undefined },
-    { key: 'past', label: 'Past menus: view or print', hint: published.length ? `${published.length} saved` : undefined },
+    { key: 'current', label: 'View, Print, or Fix Current Menu', hint: `Current as of ${currentDate}` },
+    { key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined },
+    { key: 'past', label: 'Past Menus', hint: published.length ? `${published.length} saved` : undefined },
   ];
 
   return (
@@ -68,7 +124,7 @@ export default function MenuLanding({
         <div className="dl-header-inner">
           <Link href="/" className="dl-back">🏠 Home</Link>
           <h1 className="dl-title">{menuName}</h1>
-          <p className="dl-subtitle">View or print the current menu, or start a new draft.</p>
+          <p className="dl-subtitle">View or print the current menu, fix a mistake, or start a new draft.</p>
         </div>
       </header>
 
@@ -101,12 +157,22 @@ export default function MenuLanding({
               </div>
               <p className="dl-card-note">
                 This is the menu in use. It stays locked so it can&rsquo;t be changed by accident —
-                it only updates when you publish a new draft.
+                it only updates when you publish a new menu{fixHref ? ', or use the fix option below' : ''}.
               </p>
               <div className="dl-actions">
                 <a className="dl-btn dl-btn--solid" href={`${previewHref}?src=current`} target="_blank" rel="noopener noreferrer">View</a>
                 <PrintLinks printHref={printHref} src="current" variants={printVariants} size="solid" />
               </div>
+
+              {fixHref && (
+                <div className="dl-fix-row">
+                  <Link className="dl-btn dl-btn--fix" href={fixHref}>✏️ Fix a Mistake</Link>
+                  <span className="dl-fix-hint">
+                    Spot a typo or wrong price? This opens the live menu, and saves the second you make a
+                    change — no draft, no publish button. For planning ahead instead, use &ldquo;Work on a New Menu.&rdquo;
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -132,8 +198,11 @@ export default function MenuLanding({
               ) : (
                 <div className="dl-past-list">
                   {published.map((p) => (
-                    <div key={p.key} className="dl-past-row">
-                      <span className="dl-past-label">Current as of {p.label}</span>
+                    <div key={p.key} className="dl-past-row dl-past-row--note">
+                      <div className="dl-past-main">
+                        <span className="dl-past-label">Current as of {p.label}</span>
+                        <PastMenuNote apiBase={apiBase} menuKey={p.key} initialNote={p.note} />
+                      </div>
                       <div className="dl-past-actions">
                         <a className="dl-btn dl-btn--small" href={`${previewHref}?src=${p.key}`} target="_blank" rel="noopener noreferrer">View</a>
                         <PrintLinks printHref={printHref} src={p.key} variants={printVariants} size="small" />

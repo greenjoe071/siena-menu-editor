@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DragDropContext,
@@ -415,23 +416,30 @@ function SectionBlock({
 // ── Main editor (works on the DRAFT — the current menu stays protected) ────
 
 export default function DinnerDraftEditorPage() {
+  // "Fix a Mistake" (/dinner/fix) reuses this exact editor — same fields,
+  // same validation, same live preview — but reads/writes the LIVE menu
+  // directly instead of a draft, and hides the publish/discard footer.
+  const pathname = usePathname();
+  const isFix = pathname?.endsWith('/fix') ?? false;
+  const apiPath = isFix ? '/api/dinner/fix' : '/api/dinner/draft';
+
   const [menu, setMenu] = useState<MenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
   const [publishing, setPublishing] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState('/preview?src=draft');
+  const [previewUrl, setPreviewUrl] = useState(`/preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
 
   useEffect(() => {
-    fetch('/api/dinner/draft')
+    fetch(apiPath)
       .then((r) => r.json())
       .then((data) => {
         setMenu(data);
         prevJsonRef.current = JSON.stringify(data);
       })
       .catch(() => setSaveStatus('error'));
-  }, []);
+  }, [apiPath]);
 
   const debouncedMenu = useDebounce(menu, 800);
 
@@ -443,7 +451,7 @@ export default function DinnerDraftEditorPage() {
     setSaveStatus('saving');
     setSaveMsg('Saving…');
     try {
-      const res = await fetch('/api/dinner/draft', {
+      const res = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: json,
@@ -458,7 +466,7 @@ export default function DinnerDraftEditorPage() {
         return;
       }
       setSaveStatus('saved');
-      setSaveMsg('Draft saved');
+      setSaveMsg(isFix ? 'Saved' : 'Draft saved');
       iframeRef.current?.contentWindow?.postMessage(
         { type: 'SIENA_MENU_UPDATE', payload: data }, '*'
       );
@@ -467,7 +475,7 @@ export default function DinnerDraftEditorPage() {
       setSaveStatus('error');
       setSaveMsg('Network error');
     }
-  }, []);
+  }, [apiPath, isFix]);
 
   useEffect(() => {
     if (debouncedMenu && prevJsonRef.current !== '') {
@@ -590,13 +598,19 @@ export default function DinnerDraftEditorPage() {
         <div className="editor-pane">
           <div className="editor-header">
             <Link href="/dinner" className="btn-back">← Dinner Menu</Link>
-            <h1>Editing a Draft</h1>
+            <h1>{isFix ? 'Fixing the Live Menu' : 'Editing a Draft'}</h1>
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
-          </div>
+          {isFix ? (
+            <div className="draft-banner fix-banner">
+              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+            </div>
+          ) : (
+            <div className="draft-banner">
+              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+            </div>
+          )}
 
           <div className="editor-scroll">
             {/* Restaurant header */}
@@ -689,31 +703,33 @@ export default function DinnerDraftEditorPage() {
           </div>
 
           <div className="editor-footer editor-footer--draft">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
+            {!isFix && <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>}
             <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>{saveMsg || 'Auto-saves as you type'}</span>
             <button
               className="btn-print"
               onClick={() => {
                 if (menu) localStorage.setItem('siena-print-data', JSON.stringify(menu));
-                window.open('/print?src=draft', '_blank');
+                window.open(`/print?src=${isFix ? 'current' : 'draft'}`, '_blank');
               }}
             >
-              Print Draft
+              {isFix ? 'Print Menu' : 'Print Draft'}
             </button>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
-              {publishing ? 'Publishing…' : 'Make This the Current Menu'}
-            </button>
+            {!isFix && (
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
+                {publishing ? 'Publishing…' : 'Make This the Current Menu'}
+              </button>
+            )}
           </div>
         </div>
 
         {/* ── Preview pane ────────────────────────────────────────── */}
         <div className="preview-pane">
           <div className="preview-toolbar">
-            <span>Draft preview — all 3 pages</span>
+            <span>{isFix ? 'Live preview' : 'Draft preview — all 3 pages'}</span>
             <button
               className="btn-ghost"
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-              onClick={() => setPreviewUrl('/preview?src=draft&' + Date.now())}
+              onClick={() => setPreviewUrl(`/preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
             >
               ↺ Reload from server
             </button>

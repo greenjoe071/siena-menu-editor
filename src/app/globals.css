@@ -1390,8 +1390,56 @@ button {
   color: var(--text);
 }
 .dl-past-actions { display: flex; gap: 8px; }
+.dl-past-row--note { align-items: flex-start; }
+.dl-past-main { display: flex; flex-direction: column; gap: 4px; }
+
+/* "Fix a Mistake" — set apart from View/Print so it doesn't read as a
+   routine, same-weight action on the locked current-menu card. */
+.dl-fix-row {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.dl-btn--fix {
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 8px 16px;
+  background: transparent;
+  color: #b8272c;
+  border: 2px solid #b8272c;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.dl-btn--fix:hover { background: rgba(184, 39, 44, 0.08); }
+.dl-fix-hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; max-width: 380px; }
+
+/* Past-menu notes — click text to add/edit, saves on blur */
+.dl-note-text, .dl-note-add {
+  background: none; border: none; padding: 0; text-align: left; cursor: pointer;
+  font-size: 13.5px; color: var(--muted); font-style: italic;
+}
+.dl-note-text:hover, .dl-note-add:hover { color: var(--navy); }
+.dl-note-add { color: var(--gold); font-style: normal; font-weight: 600; }
+.dl-note-text:disabled, .dl-note-add:disabled { opacity: 0.6; cursor: default; }
+.dl-note-input {
+  font-size: 13.5px; padding: 6px 10px; border: 2px solid var(--gold);
+  border-radius: 6px; width: 320px; max-width: 100%;
+}
 
 /* ── Draft editor extras (banner + publish/discard footer) ── */
+/* "Fix a Mistake" banner — same shape as .draft-banner, red-tinted to signal
+   "this edits the live menu" instead of the gold "this is a safe draft". */
+.draft-banner.fix-banner {
+  background: #fbeaea;
+  border-bottom: 1px solid #ecb8b8;
+  color: #7a1f1f;
+}
+
 .draft-banner {
   background: #fdf6e3;
   border-bottom: 1px solid #ecd9a0;

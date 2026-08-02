@@ -92,7 +92,7 @@ export function formatMenuDate(ts: number): string {
 // ── Types ─────────────────────────────────────────────────────────────────
 
 export interface CurrentMeta { publishedAt: number }
-export interface PublishedEntry { key: string; ts: number; publishedAt: number; label: string }
+export interface PublishedEntry { key: string; ts: number; publishedAt: number; label: string; note?: string }
 
 export interface DraftPublishConfig<T> {
   currentKey:      string;   // e.g. 'weekend-menu-data'
@@ -114,6 +114,7 @@ export interface DraftPublish<T> {
   listPublished:   () => Promise<PublishedEntry[]>;
   readPublished:   (key: string) => Promise<T>;
   readMenuBySrc:   (src: string | null) => Promise<T>;
+  updateNote:      (key: string, note: string) => Promise<void>;
 }
 
 // ── Factory ───────────────────────────────────────────────────────────────
@@ -189,16 +190,29 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
     for (const key of keys) {
       const ts = parseInt(key.replace(publishedPrefix, ''), 10);
       let publishedAt = ts;
+      let note: string | undefined;
       const raw = await kvRead(key);
       if (raw) {
         try {
           const e = JSON.parse(raw);
           if (typeof e.publishedAt === 'number') publishedAt = e.publishedAt;
+          if (typeof e.note === 'string' && e.note) note = e.note;
         } catch { /* keep ts */ }
       }
-      entries.push({ key, ts, publishedAt, label: formatMenuDate(publishedAt) });
+      entries.push({ key, ts, publishedAt, label: formatMenuDate(publishedAt), note });
     }
     return entries.sort((a, b) => b.ts - a.ts).slice(0, MAX_PUBLISHED);
+  }
+
+  // A short, optional description Joe can attach to a past menu (e.g. "Summer
+  // version — lighter pastas") so it's easy to tell entries apart at a glance.
+  // Stored inside the same envelope as the archived menu data.
+  async function updateNote(key: string, note: string): Promise<void> {
+    const raw = await kvRead(key);
+    if (!raw) throw new Error('Published menu not found');
+    const envelope = JSON.parse(raw);
+    envelope.note = note;
+    await kvWrite(key, JSON.stringify(envelope));
   }
 
   async function readPublished(key: string): Promise<T> {
@@ -220,7 +234,7 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
 
   return {
     readCurrentMeta, hasDraft, readDraft, writeDraft, discardDraft,
-    publishDraft, listPublished, readPublished, readMenuBySrc,
+    publishDraft, listPublished, readPublished, readMenuBySrc, updateNote,
   };
 }
 
@@ -267,6 +281,54 @@ export function makePublishHandler<T>(dp: DraftPublish<T>) {
         return NextResponse.json({ ok: true, publishedAt: meta.publishedAt });
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Publish failed';
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
+    },
+  };
+}
+
+// "Fix a Mistake" — reads and writes the CURRENT menu directly. No draft, no
+// publish step, no history archive (a quick typo/price correction shouldn't
+// burn one of the 3 "Past Menus" slots). `writeCurrent` is each menu's
+// existing write{Name}Menu() — already validates via schema.parse and keeps
+// its own hidden legacy per-save backup, which is a fine safety net here.
+export function makeFixHandlers<T>(readCurrent: () => Promise<T>, writeCurrent: (data: T) => Promise<void>) {
+  return {
+    async GET() {
+      try {
+        return NextResponse.json(await readCurrent());
+      } catch {
+        return NextResponse.json({ error: 'Failed to read current menu' }, { status: 500 });
+      }
+    },
+    async POST(request: Request) {
+      try {
+        const body = await request.json();
+        await writeCurrent(body as T);
+        return NextResponse.json({ ok: true });
+      } catch (err) {
+        if (err instanceof ZodError) {
+          return NextResponse.json({ error: 'Validation failed', issues: err.issues }, { status: 422 });
+        }
+        const msg = err instanceof Error ? err.message : String(err);
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
+    },
+  };
+}
+
+export function makeNoteHandler<T>(dp: DraftPublish<T>) {
+  return {
+    async POST(request: Request) {
+      try {
+        const { key, note } = await request.json();
+        if (typeof key !== 'string' || typeof note !== 'string') {
+          return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+        }
+        await dp.updateNote(key, note);
+        return NextResponse.json({ ok: true });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to save note';
         return NextResponse.json({ error: msg }, { status: 500 });
       }
     },

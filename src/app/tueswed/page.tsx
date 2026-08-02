@@ -15,12 +15,13 @@ export default async function TueswedLandingPage() {
     <MenuLanding
       menuName="Tue–Wed $45 Specials"
       editHref="/tueswed/edit"
+      fixHref="/tueswed/fix"
       apiBase="/api/tueswed"
       previewHref="/tueswed-preview"
       printHref="/tueswed-print"
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label }))}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
     />
   );
 }

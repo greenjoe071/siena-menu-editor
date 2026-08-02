@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -333,13 +334,20 @@ function BeerRow({ item, onChange }: {
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function HappyhourEditorPage() {
+  // "Fix a Mistake" (/happyhour/fix) reuses this exact editor — same fields,
+  // same validation, same live preview — but reads/writes the LIVE menu
+  // directly instead of a draft, and hides the publish/discard footer.
+  const pathname = usePathname();
+  const isFix = pathname?.endsWith('/fix') ?? false;
+  const apiPath = isFix ? '/api/happyhour/fix' : '/api/happyhour/draft';
+
   const [menu, setMenu] = useState<MenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
   // null = not yet validated; true = fits; false = overflow
   const [validationFits, setValidationFits] = useState<boolean | null>(null);
   const [worstSection, setWorstSection] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState('/happyhour-preview?src=draft');
+  const [previewUrl, setPreviewUrl] = useState(`/happyhour-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   // Queue: when user edits, we stash the data here; save fires after validation confirms fit
@@ -347,11 +355,11 @@ export default function HappyhourEditorPage() {
 
   // Load initial data
   useEffect(() => {
-    fetch('/api/happyhour/draft')
+    fetch(apiPath)
       .then(r => r.json())
       .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
       .catch(() => { setSaveStatus('error'); setSaveMsg('Failed to load menu data'); });
-  }, []);
+  }, [apiPath]);
 
   // Server save — only called after validation confirms the page fits
   const saveToServer = useCallback(async (data: MenuData) => {
@@ -360,7 +368,7 @@ export default function HappyhourEditorPage() {
     prevJsonRef.current = json;
     setSaveStatus('saving'); setSaveMsg('Saving…');
     try {
-      const res = await fetch('/api/happyhour/draft', {
+      const res = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: json,
@@ -375,7 +383,7 @@ export default function HappyhourEditorPage() {
       setSaveStatus('saved'); setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
-  }, []);
+  }, [apiPath]);
 
   // Listen for validation results posted back from the preview iframe
   useEffect(() => {
@@ -482,9 +490,15 @@ export default function HappyhourEditorPage() {
           </div>
         )}
 
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
-          </div>
+          {isFix ? (
+            <div className="draft-banner fix-banner">
+              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+            </div>
+          ) : (
+            <div className="draft-banner">
+              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+            </div>
+          )}
         <div className="editor-scroll chef-mode">
 
           {/* HH Specials */}
@@ -562,11 +576,13 @@ export default function HappyhourEditorPage() {
         </div>
 
 
-          <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
-            <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
-          </div>
+          {!isFix && (
+            <div className="editor-footer editor-footer--publish">
+              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
+              <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
+            </div>
+          )}
         <div className="editor-footer">
           <span className={saveStatusClass}>{saveMsg || 'Auto-saves as you type'}</span>
           <button
@@ -575,7 +591,7 @@ export default function HappyhourEditorPage() {
             title={validationFits === false ? 'Fix overflow before printing' : undefined}
             onClick={() => {
               if (menu) localStorage.setItem('siena-happyhour-print-data', JSON.stringify(menu));
-              window.open('/happyhour-print?src=draft', '_blank');
+              window.open(`/happyhour-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
             }}
           >
             Print Menu
@@ -595,7 +611,7 @@ export default function HappyhourEditorPage() {
           <button
             className="btn-ghost"
             style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px', marginLeft: 'auto' }}
-            onClick={() => setPreviewUrl('/happyhour-preview?src=draft&' + Date.now())}
+            onClick={() => setPreviewUrl(`/happyhour-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
           >
             ↺ Reload from server
           </button>
