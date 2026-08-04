@@ -354,9 +354,9 @@ function SpritzEditableList({
 // ── Collapsible card panel ────────────────────────────────────────────────
 
 function CardPanel({
-  title, pageId, report, defaultOpen, children,
+  title, pageId, report, defaultOpen, variant, children,
 }: {
-  title: string; pageId: string; report: ValidateReport | null; defaultOpen?: boolean; children: React.ReactNode;
+  title: string; pageId: string; report: ValidateReport | null; defaultOpen?: boolean; variant: string; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const pr = report?.pages.find(p => p.id === pageId);
@@ -367,8 +367,8 @@ function CardPanel({
     else status = <span className="dd-chip dd-chip--ok">✓ fits</span>;
   }
   return (
-    <div className="section-block">
-      <div className="section-block-header" onClick={() => setOpen(o => !o)}>
+    <div className={`section-block section-block--${variant}`}>
+      <div className={`section-block-header section-block-header--${variant}`} onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{title}</span>
         {status}
@@ -584,7 +584,7 @@ export default function DrinksDessertEditorPage() {
             {/* Cocktails */}
             <div className="page-group">
               <div className="page-group-label">Sheet A · Left card</div>
-              <CardPanel title="Signature Cocktails" pageId="cocktails" report={report} defaultOpen>
+              <CardPanel title="Signature Cocktails" pageId="cocktails" report={report} variant="cocktails">
                 <EditableList
                   listId="cocktails" items={menu.cocktails} descMode="required" note
                   addLabel="+ Add cocktail" namePlaceholder="e.g. Negroni Sbagliato"
@@ -596,7 +596,7 @@ export default function DrinksDessertEditorPage() {
             {/* Spritz Menu */}
             <div className="page-group">
               <div className="page-group-label">Sheet A · Right card</div>
-              <CardPanel title="Spritz Menu" pageId="spritz" report={report}>
+              <CardPanel title="Spritz Menu" pageId="spritz" report={report} variant="spritz">
                 <label className="dd-shownew-toggle">
                   <input type="checkbox" checked={menu.spritz.showNew} onChange={e => setSpritzShowNew(e.target.checked)} />
                   Show the &ldquo;NEW&rdquo; label
@@ -609,7 +609,7 @@ export default function DrinksDessertEditorPage() {
                 </div>
 
                 <div className="field-group" style={{ marginBottom: '14px' }}>
-                  <label>Design</label>
+                  <label>Choose between these two designs</label>
                   <div className="dd-design-toggle">
                     <button
                       type="button"
@@ -635,7 +635,7 @@ export default function DrinksDessertEditorPage() {
             {/* Spirits */}
             <div className="page-group">
               <div className="page-group-label">Sheet B · Left card</div>
-              <CardPanel title="Spirits & Beer" pageId="spirits" report={report}>
+              <CardPanel title="Spirits & Beer" pageId="spirits" report={report} variant="spirits">
                 {SPIRIT_SUBS.map(sub => (
                   <div key={sub.key} className="dd-subsection">
                     <div className="dd-subsection-title">{sub.title}</div>
@@ -652,7 +652,7 @@ export default function DrinksDessertEditorPage() {
             {/* Dopa Cena */}
             <div className="page-group">
               <div className="page-group-label">Sheet B · Right card</div>
-              <CardPanel title="Siena Dopa Cena" pageId="dopacena" report={report}>
+              <CardPanel title="Siena Dopa Cena" pageId="dopacena" report={report} variant="dopacena">
                 {/* While a field in this panel has focus, the preview switches to a
                     tighter "is-editing" spacing on the subsection titles so the card
                     doesn't jump around while typing. The printed/validated layout

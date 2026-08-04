@@ -561,6 +561,32 @@ button {
 .section-block-header--starters .section-count,
 .section-block-header--entrees .section-count { color: rgba(255,255,255,0.45); }
 
+/* ── Drinks Menu: one color per page, so color = which card it's on ── */
+.section-block-header--cocktails { background: #8a6a1f; }
+.section-block-header--cocktails:hover { background: #6f5518; }
+.chef-mode .section-block--cocktails .section-body { background: #faf3e0; }
+
+.section-block-header--spritz { background: #b8482a; }
+.section-block-header--spritz:hover { background: #9a3a20; }
+.chef-mode .section-block--spritz .section-body { background: #fbe8e0; }
+
+.section-block-header--spirits { background: #5c4326; }
+.section-block-header--spirits:hover { background: #47341d; }
+.chef-mode .section-block--spirits .section-body { background: #f2e9dc; }
+
+.section-block-header--dopacena { background: #6e2a3a; }
+.section-block-header--dopacena:hover { background: #58212d; }
+.chef-mode .section-block--dopacena .section-body { background: #f5e6ea; }
+
+.section-block-header--cocktails .section-title-label,
+.section-block-header--spritz .section-title-label,
+.section-block-header--spirits .section-title-label,
+.section-block-header--dopacena .section-title-label { color: #fff; }
+.section-block-header--cocktails .section-toggle,
+.section-block-header--spritz .section-toggle,
+.section-block-header--spirits .section-toggle,
+.section-block-header--dopacena .section-toggle { color: rgba(255,255,255,0.6); }
+
 /* ── Price input with auto-$ prefix ─────────────────────── */
 .price-input-wrap {
   display: flex;
