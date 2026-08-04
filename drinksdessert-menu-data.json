@@ -91,12 +91,21 @@
       { "id": "dc-t6", "name": "2018 Volpaia Vin Santo", "price": "25.00" }
     ]
   },
-  "dolci": [
-    { "id": "dl-1", "name": "Sorbetti di Frutta", "price": "11", "desc": "Mango, Raspberry, Lemon" },
-    { "id": "dl-2", "name": "Torta Cioccolato e Pistacchio", "price": "12", "desc": "Rich chocolate torte studded with roasted pistachios, orange marmalade, whipped cream" },
-    { "id": "dl-3", "name": "Cr\u00e8me Br\u00fbl\u00e9e", "price": "11", "desc": "Vanilla bean custard, whipped cream, fresh berries" },
-    { "id": "dl-4", "name": "Tiramisu", "price": "10", "desc": "Liqueur-soaked genoise, mascarpone, chocolate sauce, toasted almonds" },
-    { "id": "dl-5", "name": "Affogato", "price": "8", "desc": "Teo's vanilla gelato, with a shot of espresso poured over" },
-    { "id": "dl-6", "name": "Budino di Pane", "price": "12", "desc": "Baked peach and vanilla bread pudding, topped with Teo's vanilla gelato" }
-  ]
+  "spritz": {
+    "price": "12",
+    "design": "a",
+    "showNew": true,
+    "items": [
+      { "id": "sp-1", "name": "Aperol", "desc": "Orange and rhubarb, gently bitter, easy sipping.", "category": "bright" },
+      { "id": "sp-2", "name": "Campari", "desc": "Bold and bitter, cherry and herbs, bright red.", "category": "bright" },
+      { "id": "sp-3", "name": "Select", "desc": "Venetian aperitivo, juniper and rhubarb, lighter than Campari.", "category": "bright" },
+      { "id": "sp-4", "name": "Cappelletti", "desc": "Vibrant red, tart cherry and orange peel, mild bitterness.", "category": "bright" },
+      { "id": "sp-5", "name": "Cocchi Americano", "desc": "Quinine bitterness, citrus and honey, aromatic wine base.", "category": "herbal" },
+      { "id": "sp-6", "name": "Contratto Aperitif", "desc": "Herbal and floral, orange zest, balanced sweetness.", "category": "herbal" },
+      { "id": "sp-7", "name": "Montenegro", "desc": "Italian amaro, orange and vanilla, soft herbal spice.", "category": "herbal" },
+      { "id": "sp-8", "name": "Suze", "desc": "Gentian root, earthy and bittersweet, bright yellow hue.", "category": "earthy" },
+      { "id": "sp-9", "name": "Cynar", "desc": "Artichoke and caramel, deep bitter-sweet, dark and rich.", "category": "earthy" },
+      { "id": "sp-10", "name": "Salers", "desc": "Gentian based, herbaceous and tangy, vivid gold color.", "category": "earthy" }
+    ]
+  }
 }

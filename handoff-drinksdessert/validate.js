@@ -1,12 +1,22 @@
 /**
- * Siena Drinks & Dessert Menu — Layout Validator.
+ * Siena Drinks Menu — Layout Validator.
  *
  * Constraint model: item counts and descriptions are OPEN-ENDED. There is
  * no hard per-field or per-section cap. Instead, every save runs through
  * this validator, which is the single source of truth for "does this
  * fit?" It measures each of the four `.page` cards independently (they
  * are four separate physical insert cards — one can overflow while its
- * neighbors have room).
+ * neighbors have room). Dolci is no longer part of this package.
+ *
+ * SPRITZ MENU NOTE: the spritz `.page` has two swappable designs, but
+ * only ONE renders into the DOM's layout at a time (the other's content
+ * is `display:none` via the `spritz-design-b` body class — see
+ * render.js). This validator always measures whichever design is
+ * currently active. To check the OTHER design's fit (e.g. for a "choose
+ * your design" comparison screen), call `render()` again with the other
+ * design forced (`opts.spritzDesign`), then re-run `validate()` — don't
+ * try to measure both at once in one DOM, since the hidden one reports
+ * a false "fits" (0-height).
  *
  * THE ONE-STEP SHRINK: if a page overflows at normal size, this validator
  * tries exactly ONE fallback — adding the `shrink-1pt` class to that page,

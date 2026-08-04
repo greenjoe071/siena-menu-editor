@@ -20,13 +20,29 @@ interface Item {
   note?: string;
 }
 
+type SpritzCategory = 'bright' | 'herbal' | 'earthy';
+
+interface SpritzItem {
+  id: string;
+  name: string;
+  desc: string;
+  category: SpritzCategory;
+}
+
+interface Spritz {
+  price: string;       // single price for the whole page — DOES print with $
+  design: 'a' | 'b';
+  showNew: boolean;
+  items: SpritzItem[];
+}
+
 interface DrinksDessertMenuData {
   cocktails: Item[];
   spirits: { bourbon: Item[]; scotch: Item[]; beer: Item[] };
   dopaCena: {
     digestivo: Item[]; grappa: Item[]; ports: Item[]; cognac: Item[]; traditionalItalian: Item[];
   };
-  dolci: Item[];
+  spritz: Spritz;
 }
 
 // validate.js report shape
@@ -52,6 +68,32 @@ const DOPA_SUBS: { key: DopaKey; listId: string; title: string }[] = [
   { key: 'traditionalItalian', listId: 'dopacena-traditionalItalian', title: 'Traditional Italian · 2.5 oz' },
 ];
 
+const SPRITZ_CATEGORIES: { key: SpritzCategory; label: string }[] = [
+  { key: 'bright', label: 'Bitter & Bright' },
+  { key: 'herbal', label: 'Herbal & Aromatic' },
+  { key: 'earthy', label: 'Rich & Earthy' },
+];
+
+// The exact placeholder items the handoff shipped with — while the Spritz
+// list still matches this exactly, the editor shows a "replace this" note.
+// See handoff-drinksdessert/menu-data.json.
+const SPRITZ_SEED_ITEMS: SpritzItem[] = [
+  { id: 'sp-1', name: 'Aperol', desc: 'Orange and rhubarb, gently bitter, easy sipping.', category: 'bright' },
+  { id: 'sp-2', name: 'Campari', desc: 'Bold and bitter, cherry and herbs, bright red.', category: 'bright' },
+  { id: 'sp-3', name: 'Select', desc: 'Venetian aperitivo, juniper and rhubarb, lighter than Campari.', category: 'bright' },
+  { id: 'sp-4', name: 'Cappelletti', desc: 'Vibrant red, tart cherry and orange peel, mild bitterness.', category: 'bright' },
+  { id: 'sp-5', name: 'Cocchi Americano', desc: 'Quinine bitterness, citrus and honey, aromatic wine base.', category: 'herbal' },
+  { id: 'sp-6', name: 'Contratto Aperitif', desc: 'Herbal and floral, orange zest, balanced sweetness.', category: 'herbal' },
+  { id: 'sp-7', name: 'Montenegro', desc: 'Italian amaro, orange and vanilla, soft herbal spice.', category: 'herbal' },
+  { id: 'sp-8', name: 'Suze', desc: 'Gentian root, earthy and bittersweet, bright yellow hue.', category: 'earthy' },
+  { id: 'sp-9', name: 'Cynar', desc: 'Artichoke and caramel, deep bitter-sweet, dark and rich.', category: 'earthy' },
+  { id: 'sp-10', name: 'Salers', desc: 'Gentian based, herbaceous and tangy, vivid gold color.', category: 'earthy' },
+];
+
+function isStillSeedData(items: SpritzItem[]): boolean {
+  return JSON.stringify(items) === JSON.stringify(SPRITZ_SEED_ITEMS);
+}
+
 // data-list-id → human label (for the overflow message)
 const LIST_LABELS: Record<string, string> = {
   'cocktails': 'Signature Cocktails',
@@ -63,11 +105,14 @@ const LIST_LABELS: Record<string, string> = {
   'dopacena-ports': 'Ports',
   'dopacena-cognac': 'Cognac & Calvados',
   'dopacena-traditionalItalian': 'Traditional Italian',
-  'dolci': 'Dolci',
+  'spritz-a': 'the spritz list',
+  'spritz-b-bright': 'Bitter & Bright',
+  'spritz-b-herbal': 'Herbal & Aromatic',
+  'spritz-b-earthy': 'Rich & Earthy',
 };
 
 const CARD_LABELS: Record<string, string> = {
-  cocktails: 'Cocktails', spirits: 'Spirits & Beer', dopacena: 'Dopa Cena', dolci: 'Dolci',
+  cocktails: 'Signature Cocktails', spritz: 'Spritz Menu', spirits: 'Spirits & Beer', dopacena: 'Dopa Cena',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -105,7 +150,7 @@ function PriceInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-// ── Editable list (reused by every card / subsection) ─────────────────────
+// ── Editable list (reused by cocktails / spirits / dopa cena) ─────────────
 
 type DescMode = 'none' | 'optional' | 'required';
 
@@ -244,6 +289,88 @@ function EditableList({
   );
 }
 
+// ── Spritz item row/list (name + desc + required category) ────────────────
+
+function SpritzItemRow({
+  item, index, onChange, onRemove,
+}: {
+  item: SpritzItem;
+  index: number;
+  onChange: (updated: SpritzItem) => void;
+  onRemove: () => void;
+}) {
+  function set<K extends keyof SpritzItem>(k: K, v: SpritzItem[K]) { onChange({ ...item, [k]: v }); }
+
+  return (
+    <Draggable draggableId={item.id} index={index}>
+      {(prov, snap) => (
+        <div
+          ref={prov.innerRef}
+          {...prov.draggableProps}
+          className="dish-row"
+          style={{
+            ...prov.draggableProps.style,
+            opacity: snap.isDragging ? 0.85 : 1,
+            boxShadow: snap.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : undefined,
+          }}
+        >
+          <div className="dish-row-header">
+            <span className="drag-handle" {...prov.dragHandleProps} title="Drag to reorder">⠿</span>
+            <span className="dish-name-preview">{item.name || '(new spritz)'}</span>
+            <button className="btn-remove-dish" title="Remove item" onClick={onRemove}>×</button>
+          </div>
+
+          <div className="dish-fields">
+            <div className="field-group" style={{ marginBottom: '8px' }}>
+              <label>Name</label>
+              <input value={item.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Aperol" />
+            </div>
+            <div className="field-group" style={{ marginBottom: '8px' }}>
+              <label>Tasting note</label>
+              <textarea rows={2} value={item.desc} onChange={e => set('desc', e.target.value)} placeholder="Short tasting description" />
+            </div>
+            <div className="field-group" style={{ marginBottom: 0 }}>
+              <label>Category (used by the grouped design)</label>
+              <select className="dd-category-select" value={item.category} onChange={e => set('category', e.target.value as SpritzCategory)}>
+                {SPRITZ_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
+}
+
+function SpritzEditableList({
+  items, onItemsChange,
+}: {
+  items: SpritzItem[];
+  onItemsChange: (items: SpritzItem[]) => void;
+}) {
+  function updateAt(i: number, updated: SpritzItem) {
+    const next = [...items]; next[i] = updated; onItemsChange(next);
+  }
+  function removeAt(i: number) { onItemsChange(items.filter((_, idx) => idx !== i)); }
+  function add() { onItemsChange([...items, { id: newId('spritz'), name: '', desc: '', category: 'bright' }]); }
+
+  return (
+    <div>
+      <Droppable droppableId="spritz-items" type="dd-item">
+        {(prov) => (
+          <div ref={prov.innerRef} {...prov.droppableProps} className="dish-list">
+            {items.map((it, i) => (
+              <SpritzItemRow key={it.id} item={it} index={i} onChange={u => updateAt(i, u)} onRemove={() => removeAt(i)} />
+            ))}
+            {prov.placeholder}
+          </div>
+        )}
+      </Droppable>
+      <button className="btn-add-dish" onClick={add}>+ Add spritz</button>
+    </div>
+  );
+}
+
 // ── Collapsible card panel ────────────────────────────────────────────────
 
 function CardPanel({
@@ -273,6 +400,105 @@ function CardPanel({
   );
 }
 
+// ── "Choose your design" comparison modal ──────────────────────────────────
+
+function DesignPickerModal({
+  isFix, menu, onUse, onClose,
+}: {
+  isFix: boolean;
+  menu: DrinksDessertMenuData;
+  onUse: (design: 'a' | 'b') => void;
+  onClose: () => void;
+}) {
+  const iframeARef = useRef<HTMLIFrameElement>(null);
+  const iframeBRef = useRef<HTMLIFrameElement>(null);
+  const [fitA, setFitA] = useState<boolean | null>(null);
+  const [fitB, setFitB] = useState<boolean | null>(null);
+  const previewSrc = isFix ? 'current' : 'draft';
+  const spritz = menu.spritz;
+
+  // Push the live in-progress edits into both preview panes (each forced to
+  // its own design via the ?spritzDesign= query param on the iframe src) so
+  // the comparison always reflects what's on screen, not just what's saved.
+  const debouncedMenu = useDebounce(menu, 400);
+  useEffect(() => {
+    iframeARef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_UPDATE', payload: debouncedMenu }, '*');
+    iframeBRef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_UPDATE', payload: debouncedMenu }, '*');
+  }, [debouncedMenu]);
+
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (!e.data || e.data.type !== 'SIENA_DRINKSDESSERT_VALIDATE_RESULT') return;
+      const report = e.data.report as ValidateReport;
+      const spritzPage = report.pages?.find(p => p.id === 'spritz');
+      if (!spritzPage) return;
+      if (e.source === iframeARef.current?.contentWindow) setFitA(spritzPage.fits);
+      else if (e.source === iframeBRef.current?.contentWindow) setFitB(spritzPage.fits);
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+
+  return (
+    <div className="dd-design-backdrop" onClick={onClose}>
+      <div className="dd-design-modal" onClick={e => e.stopPropagation()}>
+        <div className="dd-design-modal-header">
+          <div>
+            <div className="dd-design-modal-title">Choose Your Spritz Design</div>
+            <div className="dd-design-modal-sub">Both use the same spirits you&rsquo;ve entered — pick your favorite. You can change your mind anytime.</div>
+          </div>
+          <button className="btn-close-modal" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="dd-design-columns">
+          <div className={`dd-design-col ${spritz.design === 'a' ? 'dd-design-col--active' : ''}`}>
+            <div className="dd-design-col-header">
+              <span className="dd-design-col-title">Design A — Simple List</span>
+              {spritz.design === 'a' && <span className="dd-design-badge-active">Currently Live</span>}
+            </div>
+            <div className="dd-design-iframe-wrap">
+              <iframe
+                ref={iframeARef}
+                className="dd-design-iframe"
+                src={`/drinksdessert-preview?src=${previewSrc}&spritzDesign=a`}
+                title="Spritz Design A preview"
+              />
+            </div>
+            {spritz.design === 'a' ? (
+              <button className="btn-use-design btn-use-design--current" disabled>This One Is Live</button>
+            ) : (
+              <button className="btn-use-design" onClick={() => onUse('a')} disabled={fitA === false}>
+                {fitA === false ? "Doesn't Fit — Trim Text First" : 'Use This One'}
+              </button>
+            )}
+          </div>
+
+          <div className={`dd-design-col ${spritz.design === 'b' ? 'dd-design-col--active' : ''}`}>
+            <div className="dd-design-col-header">
+              <span className="dd-design-col-title">Design B — Grouped by Flavor</span>
+              {spritz.design === 'b' && <span className="dd-design-badge-active">Currently Live</span>}
+            </div>
+            <div className="dd-design-iframe-wrap">
+              <iframe
+                ref={iframeBRef}
+                className="dd-design-iframe"
+                src={`/drinksdessert-preview?src=${previewSrc}&spritzDesign=b`}
+                title="Spritz Design B preview"
+              />
+            </div>
+            {spritz.design === 'b' ? (
+              <button className="btn-use-design btn-use-design--current" disabled>This One Is Live</button>
+            ) : (
+              <button className="btn-use-design" onClick={() => onUse('b')} disabled={fitB === false}>
+                {fitB === false ? "Doesn't Fit — Trim Text First" : 'Use This One'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function DrinksDessertEditorPage() {
@@ -282,6 +508,7 @@ export default function DrinksDessertEditorPage() {
   const pathname = usePathname();
   const isFix = pathname?.endsWith('/fix') ?? false;
   const apiPath = isFix ? '/api/drinksdessert/fix' : '/api/drinksdessert/draft';
+  const landingHref = '/drinksdessert/menu';
 
   const [menu, setMenu] = useState<DrinksDessertMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -289,6 +516,7 @@ export default function DrinksDessertEditorPage() {
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(`/drinksdessert-preview?src=${isFix ? 'current' : 'draft'}`);
+  const [showDesignPicker, setShowDesignPicker] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   const pendingSaveRef = useRef<DrinksDessertMenuData | null>(null);
@@ -341,6 +569,7 @@ export default function DrinksDessertEditorPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_DRINKSDESSERT_VALIDATE_RESULT') return;
+      if (e.source !== iframeRef.current?.contentWindow) return; // ignore the design-picker's own preview iframes
       const rep = e.data.report as ValidateReport;
       setReport(rep);
       if (rep.fits) {
@@ -380,14 +609,14 @@ export default function DrinksDessertEditorPage() {
       await fetch('/api/drinksdessert/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/drinksdessert/publish', { method: 'POST' });
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
-      window.location.href = '/drinksdessert';
+      window.location.href = landingHref;
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
 
   async function handleDiscard() {
     if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
     try { await fetch('/api/drinksdessert/draft', { method: 'DELETE' }); }
-    finally { window.location.href = '/drinksdessert'; }
+    finally { window.location.href = landingHref; }
   }
 
   function handlePrint() {
@@ -400,9 +629,15 @@ export default function DrinksDessertEditorPage() {
   // ── Mutations ─────────────────────────────────────────────────────────────
 
   function setCocktails(items: Item[]) { setMenu(m => m && { ...m, cocktails: items }); }
-  function setDolci(items: Item[]) { setMenu(m => m && { ...m, dolci: items }); }
   function setSpirits(key: SpiritKey, items: Item[]) { setMenu(m => m && { ...m, spirits: { ...m.spirits, [key]: items } }); }
   function setDopa(key: DopaKey, items: Item[]) { setMenu(m => m && { ...m, dopaCena: { ...m.dopaCena, [key]: items } }); }
+  function setSpritzItems(items: SpritzItem[]) { setMenu(m => m && { ...m, spritz: { ...m.spritz, items } }); }
+  function setSpritzPrice(price: string) { setMenu(m => m && { ...m, spritz: { ...m.spritz, price } }); }
+  function setSpritzShowNew(showNew: boolean) { setMenu(m => m && { ...m, spritz: { ...m.spritz, showNew } }); }
+  function setSpritzDesign(design: 'a' | 'b') {
+    setMenu(m => m && { ...m, spritz: { ...m.spritz, design } });
+    setShowDesignPicker(false);
+  }
 
   // Drag reorder within a single list (blocked across lists).
   function handleDragEnd(result: DropResult) {
@@ -411,7 +646,7 @@ export default function DrinksDessertEditorPage() {
     if (source.droppableId !== destination.droppableId) return;
     const listId = source.droppableId;
 
-    function reorder(items: Item[]): Item[] {
+    function reorder<T>(items: T[]): T[] {
       const next = Array.from(items);
       const [moved] = next.splice(source.index, 1);
       next.splice(destination!.index, 0, moved);
@@ -419,7 +654,7 @@ export default function DrinksDessertEditorPage() {
     }
 
     if (listId === 'cocktails') setCocktails(reorder(menu!.cocktails));
-    else if (listId === 'dolci') setDolci(reorder(menu!.dolci));
+    else if (listId === 'spritz-items') setSpritzItems(reorder(menu!.spritz.items));
     else {
       const sp = SPIRIT_SUBS.find(s => s.listId === listId);
       if (sp) { setSpirits(sp.key, reorder(menu!.spirits[sp.key])); return; }
@@ -431,7 +666,7 @@ export default function DrinksDessertEditorPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (!menu) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading draft…</div>;
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading…</div>;
   }
 
   const saveStatusClass =
@@ -440,6 +675,7 @@ export default function DrinksDessertEditorPage() {
     saveStatus === 'error' ? 'save-status error' : 'save-status';
 
   const anyOverflow = report ? !report.fits : false;
+  const showSampleDataNote = isStillSeedData(menu.spritz.items);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -447,7 +683,7 @@ export default function DrinksDessertEditorPage() {
         {/* ── Editor pane ─────────────────────────────────────────── */}
         <div className="editor-pane">
           <div className="editor-header">
-            <Link href="/drinksdessert" className="btn-back">← Back</Link>
+            <Link href={landingHref} className="btn-back">← Back</Link>
             <h1>{isFix ? 'Fixing the Live Menu' : 'Editing a Draft'}</h1>
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
@@ -464,7 +700,7 @@ export default function DrinksDessertEditorPage() {
 
           <div className="editor-scroll chef-mode">
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
-              <p>Four cards, printed on <strong>two sheets</strong> (A: Cocktails + Spirits & Beer · B: Dopa Cena + Dolci). Add or remove items freely — a card will tell you if it runs out of room.</p>
+              <p>Four cards, printed on <strong>two sheets</strong> (A: Signature Cocktails + Spritz Menu · B: Spirits &amp; Beer + Siena Dopa Cena). Add or remove items freely — a card will tell you if it runs out of room.</p>
             </div>
 
             {/* Cocktails */}
@@ -479,9 +715,43 @@ export default function DrinksDessertEditorPage() {
               </CardPanel>
             </div>
 
-            {/* Spirits */}
+            {/* Spritz Menu */}
             <div className="page-group">
               <div className="page-group-label">Sheet A · Right card</div>
+              <CardPanel title="Spritz Menu" pageId="spritz" report={report}>
+                <div className="dd-callout dd-callout--info">
+                  <span className="dd-callout-emoji">💡</span>
+                  <span>You can switch between the two Spritz designs anytime — click &ldquo;Change Design&rdquo; below. Nothing you type here is ever lost when you switch.</span>
+                </div>
+                {showSampleDataNote && (
+                  <div className="dd-callout dd-callout--sample">
+                    <span className="dd-callout-emoji">📝</span>
+                    <span>These are example spritzes from the designer. Replace them with your actual list of 9–12 spirits before publishing.</span>
+                  </div>
+                )}
+
+                <label className="dd-shownew-toggle">
+                  <input type="checkbox" checked={menu.spritz.showNew} onChange={e => setSpritzShowNew(e.target.checked)} />
+                  Show the &ldquo;NEW&rdquo; label
+                </label>
+                <div className="dd-shownew-hint">Turn this off once the Spritz Menu isn&rsquo;t new anymore — the rest of the card shifts up automatically, no gap left behind.</div>
+
+                <div className="field-group" style={{ maxWidth: '140px', marginBottom: '10px' }}>
+                  <label>Price (every spritz)</label>
+                  <PriceInput value={menu.spritz.price} onChange={setSpritzPrice} />
+                </div>
+
+                <button type="button" className="btn-change-design" onClick={() => setShowDesignPicker(true)}>
+                  🎨 Change Design (currently: {menu.spritz.design === 'a' ? 'Simple List' : 'Grouped by Flavor'})
+                </button>
+
+                <SpritzEditableList items={menu.spritz.items} onItemsChange={setSpritzItems} />
+              </CardPanel>
+            </div>
+
+            {/* Spirits */}
+            <div className="page-group">
+              <div className="page-group-label">Sheet B · Left card</div>
               <CardPanel title="Spirits & Beer" pageId="spirits" report={report}>
                 {SPIRIT_SUBS.map(sub => (
                   <div key={sub.key} className="dd-subsection">
@@ -498,7 +768,7 @@ export default function DrinksDessertEditorPage() {
 
             {/* Dopa Cena */}
             <div className="page-group">
-              <div className="page-group-label">Sheet B · Left card</div>
+              <div className="page-group-label">Sheet B · Right card</div>
               <CardPanel title="Siena Dopa Cena" pageId="dopacena" report={report}>
                 {/* While a field in this panel has focus, the preview switches to a
                     tighter "is-editing" spacing on the subsection titles so the card
@@ -516,18 +786,6 @@ export default function DrinksDessertEditorPage() {
                     </div>
                   ))}
                 </div>
-              </CardPanel>
-            </div>
-
-            {/* Dolci */}
-            <div className="page-group">
-              <div className="page-group-label">Sheet B · Right card</div>
-              <CardPanel title="Dolci" pageId="dolci" report={report}>
-                <EditableList
-                  listId="dolci" items={menu.dolci} descMode="required" note={false}
-                  addLabel="+ Add dessert" namePlaceholder="e.g. Tiramisu"
-                  onItemsChange={setDolci}
-                />
               </CardPanel>
             </div>
           </div>{/* end editor-scroll */}
@@ -556,14 +814,14 @@ export default function DrinksDessertEditorPage() {
                 <option value="">Entire menu (all 4 pages)</option>
               </optgroup>
               <optgroup label="By sheet (2 pages)">
-                <option value="&sheet=a">Cocktails &amp; Spirits and Beer</option>
-                <option value="&sheet=b">Dopa Cena &amp; Desserts</option>
+                <option value="&sheet=a">Signature Cocktails &amp; Spritz Menu</option>
+                <option value="&sheet=b">Spirits and Beer &amp; Siena Dopa Cena</option>
               </optgroup>
               <optgroup label="Single page">
                 <option value="&page=cocktails">Signature Cocktails only</option>
+                <option value="&page=spritz">Spritz Menu only</option>
                 <option value="&page=spirits">Spirits and Beer only</option>
                 <option value="&page=dopacena">Siena Dopa Cena only</option>
-                <option value="&page=dolci">Desserts only</option>
               </optgroup>
             </select>
             <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : undefined} onClick={handlePrint}>Print</button>
@@ -585,6 +843,15 @@ export default function DrinksDessertEditorPage() {
           <iframe ref={iframeRef} src={previewUrl} className="preview-iframe" title="Drinks & Dessert preview" />
         </div>
       </div>
+
+      {showDesignPicker && (
+        <DesignPickerModal
+          isFix={isFix}
+          menu={menu}
+          onUse={setSpritzDesign}
+          onClose={() => setShowDesignPicker(false)}
+        />
+      )}
     </DragDropContext>
   );
 }

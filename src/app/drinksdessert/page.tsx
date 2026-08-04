@@ -1,36 +1,34 @@
-import { readCurrentMeta, hasDraft, listPublished } from '@/lib/drinksdessert-menu-store';
-import { formatMenuDate } from '@/lib/draft-publish';
-import MenuLanding from '@/components/MenuLanding';
+import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+// Entry fork for the old "Drinks & Dessert" home card. Dolci became its own
+// standalone insert (see drinksdessert-dolci-archive.json) — this screen
+// lets Joe pick which side he's working on. Desserts isn't built yet, so
+// its card is intentionally not clickable (per owner request).
 
-export default async function DrinksDessertLandingPage() {
-  const [meta, draftExists, published] = await Promise.all([
-    readCurrentMeta(),
-    hasDraft(),
-    listPublished(),
-  ]);
-
+export default function DrinksDessertChooserPage() {
   return (
-    <MenuLanding
-      menuName="Drinks & Dessert"
-      editHref="/drinksdessert/edit"
-      fixHref="/drinksdessert/fix"
-      apiBase="/api/drinksdessert"
-      previewHref="/drinksdessert-preview"
-      printHref="/drinksdessert-print"
-      currentDate={formatMenuDate(meta.publishedAt)}
-      draftExists={draftExists}
-      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
-      printVariants={[
-        { label: 'Entire menu (all 4 pages)', group: 'Full menu' },
-        { label: 'Cocktails & Spirits and Beer', query: '&sheet=a', group: 'By sheet (2 pages)' },
-        { label: 'Dopa Cena & Desserts', query: '&sheet=b', group: 'By sheet (2 pages)' },
-        { label: 'Signature Cocktails only', query: '&page=cocktails', group: 'Single page' },
-        { label: 'Spirits and Beer only', query: '&page=spirits', group: 'Single page' },
-        { label: 'Siena Dopa Cena only', query: '&page=dopacena', group: 'Single page' },
-        { label: 'Desserts only', query: '&page=dolci', group: 'Single page' },
-      ]}
-    />
+    <div className="dinner-landing">
+      <header className="dl-header">
+        <div className="dl-header-inner">
+          <Link href="/" className="dl-back">🏠 Home</Link>
+          <h1 className="dl-title">Drinks &amp; Dessert</h1>
+          <p className="dl-subtitle">Choose which menu you want to work on.</p>
+        </div>
+      </header>
+
+      <main className="dd-chooser">
+        <Link href="/drinksdessert/menu" className="dd-chooser-card">
+          <span className="dd-chooser-emoji">🍸</span>
+          <span className="dd-chooser-title">Drinks Menu</span>
+          <span className="dd-chooser-hint">Cocktails, Spritz, Spirits &amp; Beer, Dopa Cena</span>
+        </Link>
+
+        <div className="dd-chooser-card dd-chooser-card--disabled">
+          <span className="dd-chooser-emoji">🍰</span>
+          <span className="dd-chooser-title">Desserts</span>
+          <span className="dd-chooser-hint">Coming soon</span>
+        </div>
+      </main>
+    </div>
   );
 }

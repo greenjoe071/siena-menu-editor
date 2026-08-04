@@ -1,7 +1,8 @@
 /**
- * Snapshot test — guards against formatting drift in the Drinks & Dessert
- * menu, plus pins the optional-field contracts (cocktail note, dopa-cena
- * per-item description).
+ * Snapshot test — guards against formatting drift in the Drinks menu,
+ * plus pins the optional-field contracts (cocktail note, dopa-cena
+ * per-item description) and the Spritz Menu's shared-data/dual-design
+ * contract.
  *
  * Resolves the handoff directory from this spec file's own location, not
  * the CWD — the test may run from the repo root.
@@ -147,6 +148,69 @@ export async function runCardinalityTest() {
   }
 }
 
+/**
+ * Spritz Menu — one shared data set drives both designs; category only
+ * sorts Design B; render() accepts a spritzDesign override for the
+ * "choose your design" comparison screen.
+ */
+export async function runSpritzTest() {
+  const [template, dataRaw, renderer] = await Promise.all([
+    readFile(join(here, 'template.html'), 'utf8'),
+    readFile(join(here, 'menu-data.json'), 'utf8'),
+    loadRenderer(),
+  ]);
+  const base = JSON.parse(dataRaw);
+
+  // Design A ignores category — flat list has every item, in array order.
+  {
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, base, { spritzDesign: 'a' });
+    const flat = dom.window.document.querySelectorAll('[data-list-id="spritz-a"] .item');
+    if (flat.length !== base.spritz.items.length) {
+      throw new Error('Design A flat list did not render every spritz item.');
+    }
+    if (!dom.window.document.body.classList.contains('spritz-design-b') === false) {
+      // body should NOT have spritz-design-b when forced to 'a'
+    }
+    if (dom.window.document.body.classList.contains('spritz-design-b')) {
+      throw new Error('spritzDesign "a" override left spritz-design-b on <body>.');
+    }
+  }
+
+  // Design B groups the SAME items by category — total count matches,
+  // and an item's category correctly places it in one group only.
+  {
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, base, { spritzDesign: 'b' });
+    if (!dom.window.document.body.classList.contains('spritz-design-b')) {
+      throw new Error('spritzDesign "b" override did not set spritz-design-b on <body>.');
+    }
+    const groups = ['bright', 'herbal', 'earthy'];
+    let total = 0;
+    groups.forEach((cat) => {
+      total += dom.window.document.querySelectorAll('[data-list-id="spritz-b-' + cat + '"] .item').length;
+    });
+    if (total !== base.spritz.items.length) {
+      throw new Error('Design B grouped lists do not add up to the full item count (got ' + total + ').');
+    }
+    const firstBright = base.spritz.items.find((it) => it.category === 'bright');
+    if (firstBright) {
+      const el = dom.window.document.querySelector('[data-list-id="spritz-b-bright"] [data-item-id="' + firstBright.id + '"]');
+      if (!el) throw new Error('A "bright" category item did not land in the spritz-b-bright group.');
+    }
+  }
+
+  // Price prints WITH a $ — the one exception on this menu.
+  {
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, base);
+    const priceText = dom.window.document.querySelector('.spritz-price-text').textContent;
+    if (priceText !== '$' + base.spritz.price) {
+      throw new Error('Spritz price did not render with a $ prefix (got "' + priceText + '").');
+    }
+  }
+}
+
 if (typeof globalThis.describe === 'function') {
   // eslint-disable-next-line no-undef
   describe('Siena Drinks & Dessert menu rendering', () => {
@@ -162,11 +226,15 @@ if (typeof globalThis.describe === 'function') {
     test('open-ended list cardinality: add/remove items 1:1', async () => {
       await runCardinalityTest();
     });
+    // eslint-disable-next-line no-undef
+    test('Spritz Menu: shared data drives both designs, category sorts design B only, $ price', async () => {
+      await runSpritzTest();
+    });
   });
 }
 
 if (process.argv[1] && process.argv[1].endsWith('snapshot-test.spec.mjs')) {
-  Promise.all([runSnapshotTest(), runOptionalFieldsTest(), runCardinalityTest()])
-    .then(() => { console.log('✓ Drinks & Dessert menu snapshot + optional-field + cardinality tests passed.'); })
+  Promise.all([runSnapshotTest(), runOptionalFieldsTest(), runCardinalityTest(), runSpritzTest()])
+    .then(() => { console.log('✓ Drinks menu snapshot + optional-field + cardinality + spritz tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

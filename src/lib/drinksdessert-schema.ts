@@ -39,15 +39,21 @@ const DopaCenaItemSchema = z.object({
   desc:  z.string().max(L.desc).optional(),
 });
 
-const DolciItemSchema = z.object({
-  id:    z.string(),
-  name:  z.string().min(1, 'Name is required').max(L.name),
-  price,
-  desc:  z.string().min(1, 'Description is required').max(L.desc),
+// Spritz: shared by both designs — see BUILD-SPEC.md §1a. Design A ignores
+// `category`; Design B groups by it. Every item still requires a category
+// so switching to Design B never surprises the manager with an unsorted item.
+const SpritzCategorySchema = z.enum(['bright', 'herbal', 'earthy']);
+const SpritzItemSchema = z.object({
+  id:       z.string(),
+  name:     z.string().min(1, 'Name is required').max(L.name),
+  desc:     z.string().min(1, 'Description is required').max(L.desc),
+  category: SpritzCategorySchema,
 });
 
 // ── Top-level: 4 cards. Spirits/DopaCena have FIXED subsections, each an
-//    open-ended item array. Cocktails/Dolci are flat open-ended arrays. ──
+//    open-ended item array. Cocktails/Spritz items are flat open-ended
+//    arrays. Dolci is no longer part of this menu — it's its own standalone
+//    insert now; see drinksdessert-dolci-archive.json for the archived data. ──
 export const DrinksDessertMenuSchema = z.object({
   cocktails: z.array(CocktailSchema),
   spirits: z.object({
@@ -62,7 +68,15 @@ export const DrinksDessertMenuSchema = z.object({
     cognac:             z.array(DopaCenaItemSchema),
     traditionalItalian: z.array(DopaCenaItemSchema),
   }),
-  dolci: z.array(DolciItemSchema),
+  spritz: z.object({
+    price:   price,
+    design:  z.enum(['a', 'b']),
+    // Controls the small "new" kicker above the Spritz Menu title — not in
+    // the original handoff, added per owner request so it can be retired
+    // once the page stops being new. Defaults true (matches current seed).
+    showNew: z.boolean().default(true),
+    items:   z.array(SpritzItemSchema),
+  }),
 });
 
 export type DrinksDessertMenuData = z.infer<typeof DrinksDessertMenuSchema>;

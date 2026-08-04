@@ -14,22 +14,26 @@ menus.
 
 This is **not** a folded multi-page menu. It's **four separate insert
 cards**, each 4.25in × 11in, that slide into a hard menu holder with
-corners that grip each card individually.
+corners that grip each card individually. **Dolci is no longer one of
+them** — it's now its own standalone insert, produced as a separate
+two-up print sheet (see `../Dessert Menu.dc.html`). Don't reintroduce it
+here.
 
 The four cards, in holder order:
 
 1. **Signature Cocktails**
-2. **Spirits & Beer** (Rye/Whiskey/Bourbon, Single Malt Scotch Whisky, Bottled Beer)
-3. **Siena Dopa Cena** (Digestivo, Grappa, Ports, Cognac &amp; Calvados, Traditional Italian)
-4. **Dolci**
+2. **Spritz Menu** — new. Guests pick any spirit off a list; every
+   spritz is the same price. See §1a for its dual-design mechanic.
+3. **Spirits & Beer** (Rye/Whiskey/Bourbon, Single Malt Scotch Whisky, Bottled Beer)
+4. **Siena Dopa Cena** (Digestivo, Grappa, Ports, Cognac &amp; Calvados, Traditional Italian)
 
 They are produced from **two physical 8.5×11 sheets**, each cut with a
 **single vertical cut down the middle**:
 
 | Sheet | Left half | Right half |
 |---|---|---|
-| **Sheet A** | Signature Cocktails | Spirits & Beer |
-| **Sheet B** | Siena Dopa Cena | Dolci |
+| **Sheet A** | Signature Cocktails | Spritz Menu |
+| **Sheet B** | Spirits & Beer | Siena Dopa Cena |
 
 `template.html` models this directly: two `<div class="sheet">` elements
 (8.5×11in each, `page-break-after` between them for print), each
@@ -38,14 +42,14 @@ a dashed `.cut-guide` down the middle showing staff where to cut.
 
 ### Why this matters for printing &amp; reprints
 
-**If only Dolci changes, reprint Sheet B only** — Sheet A (Cocktails +
-Spirits) does not need to come off the printer again. This is the whole
-reason the two sheets are independent print units instead of one 4-page
-job. Build the print UI so a manager can choose:
+**If only the Spritz Menu changes, reprint Sheet A only** — and if only
+Spirits/Dopa Cena change, reprint Sheet B only. This is the whole reason
+the two sheets are independent print units instead of one 4-page job.
+Build the print UI so a manager can choose:
 
 - **Print both sheets** (default — full new menu set)
-- **Print Sheet A only** (Cocktails + Spirits & Beer changed)
-- **Print Sheet B only** (Dopa Cena + Dolci changed)
+- **Print Sheet A only** (Cocktails + Spritz Menu changed)
+- **Print Sheet B only** (Spirits & Beer + Dopa Cena changed)
 
 `template.html` already supports this: add `print-sheet-a-only` or
 `print-sheet-b-only` to `<body>`'s class list before calling
@@ -55,13 +59,62 @@ sheets print.
 
 ---
 
+## 1a. Spritz Menu — one shared data set, two swappable designs
+
+The Spritz card is not a fixed design — the manager can toggle between
+two layouts at any time from a "choose your design" screen in the editor
+(not a one-time decision; it stays reachable for as long as the menu
+exists):
+
+- **Design A** — single flat list, item name + tasting note, top to bottom.
+- **Design B** — the same items grouped under three fixed headings
+  ("Bitter & Bright", "Herbal & Aromatic", "Rich & Earthy"), driven by
+  each item's `category`.
+
+**Both designs read the exact same `data.spritz.items` array.** There is
+only one data set, never two — this is the whole point: toggling designs
+is instant and never loses anything the manager typed, because nothing
+is duplicated or converted between formats. Design A simply ignores each
+item's `category` field; Design B sorts by it. Every item should carry a
+`category` anyway (see §3) so switching to Design B never surprises the
+manager with an unsorted item.
+
+The header block above the list — "new" kicker, "Spritz Menu" title,
+"Choose Your Spirit" subhead, the single price, and the "every spritz is
+topped with prosecco and soda" tagline — is **identical between the two
+designs** and lives once in the template (`.spritz-kicker`/
+`.spritz-subhead`/`.spritz-price`/`.spritz-tagline-wrap`). Only the
+item-list portion below it swaps. Don't duplicate the header per design —
+if it ever needs to change, it changes once for both.
+
+`render.js` hydrates BOTH designs' list containers every time it runs
+(cheap at ≤12 items) and sets which one is visible via a
+`spritz-design-b` class on `<body>`, read from `data.spritz.design` — or
+overridden via a 3rd `render(doc, data, { spritzDesign: "b" })` argument.
+**Build the "choose your design" screen as two separate rendered
+instances** (two preview iframes/documents, each given the same
+`data.spritz` but a forced `spritzDesign` override) so both can be shown
+side by side at once — don't try to show both inside one DOM, since the
+non-active one is `display:none` and can't be measured (see §8).
+
+### Price is a page-level exception
+
+Every other price on this menu omits the `$` glyph (see §3). **The
+Spritz price is a deliberate, isolated exception** — it prints as `$12`.
+This was an explicit owner decision for this one page; don't "fix" it to
+match the rest of the menu, and don't let it set a precedent elsewhere.
+
+---
+
 ## 1. Constraint model — validate.js + a single 1pt shrink step
 
 **This menu has open-ended item counts.** Managers can add or remove
-bourbons, scotches, beers, cocktails, dopa-cena items, or dolci at will —
-there is no hard max. There is also no auto-fit ladder like the Weekend
-menu's (no eyebrow/hours line to hide here — these are dense lists, not a
-hero layout). Instead:
+bourbons, scotches, beers, cocktails, dopa-cena items, or spritzes at
+will — there is no hard max (spritz targets 9–12 items, but that's a
+layout target, not an enforced ceiling — validate.js is the real limit,
+same as everywhere else on this menu). There is also no auto-fit ladder
+like the Weekend menu's (no eyebrow/hours line to hide here — these are
+dense lists, not a hero layout). Instead:
 
 1. After every edit, render the candidate data into a live preview and
    call `SienaDrinksDessertValidate.validate(previewDoc)`.
@@ -81,7 +134,11 @@ hero layout). Instead:
    step and no further ladder. Surface the message using
    `report.pages[i].worstList` — e.g. *"Spirits doesn't fit. Bottled Beer
    is the largest section on that card — remove an item there, or shorten
-   / remove a Dopa Cena description elsewhere."*
+   / remove a Dopa Cena description elsewhere."* For Spritz, remember this
+   only tells you about whichever design is currently active — a count
+   that fits Design A might not fit Design B (three subsection titles eat
+   some of the vertical budget Design A doesn't spend). If the manager is
+   choosing between designs, validate both (see §1a).
 
 This is why item counts have **no printed maximum** in this doc: the real
 limit is "however many items fit at full size, plus however many more
@@ -145,21 +202,29 @@ SienaDrinksDessertValidate.validate(document);       // measures & reports; need
     "cognac":              [ /* open-ended */ ],
     "traditionalItalian":  [ /* open-ended */ ]
   },
-  "dolci": [ /* open-ended */ {
-    "id": "dl-1", "name": "Sorbetti di Frutta", "price": "11",
-    "desc": "Mango, Raspberry, Lemon"     // REQUIRED on every dolci item
-  } ]
+  "spritz": {
+    "price": "12",           // single price for the WHOLE page — the one place `$` prints, see below
+    "design": "a",           // "a" (flat list) | "b" (grouped by category) — which one is currently live
+    "items": [ /* open-ended, targets 9–12 */ {
+      "id": "sp-1", "name": "Aperol",
+      "desc": "Orange and rhubarb, gently bitter, easy sipping.",
+      "category": "bright"   // "bright" | "herbal" | "earthy" — read by design B only, ignored by design A
+    } ]
+  }
 }
 ```
 
 ### Price convention
 
-**Prices never include the `$` glyph, anywhere.** Store `"13.00"`,
-`"7.50"`, `"11"` in the JSON. The card never prints a dollar sign, and
-the renderer also formats for display: a trailing `".00"` is dropped
-(`"13.00"` → `"13"`); any other cents are kept (`"6.50"` stays
-`"6.50"`). Store full-precision values in the JSON — let `render.js`'s
-`formatPrice()` handle the display trim; don't pre-strip `.00` yourself.
+**Prices never include the `$` glyph, anywhere — except `spritz.price`,
+which always renders WITH one** (`"12"` → prints `$12`). This is the one
+intentional exception on this menu; see §1a. Everywhere else, store
+`"13.00"`, `"7.50"`, `"11"` in the JSON. The card never prints a dollar
+sign there, and the renderer also formats for display: a trailing
+`".00"` is dropped (`"13.00"` → `"13"`); any other cents are kept
+(`"6.50"` stays `"6.50"`). Store full-precision values in the JSON — let
+`render.js`'s `formatPrice()`/`formatSpritzPrice()` handle the display
+trim; don't pre-strip `.00` or prepend `$` yourself.
 
 ### Item shape by list
 
@@ -168,7 +233,7 @@ the renderer also formats for display: a trailing `".00"` is dropped
 | `cocktails[i]` | `id`, `name`, `desc` (required), `price` (required), `note` (optional) | `note` is the small italic line under the description — e.g. the Siena Margarita's floater upsell. Empty/missing → line removed entirely. |
 | `spirits.bourbon\|scotch\|beer[i]` | `id`, `name`, `price` (required) | **No description field exists for Spirits & Beer, by design** — these are name+price only, matching the current printed list. Don't add a `desc` key here; `render.js` doesn't read one. |
 | `dopaCena.<subsection>[i]` | `id`, `name`, `price` (required), `desc` (optional) | **Any item in any Dopa Cena subsection may carry `desc`** — it is not reserved for a particular item (the seed happens to put one on "Il Poggione \"Paganelli\"" → Brunello Riserva di Montalcino, but that's just today's content). Empty/missing → line removed. Per the constraint model, adding descriptions eats vertical budget — validate.js will tell the manager when a card runs out of room (see §1). |
-| `dolci[i]` | `id`, `name`, `price` (required), `desc` (required) | Every dolci item has a description in the current design; treat it as required — don't allow an empty save. |
+| `spritz.items[i]` | `id`, `name`, `desc` (required), `category` (required: `bright`\|`herbal`\|`earthy`) | No per-item price — see `spritz.price` above. `desc` is the tasting note, shown by both designs. `category` only visibly matters in Design B but should still be set for every item — see §1a. |
 
 ### IDs
 
@@ -197,9 +262,11 @@ cocktail/dolci names, or Playfair on spirits/dopa-cena names.
 | Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). |
 | Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
 | Dopa Cena item description | `dopaCena.<sub>[i].desc` | optional | **Available on every item, every subsection.** Empty/missing removes the line. Governed entirely by validate.js — see §1. |
-| Dolci name | `dolci[i].name` | required | Playfair italic 16.5pt (shrinks to 15.5pt). |
-| Dolci price | `dolci[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. Dolci prices in the current menu have no decimals (`"11"`, not `"11.00"`) — either convention renders fine. |
-| Dolci description | `dolci[i].desc` | required | Montserrat 12pt (shrinks to 11pt), centered, wraps freely. |
+| Spritz price | `spritz.price` | required | Playfair italic, larger, part of the shared header. **Prints WITH `$`** — the one exception on this menu. Not part of the 1pt shrink (see §1a). |
+| Spritz design | `spritz.design` | required | `"a"` or `"b"` — set by the "choose your design" screen, not free text. |
+| Spritz item name | `spritz.items[i].name` | required | Montserrat bold, 12pt (11pt in Design B, shrinks 1pt further). |
+| Spritz item description | `spritz.items[i].desc` | required | Montserrat, tasting note. Shown by both designs. |
+| Spritz item category | `spritz.items[i].category` | required | `"bright"` \| `"herbal"` \| `"earthy"`. Only visibly sorts Design B; still required on every item (see §1a). |
 
 ### Add / remove / reorder
 
@@ -219,12 +286,20 @@ printed maximum (see §1). The editor:
 
 Baked into `template.html`, no data hooks, not surfaced in the editor:
 
-- The four page titles: "Signature Cocktails", "Spirits & Beer", "Siena
-  Dopa Cena", "Dolci" — plus their flanking dark rules.
-- The eight subsection titles: "Rye / Whiskey / Bourbon", "Single Malt
-  Scotch Whisky", "Bottled Beer" (on the Spirits & Beer card); "Digestivo",
-  "Grappa · 2.5 oz", "Ports · 2.5 oz", "Cognac &amp; Calvados",
-  "Traditional Italian · 2.5 oz" (on the Dopa Cena card).
+- The four page titles: "Signature Cocktails", "Spritz Menu", "Spirits &
+  Beer", "Siena Dopa Cena" — plus their flanking dark rules.
+- The entire Spritz header block: the "new" kicker, "Choose Your Spirit"
+  subhead, and "every spritz is topped with prosecco and soda" tagline —
+  identical in both designs, and in both designs' case the manager can
+  only edit `spritz.price` within it, nothing else.
+- The three Spritz Design B group headings and their order ("Bitter &
+  Bright", "Herbal & Aromatic", "Rich & Earthy") — fixed; the editor
+  cannot add, rename, or reorder groups. Only which `category` each item
+  carries (and therefore which group it lands in) is editable.
+- The eight Spirits/Dopa Cena subsection titles: "Rye / Whiskey / Bourbon",
+  "Single Malt Scotch Whisky", "Bottled Beer" (on the Spirits & Beer card);
+  "Digestivo", "Grappa · 2.5 oz", "Ports · 2.5 oz", "Cognac &amp;
+  Calvados", "Traditional Italian · 2.5 oz" (on the Dopa Cena card).
 - The number and order of subsections on Spirits & Beer (always 3, in
   that order) and Dopa Cena (always 5, in that order). The editor cannot
   add a 4th Spirits & Beer category or a 6th Dopa Cena category, rename
@@ -244,11 +319,12 @@ as a request, don't build it into the editor.
 
 | Slot family | Selector pattern | Field |
 |---|---|---|
-| Card container | `[data-page-id="cocktails\|spirits\|dopacena\|dolci"]` | validate.js measures this |
+| Card container | `[data-page-id="cocktails\|spritz\|spirits\|dopacena"]` | validate.js measures this |
 | Sheet container | `[data-sheet-id="a\|b"]` | print-scope toggle target |
 | Editing-mode flag | `body.is-editing` | see "Dopa Cena editing spacing" below |
+| Spritz design flag | `body.spritz-design-b` | set by render.js from `spritz.design` (or an override); absent = Design A |
 | Any list | `[data-list-id="…"]` | render.js clears + repopulates; validate.js's `worstList` diagnostic |
-| List IDs | `cocktails`, `spirits-bourbon`, `spirits-scotch`, `spirits-beer`, `dopacena-digestivo`, `dopacena-grappa`, `dopacena-ports`, `dopacena-cognac`, `dopacena-traditionalItalian`, `dolci` | maps 1:1 to the JSON paths in §3 |
+| List IDs | `cocktails`, `spirits-bourbon`, `spirits-scotch`, `spirits-beer`, `dopacena-digestivo`, `dopacena-grappa`, `dopacena-ports`, `dopacena-cognac`, `dopacena-traditionalItalian`, `spritz-a`, `spritz-b-bright`, `spritz-b-herbal`, `spritz-b-earthy` | maps 1:1 to the JSON paths in §3 — the four `spritz-*` lists all draw from the one `spritz.items` array (see §1a) |
 | Item | `[data-item-id="…"]` | one per JSON item, opaque stable ID |
 
 The renderer uses `textContent` exclusively — no `innerHTML` anywhere in
@@ -260,47 +336,29 @@ Weekend menu's `policy_line`).
 ## 7. Editor UI sketch
 
 Four collapsible panels (one per card), each with a live preview pane
-that re-renders and re-validates on every edit:
+that re-renders and re-validates on every edit. Spritz panel also has a
+"Change design →" link that opens the choose-your-design screen at any
+time — status line: Cocktails / Spritz / Spirits / Dopa Cena, each fits
+or "fits (reduced type)"; any failure names the worst list, save is
+disabled while any card reports fits:false, and a print dropdown offers
+both sheets / Sheet A only / Sheet B only.
 
-```
-┌────────────────────────────┬───────────────────────────────────┐
-│ EDITOR PANE                │ PREVIEW PANE (per-card, or all 4) │
-│                            │                                    │
-│ ▾ Signature Cocktails      │  [ rendered card(s), true size ]  │
-│    ≡ Godfather        [×]  │                                    │
-│      [name][desc][price]   │  Status per card:                 │
-│      ( no note )           │  ✓ Cocktails — fits                │
-│    ≡ Siena Margarita  [×]  │  ✓ Spirits — fits (reduced type)   │
-│      [name][desc][price]   │  ✓ Dopa Cena — fits                │
-│      [note]                │  ✓ Dolci — fits                    │
-│    [+ Add cocktail]        │                                    │
-│                            │  ⚠ if any card fails:              │
-│ ▸ Spirits                  │    "Spirits doesn't fit. Bottled    │
-│   ≡ Rye/Whiskey/Bourbon    │     Beer is the largest section —  │
-│     … [+ Add]              │     remove an item there, or       │
-│   ≡ Single Malt Scotch     │     shorten/remove a Dopa Cena      │
-│     … [+ Add]              │     description elsewhere."         │
-│   ≡ Bottled Beer           │                                    │
-│     … [+ Add]              │  [ Save ]  (disabled while any     │
-│                            │   card reports fits:false)         │
-│ ▸ Siena Dopa Cena          │                                    │
-│   ≡ Digestivo … [+ Add]    │  [ Print both sheets ▾ ]           │
-│   ≡ Grappa                 │     Print Sheet A only              │
-│     ≡ Il Poggione…         │     Print Sheet B only              │
-│       [name][price]        │                                    │
-│       [+ description ▾]    │                                    │
-│   …                        │                                    │
-│                            │                                    │
-│ ▸ Dolci                    │                                    │
-│   … [+ Add]                │                                    │
-└────────────────────────────┴───────────────────────────────────┘
-```
+The **"choose your design" screen** (opened from the Spritz panel, and
+reachable again later — the manager is never locked in) shows Design A
+and Design B side by side, each its own `render()` call against the SAME
+`spritz` data — one forced to `spritzDesign: "a"`, the other to `"b"`
+(see §1a) — each with its own fit status and a "Use this one" button.
+Nothing is converted or duplicated between them, so "Use this one" just
+writes `spritz.design` and closes the screen.
 
 - Every list item has drag-to-reorder within its list; dragging across
   lists (e.g. a beer into the bourbon list) is blocked.
 - On the Dopa Cena panel, each item's description is a **collapsed
   "+ description" toggle by default** (most items don't have one) that
   expands into a textarea when clicked.
+- On the Spritz panel, `category` is a required 3-option select (Bitter
+  & Bright / Herbal & Aromatic / Rich & Earthy) on every item, regardless
+  of which design is currently active.
 - Debounce re-render + re-validate ~300–500ms after the last keystroke.
 - "Save" is disabled while `report.fits === false` on any card.
 - The print control is a small dropdown: "Print both sheets" (default),
@@ -320,14 +378,25 @@ that re-renders and re-validates on every edit:
   `validate(doc)` — Playfair is a variable font and shifts line-heights
   slightly when it swaps in, which can flip a borderline fit/no-fit call.
 - **The 1pt shrink is per-page, not global.** Spirits can be at reduced
-  type while Cocktails, Dopa Cena, and Dolci stay full size. This is
+  type while Cocktails, Spritz, and Dopa Cena stay full size. This is
   correct — they're four independent physical cards.
-- **No `$` in the JSON.** See §3. This is the #1 way a first pass at this
-  data gets it wrong (copying the Weekend/Dinner convention, which DOES
-  store `$` in the JSON).
+- **No `$` in the JSON — except `spritz.price`.** See §3. This is the #1
+  way a first pass at this data gets it wrong (copying the Weekend/Dinner
+  convention, which DOES store `$` everywhere) — and the Spritz exception
+  is just as easy to get backwards (don't strip `$` there, or add it
+  everywhere else).
 - **Spirits genuinely has no description field.** Don't add one "for
   consistency" with Dopa Cena — `render.js` has no code path for it and
   the layout wasn't budgeted for it.
+- **Spritz's two designs share one data set, not two.** Never introduce
+  a second `items` array "for design B" — that's exactly the duplication
+  that would make toggling designs lossy. Design B derives its grouping
+  from `category` at render time; it doesn't need its own storage.
+- **A hidden Spritz design can't be measured.** Within one DOM, the
+  inactive design's content is `display:none`, so `scrollHeight`/
+  `clientHeight` both read 0 and validate.js would misreport it as
+  "fits". To check the other design's fit, re-render with the other
+  `spritzDesign` forced and validate that — see §1a and §7.
 - **Reprints:** always ask "which sheet(s) changed?" before printing —
   see §0. Printing both sheets on every small edit works but wastes
   paper on the unchanged half.
@@ -343,8 +412,9 @@ that re-renders and re-validates on every edit:
 - **Special characters:** preserve curly quotes (`'`, `"…"`), en/em
   dashes (`–`, `—`), middle dots (`·`), and accented letters (`è`, `à`).
   Don't ASCII-fold on save.
-- **Empty values:** never allow an empty item name or price anywhere.
-  Dolci description is required; cocktail description is required;
+- **Empty values:** never allow an empty item name anywhere, or an empty
+  price on cocktails/spirits/dopa-cena items, or an empty `spritz.price`.
+  Cocktail description and every Spritz item's description are required;
   Dopa Cena description and cocktail note are the only two truly
   optional text fields on this menu.
 
@@ -367,7 +437,14 @@ that re-renders and re-validates on every edit:
   disappears entirely from the rendered card, not just goes blank.
 - Manager reorders cocktails by drag → save → reload → new order
   persists and prints in that order.
-- Manager selects "Print Sheet B only" after only editing Dolci → only
-  the Dopa Cena + Dolci sheet goes to the printer.
+- Manager adds a 10th spritz with a new tasting note and category →
+  both Design A and Design B re-render from the same data; whichever is
+  currently active is what shows and prints.
+- Manager opens "choose your design", sees Design A and B rendered side
+  by side from current data, picks Design B → `spritz.design` becomes
+  `"b"` → live page 2 is now the grouped layout, and reopening the
+  screen later still offers both, unchanged.
+- Manager selects "Print Sheet B only" after only editing Dopa Cena →
+  only the Spirits & Beer + Dopa Cena sheet goes to the printer.
 - Snapshot test passes in CI (`snapshot-test.spec.mjs`).
 - Owner can demo to a manager in a few minutes.

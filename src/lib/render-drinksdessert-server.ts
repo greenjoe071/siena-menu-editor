@@ -8,7 +8,7 @@ const HANDOFF = join(process.cwd(), 'handoff-drinksdessert');
 async function loadRenderer() {
   const src = await readFile(join(HANDOFF, 'render.js'), 'utf8');
   const fakeRoot: Record<string, unknown> = {};
-  const mod = { exports: {} as { render?: (doc: Document, data: DrinksDessertMenuData) => void } };
+  const mod = { exports: {} as { render?: (doc: Document, data: DrinksDessertMenuData, opts?: { spritzDesign?: 'a' | 'b' }) => void } };
   // eslint-disable-next-line no-new-func
   new Function('module', 'self', src)(mod, fakeRoot);
   const renderer = (mod.exports && mod.exports.render)
@@ -17,13 +17,16 @@ async function loadRenderer() {
   return renderer;
 }
 
-export async function renderDrinksDessertMenu(data: DrinksDessertMenuData): Promise<string> {
+export async function renderDrinksDessertMenu(
+  data: DrinksDessertMenuData,
+  opts?: { spritzDesign?: 'a' | 'b' },
+): Promise<string> {
   const [template, renderer] = await Promise.all([
     readFile(join(HANDOFF, 'template.html'), 'utf8'),
     loadRenderer(),
   ]);
 
   const dom = new JSDOM(template);
-  renderer.render!(dom.window.document, data);
+  renderer.render!(dom.window.document, data, opts);
   return '<!DOCTYPE html>\n' + dom.window.document.documentElement.outerHTML;
 }

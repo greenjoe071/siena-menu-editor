@@ -1,12 +1,32 @@
 /**
- * Siena Drinks & Dessert Menu Renderer.
+ * Siena Drinks Menu Renderer.
  *
- * Hydrates the 4-card template (Signature Cocktails, Spirits, Siena Dopa
- * Cena, Dolci) from a JSON data object. Cardinality is OPEN-ENDED on every
- * list — this renderer clears each `[data-list-id]` container and clones
- * the matching `<template>` blueprint once per JSON item, in array order.
- * Page/subsection titles are static template chrome and are never touched
- * here — see BUILD-SPEC.md "Static / not editable".
+ * Hydrates the 4-card template (Signature Cocktails, Spritz Menu, Spirits
+ * & Beer, Siena Dopa Cena) from a JSON data object. Cardinality is
+ * OPEN-ENDED on every list — this renderer clears each `[data-list-id]`
+ * container and clones the matching `<template>` blueprint once per JSON
+ * item, in array order. Page/subsection titles are static template chrome
+ * and are never touched here — see BUILD-SPEC.md "Static / not editable".
+ * Dolci is no longer part of this package — it's its own insert now.
+ *
+ * SPRITZ MENU — one data set, two designs:
+ *   data.spritz = { price: "12", design: "a"|"b", items: [{id,name,desc,category}] }
+ * `render()` populates BOTH design's list containers from the same
+ * `items` array every time (cheap — it's at most 12 items) and sets
+ * `body`'s `spritz-design-b` class from `data.spritz.design`, UNLESS an
+ * explicit override is passed as a 3rd argument: `render(doc, data, {
+ * spritzDesign: "b" })`. The override lets the "choose your design"
+ * screen mount two preview instances of the same data and force one to
+ * each design for a side-by-side comparison, without needing two copies
+ * of `data.spritz`. `category` is read by design B only (to group items)
+ * and ignored entirely by design A — never omit it from an item though;
+ * see BUILD-SPEC.md.
+ *
+ * Price convention EXCEPTION: every other price on this menu omits the
+ * `$` glyph (see below). The Spritz price is the one deliberate
+ * exception — it prints as `$12`, `$14`, etc. Don't "fix" this to match
+ * the rest of the menu; it's an intentional owner decision for this page
+ * only. See BUILD-SPEC.md §3.
  *
  * Usage (browser):
  *   const doc = new DOMParser().parseFromString(templateHtml, 'text/html');
@@ -29,6 +49,8 @@
  *   - dopaCena.<sub>[i].desc   — empty/missing → the description line is
  *     removed. ANY item in ANY Dopa Cena subsection may carry a desc; it
  *     is not reserved for a particular item.
+ *   - spritz.items[i].desc     — tasting note, required (design A shows it
+ *     under every name; design B does too, inside its category group).
  *
  * This module does NOT check whether content fits its page — that is
  * validate.js's job, and it requires a real browser layout engine (it
@@ -56,6 +78,14 @@
     if (/\.00$/.test(s)) s = s.slice(0, -3);
     return s;
   }
+
+  // Spritz-only exception: DOES print the $ glyph. See file header.
+  function formatSpritzPrice(raw) {
+    return '$' + formatPrice(raw);
+  }
+
+  var SPRITZ_CATEGORIES = ['bright', 'herbal', 'earthy'];
+  var SPRITZ_CATEGORY_LIST_ID = { bright: 'spritz-b-bright', herbal: 'spritz-b-herbal', earthy: 'spritz-b-earthy' };
 
   function renderCocktails(doc, items) {
     const list = clearList(doc, 'cocktails');
@@ -115,26 +145,54 @@
     });
   }
 
-  function renderDolci(doc, items) {
-    const list = clearList(doc, 'dolci');
-    if (!list) return;
-    const tpl = doc.getElementById('dolci-item-template');
+  function renderSpritzItem(blueprint, it) {
+    const node = blueprint.cloneNode(true);
+    node.setAttribute('data-item-id', it.id);
+    node.querySelector('.spritz-name').textContent = it.name;
+    node.querySelector('.spritz-desc').textContent = it.desc || '';
+    return node;
+  }
+
+  function renderSpritz(doc, spritz) {
+    spritz = spritz || {};
+    const items = spritz.items || [];
+    const tpl = doc.getElementById('spritz-item-template');
     const blueprint = tpl && tpl.content.firstElementChild;
-    if (!blueprint) throw new Error('Missing #dolci-item-template blueprint.');
-    (items || []).forEach(function (it) {
-      const node = blueprint.cloneNode(true);
-      node.setAttribute('data-item-id', it.id);
-      node.querySelector('.dolci-name').textContent = it.name;
-      node.querySelector('.dolci-price').textContent = formatPrice(it.price);
-      node.querySelector('.dolci-desc').textContent = it.desc || '';
-      list.appendChild(node);
+    if (!blueprint) throw new Error('Missing #spritz-item-template blueprint.');
+
+    // "new" kicker — owner can retire it once the page stops being new. The
+    // header is a simple flex-column child, so hiding it collapses its own
+    // space and everything below shifts up with no leftover gap. Not part
+    // of the original handoff contract; added per owner request.
+    const kickerEl = doc.querySelector('.spritz-kicker');
+    if (kickerEl) kickerEl.style.display = spritz.showNew === false ? 'none' : '';
+
+    doc.querySelector('.spritz-price-text').textContent = formatSpritzPrice(spritz.price);
+
+    // Design A: flat list, array order, category ignored.
+    const flatList = clearList(doc, 'spritz-a');
+    if (flatList) {
+      items.forEach(function (it) { flatList.appendChild(renderSpritzItem(blueprint, it)); });
+    }
+
+    // Design B: grouped by category, fixed group order (bright/herbal/earthy).
+    const groupLists = {};
+    SPRITZ_CATEGORIES.forEach(function (cat) {
+      groupLists[cat] = clearList(doc, SPRITZ_CATEGORY_LIST_ID[cat]);
+    });
+    items.forEach(function (it) {
+      const cat = SPRITZ_CATEGORIES.indexOf(it.category) !== -1 ? it.category : 'bright';
+      const list = groupLists[cat];
+      if (list) list.appendChild(renderSpritzItem(blueprint, it));
     });
   }
 
-  function render(doc, data) {
+  function render(doc, data, opts) {
     data = data || {};
+    opts = opts || {};
     const spirits = data.spirits || {};
     const dopaCena = data.dopaCena || {};
+    const spritz = data.spritz || {};
 
     renderCocktails(doc, data.cocktails);
 
@@ -148,7 +206,9 @@
     renderDescriptiveList(doc, 'dopacena-cognac', dopaCena.cognac);
     renderDescriptiveList(doc, 'dopacena-traditionalItalian', dopaCena.traditionalItalian);
 
-    renderDolci(doc, data.dolci);
+    renderSpritz(doc, spritz);
+    const design = opts.spritzDesign || spritz.design || 'a';
+    if (doc.body) doc.body.classList.toggle('spritz-design-b', design === 'b');
   }
 
   return { render: render };

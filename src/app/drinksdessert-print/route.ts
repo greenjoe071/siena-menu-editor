@@ -7,11 +7,11 @@ export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-drinksdessert');
 
-const ALLOWED_PAGES = ['cocktails', 'spirits', 'dopacena', 'dolci'];
+const ALLOWED_PAGES = ['cocktails', 'spritz', 'spirits', 'dopacena'];
 
 // ?src=current (default) | draft | drinksdessert-published-<ts>
 // ?sheet=a | b (omit for both) — print one of the two physical sheets.
-// ?page=cocktails|spirits|dopacena|dolci — print a single card only,
+// ?page=cocktails|spritz|spirits|dopacena — print a single card only,
 // left-aligned on the sheet. Takes priority over ?sheet if both are given.
 export async function GET(request: Request) {
   const url = new URL(request.url);

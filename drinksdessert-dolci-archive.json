@@ -1,0 +1,42 @@
+{
+  "archivedAt": "2026-08-04T05:56:47.327Z",
+  "note": "Dolci pulled out of the Drinks Menu when Spritz Menu was added. Saved here for the future standalone Desserts insert. See project memory.",
+  "dolci": [
+    {
+      "id": "dl-1",
+      "name": "Sorbetti di Frutta",
+      "price": "11",
+      "desc": "Mango, Raspberry, Lemon"
+    },
+    {
+      "id": "dl-2",
+      "name": "Torta Cioccolato e Pistacchio",
+      "price": "12",
+      "desc": "Rich chocolate torte studded with roasted pistachios, orange marmalade, whipped cream"
+    },
+    {
+      "id": "dl-3",
+      "name": "Crème Brûlée",
+      "price": "11",
+      "desc": "Vanilla bean custard, whipped cream, fresh berries"
+    },
+    {
+      "id": "dl-4",
+      "name": "Tiramisu",
+      "price": "10",
+      "desc": "Liqueur-soaked genoise, mascarpone, chocolate sauce, toasted almonds"
+    },
+    {
+      "id": "dl-5",
+      "name": "Affogato",
+      "price": "8",
+      "desc": "Teo's vanilla gelato, with a shot of espresso poured over"
+    },
+    {
+      "id": "dl-6",
+      "name": "Budino di Pane",
+      "price": "12",
+      "desc": "Baked peach and vanilla bread pudding, topped with Teo's vanilla gelato"
+    }
+  ]
+}
