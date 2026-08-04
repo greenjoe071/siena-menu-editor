@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   DragDropContext,
@@ -175,20 +174,17 @@ function CardPanel({
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function DessertEditorPage() {
-  // "Fix a Mistake" (/dessert/fix) reuses this exact editor — same fields,
-  // same validation, same live preview — but reads/writes the LIVE menu
-  // directly instead of a draft, and hides the publish/discard footer.
-  const pathname = usePathname();
-  const isFix = pathname?.endsWith('/fix') ?? false;
-  const apiPath = isFix ? '/api/dessert/fix' : '/api/dessert/draft';
+  // No draft/publish flow on this menu (Aug 2026) — /edit and /fix are the
+  // same route in practice, both editing the LIVE menu directly via
+  // /api/dessert/fix. Every change saves immediately.
+  const apiPath = '/api/dessert/fix';
   const landingHref = '/dessert';
 
   const [menu, setMenu] = useState<DessertMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
   const [report, setReport] = useState<ValidateReport | null>(null);
-  const [publishing, setPublishing] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(`/dessert-preview?src=${isFix ? 'current' : 'draft'}`);
+  const [previewUrl, setPreviewUrl] = useState('/dessert-preview?src=current');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   const pendingSaveRef = useRef<DessertMenuData | null>(null);
@@ -216,10 +212,10 @@ export default function DessertEditorPage() {
         const msg = body.issues ? body.issues.map((i: { message: string }) => i.message).join('; ') : (body.error || 'Save failed');
         setSaveStatus('error'); setSaveMsg(msg); return;
       }
-      setSaveStatus('saved'); setSaveMsg(isFix ? 'Saved' : 'Draft saved');
+      setSaveStatus('saved'); setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
-  }, [apiPath, isFix]);
+  }, [apiPath]);
 
   // Validation result → status chip + gate the pending save.
   useEffect(() => {
@@ -249,31 +245,10 @@ export default function DessertEditorPage() {
     );
   }, [debouncedMenu]);
 
-  // ── Publish / discard ────────────────────────────────────────────────────
-
-  async function handlePublish() {
-    if (!menu) return;
-    if (report && !report.fits) { alert('Dolci is too long to fit. Fix that before publishing.'); return; }
-    if (!confirm('Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.')) return;
-    setPublishing(true); setSaveMsg('Publishing…');
-    try {
-      await fetch('/api/dessert/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
-      const res = await fetch('/api/dessert/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
-      window.location.href = landingHref;
-    } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
-  }
-
-  async function handleDiscard() {
-    if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
-    try { await fetch('/api/dessert/draft', { method: 'DELETE' }); }
-    finally { window.location.href = landingHref; }
-  }
-
   function handlePrint() {
     if (!menu) return;
     localStorage.setItem('siena-dessert-print-data', JSON.stringify(menu));
-    window.open(`/dessert-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
+    window.open('/dessert-print?src=current', '_blank');
   }
 
   function setDesserts(items: DessertItem[]) { setMenu(m => m && { ...m, desserts: items }); }
@@ -308,19 +283,13 @@ export default function DessertEditorPage() {
         <div className="editor-pane">
           <div className="editor-header">
             <Link href={landingHref} className="btn-back">← Back</Link>
-            <h1>{isFix ? 'Fixing the Live Menu' : 'Editing a Draft'}</h1>
+            <h1>Making a Change</h1>
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
-          {isFix ? (
-            <div className="draft-banner fix-banner">
-              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step. The card must still fit before you can print.
-            </div>
-          ) : (
-            <div className="draft-banner">
-              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked until you press <strong>Make This the Current Menu</strong>. The card must fit before you can publish or print.
-            </div>
-          )}
+          <div className="draft-banner fix-banner">
+            ✏️ Every change you make here saves right away — the card must still fit before you can print.
+          </div>
 
           <div className="editor-scroll chef-mode">
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
@@ -333,19 +302,6 @@ export default function DessertEditorPage() {
               </CardPanel>
             </div>
           </div>{/* end editor-scroll */}
-
-          {/* Publish bar */}
-          {!isFix && (
-            <div className="editor-footer editor-footer--publish">
-              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
-              <span className="publish-hint">
-                {anyOverflow ? '⚠ Dolci is too long — fix it before publishing.' : 'Current menu is unchanged until you publish.'}
-              </span>
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing || anyOverflow}>
-                {publishing ? 'Publishing…' : 'Make This the Current Menu'}
-              </button>
-            </div>
-          )}
 
           {/* Save status + print control */}
           <div className="editor-footer">
@@ -363,7 +319,7 @@ export default function DessertEditorPage() {
             <button
               className="btn-ghost"
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-              onClick={() => setPreviewUrl(`/dessert-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
+              onClick={() => setPreviewUrl('/dessert-preview?src=current&' + Date.now())}
             >
               ↺ Reload from server
             </button>

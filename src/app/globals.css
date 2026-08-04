@@ -1298,6 +1298,10 @@ button {
   padding-left: 32px;
 }
 
+/* ── editOnly landing (no nav/divider — just the current-menu card) ── */
+.dl-split--single { justify-content: center; }
+.dl-split--single .dl-content { flex: none; width: 100%; max-width: 560px; padding-left: 0; }
+
 .dl-pane {
   background: var(--surface);
   border: 1px solid var(--border);
