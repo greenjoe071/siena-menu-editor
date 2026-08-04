@@ -18,6 +18,8 @@ const nextConfig = {
       '/drinksdessert-print':   ['./handoff-drinksdessert/**'],
       '/privatedining-preview': ['./handoff-privatedining/**'],
       '/privatedining-print':   ['./handoff-privatedining/**'],
+      '/dessert-preview': ['./handoff-dessert/**'],
+      '/dessert-print':   ['./handoff-dessert/**'],
     },
   },
 };
