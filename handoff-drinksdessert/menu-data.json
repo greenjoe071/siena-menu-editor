@@ -93,7 +93,7 @@
   },
   "spritz": {
     "price": "12",
-    "design": "a",
+    "design": "b",
     "showNew": true,
     "items": [
       { "id": "sp-1", "name": "Aperol", "desc": "Orange and rhubarb, gently bitter, easy sipping.", "category": "bright" },

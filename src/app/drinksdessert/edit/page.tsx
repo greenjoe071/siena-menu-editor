@@ -74,26 +74,6 @@ const SPRITZ_CATEGORIES: { key: SpritzCategory; label: string }[] = [
   { key: 'earthy', label: 'Rich & Earthy' },
 ];
 
-// The exact placeholder items the handoff shipped with — while the Spritz
-// list still matches this exactly, the editor shows a "replace this" note.
-// See handoff-drinksdessert/menu-data.json.
-const SPRITZ_SEED_ITEMS: SpritzItem[] = [
-  { id: 'sp-1', name: 'Aperol', desc: 'Orange and rhubarb, gently bitter, easy sipping.', category: 'bright' },
-  { id: 'sp-2', name: 'Campari', desc: 'Bold and bitter, cherry and herbs, bright red.', category: 'bright' },
-  { id: 'sp-3', name: 'Select', desc: 'Venetian aperitivo, juniper and rhubarb, lighter than Campari.', category: 'bright' },
-  { id: 'sp-4', name: 'Cappelletti', desc: 'Vibrant red, tart cherry and orange peel, mild bitterness.', category: 'bright' },
-  { id: 'sp-5', name: 'Cocchi Americano', desc: 'Quinine bitterness, citrus and honey, aromatic wine base.', category: 'herbal' },
-  { id: 'sp-6', name: 'Contratto Aperitif', desc: 'Herbal and floral, orange zest, balanced sweetness.', category: 'herbal' },
-  { id: 'sp-7', name: 'Montenegro', desc: 'Italian amaro, orange and vanilla, soft herbal spice.', category: 'herbal' },
-  { id: 'sp-8', name: 'Suze', desc: 'Gentian root, earthy and bittersweet, bright yellow hue.', category: 'earthy' },
-  { id: 'sp-9', name: 'Cynar', desc: 'Artichoke and caramel, deep bitter-sweet, dark and rich.', category: 'earthy' },
-  { id: 'sp-10', name: 'Salers', desc: 'Gentian based, herbaceous and tangy, vivid gold color.', category: 'earthy' },
-];
-
-function isStillSeedData(items: SpritzItem[]): boolean {
-  return JSON.stringify(items) === JSON.stringify(SPRITZ_SEED_ITEMS);
-}
-
 // data-list-id → human label (for the overflow message)
 const LIST_LABELS: Record<string, string> = {
   'cocktails': 'Signature Cocktails',
@@ -400,105 +380,6 @@ function CardPanel({
   );
 }
 
-// ── "Choose your design" comparison modal ──────────────────────────────────
-
-function DesignPickerModal({
-  isFix, menu, onUse, onClose,
-}: {
-  isFix: boolean;
-  menu: DrinksDessertMenuData;
-  onUse: (design: 'a' | 'b') => void;
-  onClose: () => void;
-}) {
-  const iframeARef = useRef<HTMLIFrameElement>(null);
-  const iframeBRef = useRef<HTMLIFrameElement>(null);
-  const [fitA, setFitA] = useState<boolean | null>(null);
-  const [fitB, setFitB] = useState<boolean | null>(null);
-  const previewSrc = isFix ? 'current' : 'draft';
-  const spritz = menu.spritz;
-
-  // Push the live in-progress edits into both preview panes (each forced to
-  // its own design via the ?spritzDesign= query param on the iframe src) so
-  // the comparison always reflects what's on screen, not just what's saved.
-  const debouncedMenu = useDebounce(menu, 400);
-  useEffect(() => {
-    iframeARef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_UPDATE', payload: debouncedMenu }, '*');
-    iframeBRef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_UPDATE', payload: debouncedMenu }, '*');
-  }, [debouncedMenu]);
-
-  useEffect(() => {
-    function onMessage(e: MessageEvent) {
-      if (!e.data || e.data.type !== 'SIENA_DRINKSDESSERT_VALIDATE_RESULT') return;
-      const report = e.data.report as ValidateReport;
-      const spritzPage = report.pages?.find(p => p.id === 'spritz');
-      if (!spritzPage) return;
-      if (e.source === iframeARef.current?.contentWindow) setFitA(spritzPage.fits);
-      else if (e.source === iframeBRef.current?.contentWindow) setFitB(spritzPage.fits);
-    }
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, []);
-
-  return (
-    <div className="dd-design-backdrop" onClick={onClose}>
-      <div className="dd-design-modal" onClick={e => e.stopPropagation()}>
-        <div className="dd-design-modal-header">
-          <div>
-            <div className="dd-design-modal-title">Choose Your Spritz Design</div>
-            <div className="dd-design-modal-sub">Both use the same spirits you&rsquo;ve entered — pick your favorite. You can change your mind anytime.</div>
-          </div>
-          <button className="btn-close-modal" onClick={onClose} aria-label="Close">×</button>
-        </div>
-        <div className="dd-design-columns">
-          <div className={`dd-design-col ${spritz.design === 'a' ? 'dd-design-col--active' : ''}`}>
-            <div className="dd-design-col-header">
-              <span className="dd-design-col-title">Design A — Simple List</span>
-              {spritz.design === 'a' && <span className="dd-design-badge-active">Currently Live</span>}
-            </div>
-            <div className="dd-design-iframe-wrap">
-              <iframe
-                ref={iframeARef}
-                className="dd-design-iframe"
-                src={`/drinksdessert-preview?src=${previewSrc}&spritzDesign=a`}
-                title="Spritz Design A preview"
-              />
-            </div>
-            {spritz.design === 'a' ? (
-              <button className="btn-use-design btn-use-design--current" disabled>This One Is Live</button>
-            ) : (
-              <button className="btn-use-design" onClick={() => onUse('a')} disabled={fitA === false}>
-                {fitA === false ? "Doesn't Fit — Trim Text First" : 'Use This One'}
-              </button>
-            )}
-          </div>
-
-          <div className={`dd-design-col ${spritz.design === 'b' ? 'dd-design-col--active' : ''}`}>
-            <div className="dd-design-col-header">
-              <span className="dd-design-col-title">Design B — Grouped by Flavor</span>
-              {spritz.design === 'b' && <span className="dd-design-badge-active">Currently Live</span>}
-            </div>
-            <div className="dd-design-iframe-wrap">
-              <iframe
-                ref={iframeBRef}
-                className="dd-design-iframe"
-                src={`/drinksdessert-preview?src=${previewSrc}&spritzDesign=b`}
-                title="Spritz Design B preview"
-              />
-            </div>
-            {spritz.design === 'b' ? (
-              <button className="btn-use-design btn-use-design--current" disabled>This One Is Live</button>
-            ) : (
-              <button className="btn-use-design" onClick={() => onUse('b')} disabled={fitB === false}>
-                {fitB === false ? "Doesn't Fit — Trim Text First" : 'Use This One'}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function DrinksDessertEditorPage() {
@@ -516,7 +397,6 @@ export default function DrinksDessertEditorPage() {
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(`/drinksdessert-preview?src=${isFix ? 'current' : 'draft'}`);
-  const [showDesignPicker, setShowDesignPicker] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   const pendingSaveRef = useRef<DrinksDessertMenuData | null>(null);
@@ -636,7 +516,6 @@ export default function DrinksDessertEditorPage() {
   function setSpritzShowNew(showNew: boolean) { setMenu(m => m && { ...m, spritz: { ...m.spritz, showNew } }); }
   function setSpritzDesign(design: 'a' | 'b') {
     setMenu(m => m && { ...m, spritz: { ...m.spritz, design } });
-    setShowDesignPicker(false);
   }
 
   // Drag reorder within a single list (blocked across lists).
@@ -675,7 +554,6 @@ export default function DrinksDessertEditorPage() {
     saveStatus === 'error' ? 'save-status error' : 'save-status';
 
   const anyOverflow = report ? !report.fits : false;
-  const showSampleDataNote = isStillSeedData(menu.spritz.items);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -719,17 +597,6 @@ export default function DrinksDessertEditorPage() {
             <div className="page-group">
               <div className="page-group-label">Sheet A · Right card</div>
               <CardPanel title="Spritz Menu" pageId="spritz" report={report}>
-                <div className="dd-callout dd-callout--info">
-                  <span className="dd-callout-emoji">💡</span>
-                  <span>You can switch between the two Spritz designs anytime — click &ldquo;Change Design&rdquo; below. Nothing you type here is ever lost when you switch.</span>
-                </div>
-                {showSampleDataNote && (
-                  <div className="dd-callout dd-callout--sample">
-                    <span className="dd-callout-emoji">📝</span>
-                    <span>These are example spritzes from the designer. Replace them with your actual list of 9–12 spirits before publishing.</span>
-                  </div>
-                )}
-
                 <label className="dd-shownew-toggle">
                   <input type="checkbox" checked={menu.spritz.showNew} onChange={e => setSpritzShowNew(e.target.checked)} />
                   Show the &ldquo;NEW&rdquo; label
@@ -741,9 +608,25 @@ export default function DrinksDessertEditorPage() {
                   <PriceInput value={menu.spritz.price} onChange={setSpritzPrice} />
                 </div>
 
-                <button type="button" className="btn-change-design" onClick={() => setShowDesignPicker(true)}>
-                  🎨 Change Design (currently: {menu.spritz.design === 'a' ? 'Simple List' : 'Grouped by Flavor'})
-                </button>
+                <div className="field-group" style={{ marginBottom: '14px' }}>
+                  <label>Design</label>
+                  <div className="dd-design-toggle">
+                    <button
+                      type="button"
+                      className={`dd-design-toggle-btn ${menu.spritz.design === 'a' ? 'dd-design-toggle-btn--active' : ''}`}
+                      onClick={() => setSpritzDesign('a')}
+                    >
+                      Simple List
+                    </button>
+                    <button
+                      type="button"
+                      className={`dd-design-toggle-btn ${menu.spritz.design === 'b' ? 'dd-design-toggle-btn--active' : ''}`}
+                      onClick={() => setSpritzDesign('b')}
+                    >
+                      Grouped by Flavor
+                    </button>
+                  </div>
+                </div>
 
                 <SpritzEditableList items={menu.spritz.items} onItemsChange={setSpritzItems} />
               </CardPanel>
@@ -843,15 +726,6 @@ export default function DrinksDessertEditorPage() {
           <iframe ref={iframeRef} src={previewUrl} className="preview-iframe" title="Drinks & Dessert preview" />
         </div>
       </div>
-
-      {showDesignPicker && (
-        <DesignPickerModal
-          isFix={isFix}
-          menu={menu}
-          onUse={setSpritzDesign}
-          onClose={() => setShowDesignPicker(false)}
-        />
-      )}
     </DragDropContext>
   );
 }

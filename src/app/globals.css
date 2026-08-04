@@ -1601,21 +1601,6 @@ a.dd-chooser-card:hover {
 }
 .btn-print--ghost:hover:not(:disabled) { border-color: var(--navy); background: rgba(26,58,92,0.06); }
 
-/* ── Spritz panel callouts (info notes, non-technical-friendly) ── */
-.dd-callout {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 12.5px;
-  line-height: 1.5;
-  padding: 10px 12px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-}
-.dd-callout--info { background: #eaf1fb; color: #1e3a5c; }
-.dd-callout--sample { background: #fdf2d6; color: #6b5410; }
-.dd-callout-emoji { flex-shrink: 0; font-size: 15px; }
-
 .dd-shownew-toggle {
   display: flex;
   align-items: center;
@@ -1636,84 +1621,29 @@ a.dd-chooser-card:hover {
   font-size: 13px;
 }
 
-.btn-change-design {
-  background: transparent;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  font-size: 12.5px;
+/* Simple two-button Spritz design toggle — swaps data.spritz.design, which
+   shows up live in the regular preview pane like any other field. */
+.dd-design-toggle {
+  display: flex;
+  gap: 8px;
+}
+.dd-design-toggle-btn {
+  flex: 1;
+  background: #1e1409;
+  border: 2px solid #4a3520;
+  color: #d4b57a;
+  font-size: 13px;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 10px;
   border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 14px;
 }
-.btn-change-design:hover { background: rgba(184, 130, 30, 0.1); }
-
-/* ── "Choose your design" comparison modal ── */
-.dd-design-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(20, 12, 4, 0.6);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1000;
-  padding: 24px;
+.dd-design-toggle-btn:hover { border-color: #b8821e; }
+.dd-design-toggle-btn--active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
 }
-.dd-design-modal {
-  background: #fff;
-  border-radius: 16px;
-  max-width: 1100px;
-  width: 100%;
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.dd-design-modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
-}
-.dd-design-modal-title { font-size: 17px; font-weight: 700; color: var(--text); }
-.dd-design-modal-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-.btn-close-modal {
-  background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); padding: 4px;
-}
-.btn-close-modal:hover { color: var(--text); }
-.dd-design-columns {
-  display: flex; gap: 20px;
-  padding: 20px 24px;
-  overflow-y: auto;
-  background: var(--bg);
-}
-.dd-design-col {
-  flex: 1;
-  display: flex; flex-direction: column; gap: 10px;
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-}
-.dd-design-col--active { border-color: var(--gold); box-shadow: 0 4px 16px rgba(184,150,42,0.14); }
-.dd-design-col-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.dd-design-col-title { font-size: 14.5px; font-weight: 700; color: var(--text); }
-.dd-design-badge-active {
-  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-  background: var(--gold); color: #fff; padding: 3px 8px; border-radius: 10px;
-}
-.dd-design-iframe-wrap {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: #e8dfd2;
-  height: 480px;
-}
-.dd-design-iframe { width: 100%; height: 100%; border: none; }
-.btn-use-design {
-  background: var(--gold); color: #fff; border: none;
-  font-size: 13.5px; font-weight: 700; padding: 10px; border-radius: 8px; cursor: pointer;
-}
-.btn-use-design:hover:not(:disabled) { background: #9a7a20; }
-.btn-use-design:disabled { opacity: 0.6; cursor: default; }
-.btn-use-design--current { background: var(--border); color: var(--muted); cursor: default; }
 
 /* Editor's print-scope dropdown (Drinks & Dessert) */
 .dd-print-select {
