@@ -11,8 +11,10 @@ const ALLOWED_PAGES = ['cocktails', 'spritz', 'spirits', 'dopacena'];
 
 // ?src=current (default) | draft | drinksdessert-published-<ts>
 // ?sheet=a | b (omit for both) — print one of the two physical sheets.
-// ?page=cocktails|spritz|spirits|dopacena — print a single card only,
-// left-aligned on the sheet. Takes priority over ?sheet if both are given.
+// ?page=cocktails|spritz|spirits|dopacena — print ONE sheet with the chosen
+// card duplicated on BOTH halves (cut down the middle for 2 identical
+// copies from a single piece of paper). Takes priority over ?sheet if both
+// are given.
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const src = url.searchParams.get('src');
@@ -55,12 +57,22 @@ ${validateSrc}
     localStorage.removeItem('siena-drinksdessert-print-data');
     localStorage.removeItem('siena-drinksdessert-print-scope');
   }
-  if (pageParam) {
-    document.body.classList.add('print-only-' + pageParam);
-  } else if (scope === 'a') {
-    document.body.classList.add('print-sheet-a-only');
-  } else if (scope === 'b') {
-    document.body.classList.add('print-sheet-b-only');
+
+  var SHEET_OF    = { cocktails: 'a', spritz: 'a', spirits: 'b', dopacena: 'b' };
+  var SIBLING_OF  = { cocktails: 'spritz', spritz: 'cocktails', spirits: 'dopacena', dopacena: 'spirits' };
+
+  // Keep exactly one physical sheet and make sure it never leaves a trailing
+  // blank page behind it. .sheet's default page-break-after:always assumes
+  // BOTH sheets print; when only one survives, that sheet's own break must
+  // be reset to auto — the template's ":last-child" rule only covers the
+  // case where Sheet B is the one left standing, not Sheet A.
+  function keepOnlySheet(keepId) {
+    ['a', 'b'].forEach(function (id) {
+      var el = document.querySelector('[data-sheet-id="' + id + '"]');
+      if (!el) return;
+      if (id === keepId) el.style.pageBreakAfter = 'auto';
+      else el.style.display = 'none';
+    });
   }
 
   // First-run print help: for the first 10 prints, show a reminder to set
@@ -93,6 +105,24 @@ ${validateSrc}
   document.fonts.ready.then(function () {
     V.waitForLayout(document).then(function () {
       V.validate(document); // applies shrink-1pt where needed, matching the preview
+
+      if (pageParam) {
+        // Duplicate the chosen card onto its sibling slot (same sheet) so
+        // one sheet prints two identical copies, side by side — cloned
+        // AFTER validate so it inherits any shrink-1pt already applied.
+        var targetPage  = document.querySelector('[data-page-id="' + pageParam + '"]');
+        var siblingPage = document.querySelector('[data-page-id="' + SIBLING_OF[pageParam] + '"]');
+        if (targetPage && siblingPage) {
+          var clone = targetPage.cloneNode(true);
+          siblingPage.parentNode.replaceChild(clone, siblingPage);
+        }
+        keepOnlySheet(SHEET_OF[pageParam]);
+      } else if (scope === 'a') {
+        keepOnlySheet('a');
+      } else if (scope === 'b') {
+        keepOnlySheet('b');
+      }
+
       var n = parseInt(localStorage.getItem(HELP_KEY) || '0', 10);
       if (isNaN(n)) n = 0;
       if (n < 10) {
