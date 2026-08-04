@@ -45,7 +45,7 @@ const MENUS = [
   {
     id: 'drinksdessert',
     label: 'Drinks & Dessert',
-    description: 'Drinks Menu (Cocktails, Spritz, Spirits & Beer, Dopa Cena) — Desserts coming soon',
+    description: 'Drinks Menu (Cocktails, Spritz, Spirits & Beer, Dopa Cena) and the Desserts insert',
     icon: '🍸',
     ready: true,
     href: '/drinksdessert',

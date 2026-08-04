@@ -2,8 +2,7 @@ import Link from 'next/link';
 
 // Entry fork for the old "Drinks & Dessert" home card. Dolci became its own
 // standalone insert (see drinksdessert-dolci-archive.json) — this screen
-// lets Joe pick which side he's working on. Desserts isn't built yet, so
-// its card is intentionally not clickable (per owner request).
+// lets Joe pick which side he's working on.
 
 export default function DrinksDessertChooserPage() {
   return (
@@ -23,11 +22,11 @@ export default function DrinksDessertChooserPage() {
           <span className="dd-chooser-hint">Cocktails, Spritz, Spirits &amp; Beer, Dopa Cena</span>
         </Link>
 
-        <div className="dd-chooser-card dd-chooser-card--disabled">
+        <Link href="/dessert" className="dd-chooser-card">
           <span className="dd-chooser-emoji">🍰</span>
           <span className="dd-chooser-title">Desserts</span>
-          <span className="dd-chooser-hint">Coming soon</span>
-        </div>
+          <span className="dd-chooser-hint">Dolci — the single dessert insert card</span>
+        </Link>
       </main>
     </div>
   );

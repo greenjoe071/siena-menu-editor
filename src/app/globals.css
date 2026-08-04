@@ -587,6 +587,12 @@ button {
 .section-block-header--spirits .section-toggle,
 .section-block-header--dopacena .section-toggle { color: rgba(255,255,255,0.6); }
 
+/* ── Desserts (Dolci) card — same holder as the 4 Drinks Menu cards, own color ── */
+.section-block-header--dessert { background: #3d2817; }
+.section-block-header--dessert:hover { background: #2e1d10; }
+.chef-mode .section-block--dessert .section-body { background: #f3e7da; }
+.section-block-header--dessert .section-title-label { color: #fff; }
+
 /* ── Price input with auto-$ prefix ─────────────────────── */
 .price-input-wrap {
   display: flex;
@@ -1488,11 +1494,6 @@ a.dd-chooser-card:hover {
   border-color: var(--gold);
   box-shadow: 0 8px 24px rgba(184, 150, 42, 0.18);
   transform: translateY(-2px);
-}
-.dd-chooser-card--disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  background: var(--bg);
 }
 .dd-chooser-emoji { font-size: 40px; }
 .dd-chooser-title { font-size: 19px; font-weight: 700; }

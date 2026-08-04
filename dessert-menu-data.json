@@ -1,0 +1,10 @@
+{
+  "desserts": [
+    { "id": "ds-1", "name": "Sorbetti di Frutta", "desc": "Mango, Raspberry, Lemon", "price": "11.00" },
+    { "id": "ds-2", "name": "Torta Cioccolato e Pistacchio", "desc": "Rich chocolate torte studded with roasted pistachios, orange marmalade, whipped cream", "price": "12.00" },
+    { "id": "ds-3", "name": "Cr\u00e8me Br\u00fbl\u00e9e", "desc": "Vanilla bean custard, whipped cream, fresh berries", "price": "11.00" },
+    { "id": "ds-4", "name": "Tiramisu", "desc": "Liqueur-soaked genoise, mascarpone, chocolate sauce, toasted almonds", "price": "10.00" },
+    { "id": "ds-5", "name": "Affogato", "desc": "Teo's vanilla gelato, with a shot of espresso poured over", "price": "8.00" },
+    { "id": "ds-6", "name": "Budino di Pane", "desc": "Baked peach and vanilla bread pudding, topped with Teo's vanilla gelato", "price": "12.00" }
+  ]
+}

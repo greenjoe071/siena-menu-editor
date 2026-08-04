@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Siena Ristorante — Desserts Menu</title>
+<style>
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; font-style: italic; font-display: swap;
+}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/*
+  PHYSICAL PRODUCT — read this before touching layout.
+  ======================================================
+  One 4.25in x 11in insert card — same size and holder as the 4 cards in
+  ../handoff-drinksdessert/ (this used to be the Dolci page on that old
+  combined card; it's now its own standalone insert). Printed two-up on
+  ONE 8.5x11 sheet: TWO IDENTICAL COPIES of the same card, side by side,
+  cut down the middle. This is unlike the Drinks Menu's Sheet A/B (two
+  DIFFERENT cards per sheet) — both halves here are the same content, so
+  this just saves paper vs. printing two separate 8.5x11 sheets to get two
+  copies of one card. See BUILD-SPEC.md \u00a70.
+*/
+@page { size: 8.5in 11in; margin: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+  color: #3a1a06;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sheet {
+  width: 8.5in;
+  height: 11in;
+  display: flex;
+  position: relative;
+  background: #fff;
+}
+
+.cut-guide {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed #3a1a06;
+  pointer-events: none;
+}
+
+@media screen {
+  body { background: #e8dfd2; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  .sheet { box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
+}
+@media print {
+  body { background: #fff; padding: 0; display: block; }
+  .sheet { box-shadow: none; }
+}
+
+.page {
+  width: 4.25in;
+  height: 11in;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 0.55in 0.42in 0.4in;
+  background: #faf6ef;
+}
+
+.page-title { text-align: center; flex-shrink: 0; margin-bottom: 20px; }
+.page-title-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.page-title-rule { height: 1px; width: 28px; background: #3a1a06; opacity: 0.75; }
+.page-title-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22pt;
+  color: #3a1a06;
+  white-space: nowrap;
+}
+
+/* Items vertically center in the space below the title; the title itself
+   never moves. */
+.item-list-wrap { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.item-list { display: flex; flex-direction: column; }
+.item-list[data-list-id^="dessert-"] .item { margin-bottom: 26px; }
+.item-list[data-list-id^="dessert-"] .item:last-child { margin-bottom: 0; }
+.item-list[data-list-id^="dessert-"] .row { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
+
+.dessert-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 16pt; color: #3a1a06; line-height: 1.15; }
+.dessert-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 14pt; color: #3a1a06; line-height: 1.15; white-space: nowrap; }
+.dessert-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.4; margin-top: 6px; padding: 0 8px; text-align: center; text-wrap: pretty; }
+
+/*
+  ── THE ONLY SIZE FLEX THIS LAYOUT ALLOWS ──
+  validate.js measures the primary copy (data-copy-id="1") only — both
+  copies are always identical, so checking one proves both. If it
+  overflows at normal size, validate.js adds "shrink-1pt" to BOTH
+  data-page-id="dessert" elements together (so the two printed copies
+  never disagree) and re-measures. Item name/price/description drop by
+  exactly 1pt. The page title is static chrome and is never touched. If
+  it still overflows after this one step, validate.js reports it and the
+  editor blocks the save — there is no second shrink step.
+*/
+.page.shrink-1pt .dessert-name { font-size: 15pt; }
+.page.shrink-1pt .dessert-price { font-size: 13pt; }
+.page.shrink-1pt .dessert-desc { font-size: 11pt; }
+</style>
+</head>
+<body>
+
+<div class="sheet" data-sheet-id="dessert">
+
+  <div class="page" data-page-id="dessert" data-copy-id="1">
+    <div class="page-title">
+      <div class="page-title-row">
+        <div class="page-title-rule"></div>
+        <div class="page-title-text">Dolci</div>
+        <div class="page-title-rule"></div>
+      </div>
+    </div>
+    <div class="item-list-wrap"><div class="item-list" data-list-id="dessert-1"><div class="item" data-item-id="ds-1"><div class="row"><span class="dessert-name">Sorbetti di Frutta</span><span class="dessert-price">11</span></div><div class="dessert-desc">Mango, Raspberry, Lemon</div></div><div class="item" data-item-id="ds-2"><div class="row"><span class="dessert-name">Torta Cioccolato e Pistacchio</span><span class="dessert-price">12</span></div><div class="dessert-desc">Rich chocolate torte studded with roasted pistachios, orange marmalade, whipped cream</div></div><div class="item" data-item-id="ds-3"><div class="row"><span class="dessert-name">Crème Brûlée</span><span class="dessert-price">11</span></div><div class="dessert-desc">Vanilla bean custard, whipped cream, fresh berries</div></div><div class="item" data-item-id="ds-4"><div class="row"><span class="dessert-name">Tiramisu</span><span class="dessert-price">10</span></div><div class="dessert-desc">Liqueur-soaked genoise, mascarpone, chocolate sauce, toasted almonds</div></div><div class="item" data-item-id="ds-5"><div class="row"><span class="dessert-name">Affogato</span><span class="dessert-price">8</span></div><div class="dessert-desc">Teo's vanilla gelato, with a shot of espresso poured over</div></div><div class="item" data-item-id="ds-6"><div class="row"><span class="dessert-name">Budino di Pane</span><span class="dessert-price">12</span></div><div class="dessert-desc">Baked peach and vanilla bread pudding, topped with Teo's vanilla gelato</div></div></div></div>
+  </div>
+
+  <div class="cut-guide"></div>
+
+  <div class="page" data-page-id="dessert" data-copy-id="2">
+    <div class="page-title">
+      <div class="page-title-row">
+        <div class="page-title-rule"></div>
+        <div class="page-title-text">Dolci</div>
+        <div class="page-title-rule"></div>
+      </div>
+    </div>
+    <div class="item-list-wrap"><div class="item-list" data-list-id="dessert-2"><div class="item" data-item-id="ds-1"><div class="row"><span class="dessert-name">Sorbetti di Frutta</span><span class="dessert-price">11</span></div><div class="dessert-desc">Mango, Raspberry, Lemon</div></div><div class="item" data-item-id="ds-2"><div class="row"><span class="dessert-name">Torta Cioccolato e Pistacchio</span><span class="dessert-price">12</span></div><div class="dessert-desc">Rich chocolate torte studded with roasted pistachios, orange marmalade, whipped cream</div></div><div class="item" data-item-id="ds-3"><div class="row"><span class="dessert-name">Crème Brûlée</span><span class="dessert-price">11</span></div><div class="dessert-desc">Vanilla bean custard, whipped cream, fresh berries</div></div><div class="item" data-item-id="ds-4"><div class="row"><span class="dessert-name">Tiramisu</span><span class="dessert-price">10</span></div><div class="dessert-desc">Liqueur-soaked genoise, mascarpone, chocolate sauce, toasted almonds</div></div><div class="item" data-item-id="ds-5"><div class="row"><span class="dessert-name">Affogato</span><span class="dessert-price">8</span></div><div class="dessert-desc">Teo's vanilla gelato, with a shot of espresso poured over</div></div><div class="item" data-item-id="ds-6"><div class="row"><span class="dessert-name">Budino di Pane</span><span class="dessert-price">12</span></div><div class="dessert-desc">Baked peach and vanilla bread pudding, topped with Teo's vanilla gelato</div></div></div></div>
+  </div>
+
+</div>
+
+<!-- render.js clones this once per JSON item, into BOTH [data-list-id]
+     containers (same data, two copies). -->
+<template id="dessert-item-template"><div class="item"><div class="row"><span class="dessert-name"></span><span class="dessert-price"></span></div><div class="dessert-desc"></div></div></template>
+
+<script src="validate.js"></script>
+
+
+
+</body></html>
