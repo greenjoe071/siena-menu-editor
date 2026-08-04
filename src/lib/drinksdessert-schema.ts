@@ -75,6 +75,11 @@ export const DrinksDessertMenuSchema = z.object({
     // the original handoff, added per owner request so it can be retired
     // once the page stops being new. Defaults true (matches current seed).
     showNew: z.boolean().default(true),
+    // Owner-editable tagline under the price ("every spritz is topped
+    // with..."). This cap is a loose paste-guard only — the real "must
+    // stay on one line" enforcement is validate.js's isTaglineWrapped(),
+    // which measures the actual rendered line count in a real browser.
+    tagline: z.string().min(1, 'Tagline is required').max(90),
     items:   z.array(SpritzItemSchema),
   }),
 });

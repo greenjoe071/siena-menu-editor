@@ -75,6 +75,20 @@
     };
   }
 
+  // Spritz tagline is owner-editable free text but the design requires it
+  // stay on one line — its font never shrinks (see template.html's
+  // shrink-1pt rules, which deliberately exclude the tagline), so if it's
+  // wrapped at normal size it's wrapped, period. Compares rendered height
+  // against its own line-height rather than guessing a character count,
+  // since letter widths vary too much for a static cap to be reliable.
+  function isTaglineWrapped(page) {
+    const el = page.querySelector('.spritz-tagline');
+    if (!el) return false;
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 0;
+    if (!lineHeight) return false;
+    return el.getBoundingClientRect().height > lineHeight * 1.4;
+  }
+
   function worstList(page) {
     const lists = page.querySelectorAll('[data-list-id]');
     let worstId = null;
@@ -106,16 +120,23 @@
 
   function validatePage(page) {
     const id = page.getAttribute('data-page-id');
+    const tagWrapped = id === 'spritz' && isTaglineWrapped(page);
 
     page.classList.remove('shrink-1pt');
     let m = measure(page);
-    if (m.fits) return { id: id, fits: true, shrunk: false, overflowPx: 0, worstList: null };
+    if (m.fits && !tagWrapped) return { id: id, fits: true, shrunk: false, overflowPx: 0, worstList: null };
 
     page.classList.add('shrink-1pt');
     m = measure(page);
-    if (m.fits) return { id: id, fits: true, shrunk: true, overflowPx: 0, worstList: null };
+    if (m.fits && !tagWrapped) return { id: id, fits: true, shrunk: true, overflowPx: 0, worstList: null };
 
-    return { id: id, fits: false, shrunk: true, overflowPx: m.overflowPx, worstList: worstList(page) };
+    return {
+      id: id,
+      fits: false,
+      shrunk: true,
+      overflowPx: m.overflowPx,
+      worstList: tagWrapped ? 'spritz-tagline' : worstList(page)
+    };
   }
 
   /**

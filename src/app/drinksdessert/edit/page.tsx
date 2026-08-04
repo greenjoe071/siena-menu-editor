@@ -33,6 +33,7 @@ interface Spritz {
   price: string;       // single price for the whole page — DOES print with $
   design: 'a' | 'b';
   showNew: boolean;
+  tagline: string;      // must stay on one line — see validate.js isTaglineWrapped()
   items: SpritzItem[];
 }
 
@@ -128,6 +129,12 @@ function PriceInput({ value, onChange }: { value: string; onChange: (v: string) 
       />
     </div>
   );
+}
+
+function CharCount({ value, max }: { value: string; max: number }) {
+  const len = value.length;
+  const cls = len > max ? 'char-count over' : len > max * 0.85 ? 'char-count warn' : 'char-count';
+  return <span className={cls}>{len}/{max}</span>;
 }
 
 // ── Editable list (reused by cocktails / spirits / dopa cena) ─────────────
@@ -449,7 +456,7 @@ export default function DrinksDessertEditorPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_DRINKSDESSERT_VALIDATE_RESULT') return;
-      if (e.source !== iframeRef.current?.contentWindow) return; // ignore the design-picker's own preview iframes
+      if (e.source !== iframeRef.current?.contentWindow) return;
       const rep = e.data.report as ValidateReport;
       setReport(rep);
       if (rep.fits) {
@@ -458,11 +465,15 @@ export default function DrinksDessertEditorPage() {
         pendingSaveRef.current = null;
         const bad = rep.pages.find(p => !p.fits);
         const card = bad ? (CARD_LABELS[bad.id] ?? bad.id) : 'A card';
-        const worst = bad?.worstList ? LIST_LABELS[bad.worstList] ?? bad.worstList : null;
         setSaveStatus('error');
-        setSaveMsg(worst
-          ? `${card} is too long — ${worst} is the largest section. Remove an item there, or shorten/remove a description.`
-          : `${card} is too long — remove an item or shorten a description.`);
+        if (bad?.worstList === 'spritz-tagline') {
+          setSaveMsg(`${card} — the tagline line is too long to fit on one line. Shorten it.`);
+        } else {
+          const worst = bad?.worstList ? LIST_LABELS[bad.worstList] ?? bad.worstList : null;
+          setSaveMsg(worst
+            ? `${card} is too long — ${worst} is the largest section. Remove an item there, or shorten/remove a description.`
+            : `${card} is too long — remove an item or shorten a description.`);
+        }
       }
     }
     window.addEventListener('message', onMessage);
@@ -514,6 +525,7 @@ export default function DrinksDessertEditorPage() {
   function setSpritzItems(items: SpritzItem[]) { setMenu(m => m && { ...m, spritz: { ...m.spritz, items } }); }
   function setSpritzPrice(price: string) { setMenu(m => m && { ...m, spritz: { ...m.spritz, price } }); }
   function setSpritzShowNew(showNew: boolean) { setMenu(m => m && { ...m, spritz: { ...m.spritz, showNew } }); }
+  function setSpritzTagline(tagline: string) { setMenu(m => m && { ...m, spritz: { ...m.spritz, tagline } }); }
   function setSpritzDesign(design: 'a' | 'b') {
     setMenu(m => m && { ...m, spritz: { ...m.spritz, design } });
   }
@@ -554,6 +566,7 @@ export default function DrinksDessertEditorPage() {
     saveStatus === 'error' ? 'save-status error' : 'save-status';
 
   const anyOverflow = report ? !report.fits : false;
+  const taglineWrapped = report?.pages.find(p => p.id === 'spritz')?.worstList === 'spritz-tagline';
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -606,6 +619,22 @@ export default function DrinksDessertEditorPage() {
                 <div className="field-group" style={{ maxWidth: '140px', marginBottom: '10px' }}>
                   <label>Price (every spritz)</label>
                   <PriceInput value={menu.spritz.price} onChange={setSpritzPrice} />
+                </div>
+
+                <div className="field-group" style={{ marginBottom: '14px' }}>
+                  <div className="field-label-row">
+                    <label>Tagline (must fit on one line)</label>
+                    <CharCount value={menu.spritz.tagline} max={90} />
+                  </div>
+                  <input
+                    value={menu.spritz.tagline}
+                    onChange={e => setSpritzTagline(e.target.value)}
+                    placeholder="e.g. every spritz is topped with prosecco and soda"
+                    className={taglineWrapped ? 'dd-input-error' : ''}
+                  />
+                  {taglineWrapped && (
+                    <div className="dd-field-error">⚠ This is too long — it&rsquo;s wrapping to a second line. Shorten it.</div>
+                  )}
                 </div>
 
                 <div className="field-group" style={{ marginBottom: '14px' }}>

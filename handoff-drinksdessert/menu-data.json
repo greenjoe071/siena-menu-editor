@@ -94,6 +94,7 @@
   "spritz": {
     "price": "12",
     "design": "b",
+    "tagline": "every spritz is topped with prosecco and soda",
     "showNew": true,
     "items": [
       { "id": "sp-1", "name": "Aperol", "desc": "Orange and rhubarb, gently bitter, easy sipping.", "category": "bright" },

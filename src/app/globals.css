@@ -1647,6 +1647,14 @@ a.dd-chooser-card:hover {
   font-size: 13px;
 }
 
+.dd-input-error { border-color: var(--danger) !important; }
+.dd-field-error {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ff8a7a;
+  margin-top: 4px;
+}
+
 /* Simple two-button Spritz design toggle — swaps data.spritz.design, which
    shows up live in the regular preview pane like any other field. */
 .dd-design-toggle {

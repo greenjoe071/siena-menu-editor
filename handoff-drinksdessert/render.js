@@ -167,6 +167,12 @@
     const kickerEl = doc.querySelector('.spritz-kicker');
     if (kickerEl) kickerEl.style.display = spritz.showNew === false ? 'none' : '';
 
+    // Tagline — owner-editable, but must always render on a single line
+    // (see validate.js's spritz-tagline wrap check). Not part of the
+    // original handoff contract; added per owner request.
+    const taglineEl = doc.querySelector('.spritz-tagline');
+    if (taglineEl) taglineEl.textContent = spritz.tagline || '';
+
     doc.querySelector('.spritz-price-text').textContent = formatSpritzPrice(spritz.price);
 
     // Design A: flat list, array order, category ignored.
