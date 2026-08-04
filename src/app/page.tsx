@@ -45,7 +45,7 @@ const MENUS = [
   {
     id: 'drinksdessert',
     label: 'Drinks & Dessert',
-    description: 'Cocktails, spirits, Dopa Cena, and Dolci — four cards',
+    description: 'Drinks Menu (Cocktails, Spritz, Spirits & Beer, Dopa Cena) — Desserts coming soon',
     icon: '🍸',
     ready: true,
     href: '/drinksdessert',
