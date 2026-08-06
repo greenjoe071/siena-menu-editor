@@ -106,13 +106,22 @@ body {
   flex-direction: column;
   position: relative;
 }
-.page[data-page-id="cocktails"] { padding: 0.55in 0.42in 0.4in; }
-.page[data-page-id="dopacena"] { padding: 0.5in 0.4in 0.35in; }
+/* Corner-clip fix (Aug 2026): the physical card holder's angled corner
+   grips cover roughly the last ~0.5in at the bottom-left/bottom-right of
+   each card. Spirits & Beer and Dopa Cena run dense enough lists to reach
+   that zone (Cocktails/Spritz don't). Top padding is trimmed by 0.15-0.2in
+   on ALL FOUR cards (so the header sits at the same height across the
+   whole set) and that reclaimed space is added to the BOTTOM padding of
+   ONLY Spirits & Beer and Dopa Cena, so their last line clears the
+   holder's corners without shrinking the card's total height budget on
+   the other two cards. */
+.page[data-page-id="cocktails"] { padding: 0.35in 0.42in 0.4in; }
+.page[data-page-id="dopacena"] { padding: 0.35in 0.4in 0.55in; }
 /* Hand-cut registration fix: shift each card's content within its own
    4.25in column (total L+R padding unchanged, so nothing else about the
    layout/fit changes) — Spritz 1/4in right, Spirits 1/4in left. */
-.page[data-page-id="spritz"] { padding: 0.5in 0.15in 0.35in 0.65in; }
-.page[data-page-id="spirits"] { padding: 0.5in 0.65in 0.35in 0.15in; }
+.page[data-page-id="spritz"] { padding: 0.35in 0.15in 0.35in 0.65in; }
+.page[data-page-id="spirits"] { padding: 0.35in 0.65in 0.55in 0.15in; }
 
 .page-title {
   text-align: center;
