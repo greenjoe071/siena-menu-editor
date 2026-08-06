@@ -22,28 +22,47 @@ here.
 **⚠️ Aug 2026 corner-clip fix:** the holder's angled corner grips were
 covering the bottom-left/bottom-right of Spirits & Beer and Dopa Cena
 (the two densest cards — Cocktails/Spritz never ran deep enough to reach
-that zone). Fixed directly in `template.html` in two rounds — a first
-padding-only pass, then Joe measured the holder directly and asked for a
-specific amount more clearance per card (3/4in on Spirits & Beer, 1/4in
-on Dopa Cena). Closing that second, larger gap needed more than padding
-alone without shrinking the whole card further, so the item name/price
-base font size on those two cards also dropped 1pt (12→11 / 11→10) —
-subsection titles, item descriptions, and the page title itself were
-left untouched, per Joe's explicit instruction to only touch "the
-largest fonts." The `shrink-1pt` emergency ladder was moved one step
-further down (11→10 / 10→9) to match. Top padding on all 4 cards is now
-frozen — don't reduce it further without checking with Joe first.
+that zone). Fixed directly in `template.html`, bottom padding only — item
+name/price font sizes were NOT permanently changed on either card. Two
+rounds: a first padding-only pass, then Joe measured the holder directly
+with a ruler and asked for a specific amount more (3/4in on Spirits &
+Beer, 1/4in on Dopa Cena) — final bottom padding is 1.30in (Spirits &
+Beer) and 0.80in (Dopa Cena), up from an original 0.35in. Top padding on
+all 4 cards is frozen at 0.35in — don't reduce it further without
+checking with Joe first.
 
-**Gotcha hit while verifying this fix:** a naive fit check done
-immediately after page load can read as "fits, no shrink needed" even
-when the true (fonts-fully-loaded) answer is "needs the shrink" — Playfair
-Display is a variable font and `document.fonts.ready` can resolve slightly
-before its metrics have actually settled, so `validate()`'s async
-`fonts.ready.then(...)` call may not have run yet at the moment you check
-`scrollHeight`/`clientHeight` (or the `shrink-1pt` class) by hand in a
-console. Always wait a beat (or explicitly re-check after a short delay)
-before trusting a manual fit measurement — see `waitForLayout()` in
-`validate.js`, which exists specifically for this.
+At that final padding, Spirits & Beer fits its real content at full
+12pt/11pt size with no shrink at all. Dopa Cena needs the ALREADY-
+EXISTING standard `shrink-1pt` step (11pt/10pt, unchanged from this
+menu's original design) to fit — this is normal, expected behavior of
+the layout-budget model doing its job, not a special case introduced by
+this fix, and it'll show "fits (reduced type)" in the editor. **Don't
+reintroduce a permanent base-font-size drop on either card** — an
+earlier pass at this fix did exactly that (on top of the padding
+increase) and it was a real mistake: it compounded with the padding
+change to leave a visibly excessive blank strip at the bottom of both
+cards. If Dopa Cena's real content ever grows enough to also need a
+SECOND shrink step, there isn't one (matches every other layout-budget
+menu) — the editor will block the save and name the worst list.
+
+**Gotcha hit while chasing this fix:** a naive fit check done
+immediately after page load, or a hand-measured "distance from last item
+to the page edge," can both be misleading. (1) Playfair Display is a
+variable font and `document.fonts.ready` can resolve before its metrics
+have actually settled, so a check run too early can read "fits, no
+shrink needed" when the true answer is "needs the shrink" — always wait
+a beat, or better, call `await validate.waitForLayout(document)` before
+`validate.validate(document)`, exactly as the app itself does, rather
+than hand-rolling a delay. (2) Measuring "last item bottom vs. page
+bottom" via `getBoundingClientRect()` is NOT a reliable proxy for how
+much room a font-size change actually saved — on this template's
+baseline-aligned flex rows (name + price sharing one line), changing one
+element's font size interacts with baseline/ascent-descent metrics in
+ways that don't move linearly with point size, and produced misleading
+deltas on more than one attempt at this fix. Trust `validate()`'s own
+`fits`/`shrunk` report as the only ground truth for "does this fit and
+at what size" — treat any other hand-rolled height comparison as a
+sanity check at best, never the deciding number.
 
 The four cards, in holder order:
 
@@ -283,10 +302,10 @@ cocktail/dolci names, or Playfair on spirits/dopa-cena names.
 | Cocktail description | `cocktails[i].desc` | required | Montserrat 12pt (shrinks to 11pt), wraps freely. |
 | Cocktail price | `cocktails[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
 | Cocktail note | `cocktails[i].note` | optional | Montserrat. Empty/missing removes the line. |
-| Spirits & Beer item name | `spirits.<sub>[i].name` | required | Montserrat semibold 11pt (shrinks to 10pt). Dropped from 12pt in the Aug 2026 corner-clip fix — see §0. |
-| Spirits & Beer item price | `spirits.<sub>[i].price` | required | Playfair italic 10pt (shrinks to 9pt), dropped from 11pt same fix. No `$`, trailing `.00` dropped for display. |
-| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold 11pt (shrinks to 10pt). Dropped from 12pt in the Aug 2026 corner-clip fix — see §0. |
-| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair italic 10pt (shrinks to 9pt), dropped from 11pt same fix. No `$`, trailing `.00` dropped for display. |
+| Spirits & Beer item name | `spirits.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). Unchanged by the Aug 2026 corner-clip fix (padding-only) — see §0. |
+| Spirits & Beer item price | `spirits.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
+| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). Unchanged by the Aug 2026 corner-clip fix (padding-only) — this card's real content currently relies on that existing shrink step to fit, see §0. |
+| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
 | Dopa Cena item description | `dopaCena.<sub>[i].desc` | optional | **Available on every item, every subsection.** Empty/missing removes the line. Governed entirely by validate.js — see §1. |
 | Spritz price | `spritz.price` | required | Playfair italic, larger, part of the shared header. **Prints WITH `$`** — the one exception on this menu. Not part of the 1pt shrink (see §1a). |
 | Spritz design | `spritz.design` | required | `"a"` or `"b"` — set by the "choose your design" screen, not free text. |
