@@ -19,6 +19,32 @@ them** — it's now its own standalone insert, produced as a separate
 two-up print sheet (see `../Dessert Menu.dc.html`). Don't reintroduce it
 here.
 
+**⚠️ Aug 2026 corner-clip fix:** the holder's angled corner grips were
+covering the bottom-left/bottom-right of Spirits & Beer and Dopa Cena
+(the two densest cards — Cocktails/Spritz never ran deep enough to reach
+that zone). Fixed directly in `template.html` in two rounds — a first
+padding-only pass, then Joe measured the holder directly and asked for a
+specific amount more clearance per card (3/4in on Spirits & Beer, 1/4in
+on Dopa Cena). Closing that second, larger gap needed more than padding
+alone without shrinking the whole card further, so the item name/price
+base font size on those two cards also dropped 1pt (12→11 / 11→10) —
+subsection titles, item descriptions, and the page title itself were
+left untouched, per Joe's explicit instruction to only touch "the
+largest fonts." The `shrink-1pt` emergency ladder was moved one step
+further down (11→10 / 10→9) to match. Top padding on all 4 cards is now
+frozen — don't reduce it further without checking with Joe first.
+
+**Gotcha hit while verifying this fix:** a naive fit check done
+immediately after page load can read as "fits, no shrink needed" even
+when the true (fonts-fully-loaded) answer is "needs the shrink" — Playfair
+Display is a variable font and `document.fonts.ready` can resolve slightly
+before its metrics have actually settled, so `validate()`'s async
+`fonts.ready.then(...)` call may not have run yet at the moment you check
+`scrollHeight`/`clientHeight` (or the `shrink-1pt` class) by hand in a
+console. Always wait a beat (or explicitly re-check after a short delay)
+before trusting a manual fit measurement — see `waitForLayout()` in
+`validate.js`, which exists specifically for this.
+
 The four cards, in holder order:
 
 1. **Signature Cocktails**
@@ -257,10 +283,10 @@ cocktail/dolci names, or Playfair on spirits/dopa-cena names.
 | Cocktail description | `cocktails[i].desc` | required | Montserrat 12pt (shrinks to 11pt), wraps freely. |
 | Cocktail price | `cocktails[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
 | Cocktail note | `cocktails[i].note` | optional | Montserrat. Empty/missing removes the line. |
-| Spirits & Beer item name | `spirits.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). |
-| Spirits & Beer item price | `spirits.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
-| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold 12pt (shrinks to 11pt). |
-| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair italic. No `$`, trailing `.00` dropped for display. |
+| Spirits & Beer item name | `spirits.<sub>[i].name` | required | Montserrat semibold 11pt (shrinks to 10pt). Dropped from 12pt in the Aug 2026 corner-clip fix — see §0. |
+| Spirits & Beer item price | `spirits.<sub>[i].price` | required | Playfair italic 10pt (shrinks to 9pt), dropped from 11pt same fix. No `$`, trailing `.00` dropped for display. |
+| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold 11pt (shrinks to 10pt). Dropped from 12pt in the Aug 2026 corner-clip fix — see §0. |
+| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair italic 10pt (shrinks to 9pt), dropped from 11pt same fix. No `$`, trailing `.00` dropped for display. |
 | Dopa Cena item description | `dopaCena.<sub>[i].desc` | optional | **Available on every item, every subsection.** Empty/missing removes the line. Governed entirely by validate.js — see §1. |
 | Spritz price | `spritz.price` | required | Playfair italic, larger, part of the shared header. **Prints WITH `$`** — the one exception on this menu. Not part of the 1pt shrink (see §1a). |
 | Spritz design | `spritz.design` | required | `"a"` or `"b"` — set by the "choose your design" screen, not free text. |
