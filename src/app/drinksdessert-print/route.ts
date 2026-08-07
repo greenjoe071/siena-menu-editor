@@ -21,19 +21,31 @@ export async function GET(request: Request) {
   const sheetParam = url.searchParams.get('sheet'); // 'a' | 'b' | null
   const pageParamRaw = url.searchParams.get('page');
   const pageParam = pageParamRaw && ALLOWED_PAGES.includes(pageParamRaw) ? pageParamRaw : null;
-  const [data, renderSrc, validateSrc] = await Promise.all([
+  const [data, renderSrc, validateSrc, templateSrc] = await Promise.all([
     readMenuBySrc(src),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'validate.js'), 'utf8'),
+    readFile(join(HANDOFF, 'template.html'), 'utf8'),
   ]);
 
   let html = await renderDrinksDessertMenu(data);
   html = html.replace(/<script src="validate\.js"><\/script>/g, '');
 
+  // render.js permanently removes the cocktail note / dopaCena description
+  // (.remove()) when empty. The server-side render above used whatever was
+  // saved at request time; re-rendering the localStorage bridge payload onto
+  // that SAME document can't bring a removed element back. Fix: parse a
+  // fresh DOM from the raw template before re-rendering, then swap it in —
+  // everything downstream (validate, single-page duplication) keeps
+  // operating on the same `document` as before, just with correct content.
+  const cleanTemplate = templateSrc.replace(/<script src="validate\.js"><\/script>/g, '');
+  const safeTemplate = JSON.stringify(cleanTemplate).replace(/<\/script/gi, '<\\/script');
+
   // Print script: optionally re-render from localStorage (editor draft), apply
   // the sheet print-scope (both / A / B), run the validator so any auto-shrink
   // matches the preview, then print.
   const printScript = `<script>
+var _tpl = ${safeTemplate};
 ${renderSrc}
 ${validateSrc}
 (function () {
@@ -53,7 +65,11 @@ ${validateSrc}
   var sheetParam = ${JSON.stringify(sheetParam)};
   var scope = sheetParam || localStorage.getItem('siena-drinksdessert-print-scope') || 'both';
   if (raw) {
-    try { (window.SienaDrinksDessertRender).render(document, JSON.parse(raw)); } catch (_) {}
+    try {
+      var fresh = (new DOMParser()).parseFromString(_tpl, 'text/html');
+      (window.SienaDrinksDessertRender).render(fresh, JSON.parse(raw));
+      document.body.innerHTML = fresh.body.innerHTML;
+    } catch (_) {}
     localStorage.removeItem('siena-drinksdessert-print-data');
     localStorage.removeItem('siena-drinksdessert-print-scope');
   }
