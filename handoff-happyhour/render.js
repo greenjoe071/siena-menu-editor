@@ -36,11 +36,12 @@
  *     Miller Lite" — split on \n in your data.
  *   - Cocktail floater is a SINGLE plain-text string (not text+price).
  *     The leading "+" is template chrome. Empty → row removed.
- *   - Promo headline auto-detects a leading "$XX" token and wraps it
- *     in <span class="price"> for the gold accent. Pure plain text
- *     elsewhere renders without the accent. The editor types one
- *     plain string ("$10 Signature Cocktails") and the visual styling
- *     is applied here.
+ *   - Promo headline auto-detects EVERY "$XX" or "$XX.XX" token
+ *     anywhere in the string and wraps each in <span class="price">
+ *     for the gold accent (not just a leading one — e.g. "$5 House
+ *     Wines and $10 Premium Wines" gets both prices accented). Pure
+ *     text elsewhere renders without the accent. The editor types one
+ *     plain string and the visual styling is applied here.
  *   - No per-field character caps in the data model. Validation is
  *     done by `validate.js` against the rendered page height.
  *
@@ -80,28 +81,30 @@
     });
   }
 
-  // Promo headline: wrap ALL "$XX" or "$XX.XX" tokens in <span class="price">
-  // for the gold accent. Works whether there is one price token or several
-  // (e.g. "$5 house wines and $10 premium wines"). Everything between the
-  // price tokens renders as plain text.
+  // Promo headline: auto-detect every "$XX" or "$XX.XX" token anywhere
+  // in the string and wrap each one in <span class="price"> for the
+  // gold accent. Everything between/around tokens is plain text.
   function setPromoHeadline(doc, value) {
     const el = doc.querySelector('[data-html-id="promo-headline"]');
     if (!el) return;
     while (el.firstChild) el.removeChild(el.firstChild);
 
     const str = String(value);
-    // Split on every $XX / $XX.XX token; the capture group keeps the tokens.
-    const parts = str.split(/(\$\d+(?:\.\d+)?)/);
-    for (const part of parts) {
-      if (/^\$\d+(?:\.\d+)?$/.test(part)) {
-        const span = doc.createElement('span');
-        span.className = 'price';
-        span.textContent = part;
-        el.appendChild(span);
-      } else if (part) {
-        el.appendChild(doc.createTextNode(part));
-      }
+    const re = /\$\d+(?:\.\d+)?/g;
+    let lastIndex = 0;
+    let m;
+    let any = false;
+    while ((m = re.exec(str)) !== null) {
+      any = true;
+      if (m.index > lastIndex) el.appendChild(doc.createTextNode(str.slice(lastIndex, m.index)));
+      const priceSpan = doc.createElement('span');
+      priceSpan.className = 'price';
+      priceSpan.textContent = m[0];
+      el.appendChild(priceSpan);
+      lastIndex = re.lastIndex;
     }
+    if (lastIndex < str.length) el.appendChild(doc.createTextNode(str.slice(lastIndex)));
+    if (!any) el.appendChild(doc.createTextNode(str));
   }
 
   // ── item renderers ────────────────────────────────────────────────
