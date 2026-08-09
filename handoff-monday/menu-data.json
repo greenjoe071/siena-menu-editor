@@ -1,10 +1,9 @@
 {
   "hero": {
-    "eyebrow": "Monday Nights at Siena",
+    "eyebrow_left": "Two Courses",
+    "eyebrow_right": "Mondays Only",
     "price": "26",
-    "tagline": "for 26 Years in Austin",
-    "meta_left": "Two Courses",
-    "meta_right": "Mondays Only"
+    "tagline": "for 26 Years in Austin"
   },
   "sections": {
     "course-1": {
@@ -56,8 +55,19 @@
       ]
     }
   },
+  "pasta_addons": {
+    "enabled": true,
+    "label": "Add to any pasta",
+    "items": [
+      { "id": "pa-1", "name": "Chicken", "price": "6.25", "enabled": true },
+      { "id": "pa-2", "name": "Shrimp", "price": "8", "enabled": true },
+      { "id": "pa-3", "name": "Scallops", "price": "12", "enabled": true },
+      { "id": "pa-4", "name": "Mushrooms", "price": "6", "enabled": true },
+      { "id": "pa-5", "name": "Sausage", "price": "4", "enabled": true }
+    ],
+    "tail": "— or ask your server for other options."
+  },
   "weekly": {
-    "title": "Throughout the Week at Siena",
     "rows": [
       {
         "id": "w-tue",

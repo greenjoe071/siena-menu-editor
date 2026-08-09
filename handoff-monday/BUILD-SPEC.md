@@ -13,11 +13,10 @@ The menu data is a single JSON object. Its top-level shape:
 ```jsonc
 {
   "hero": {
-    "eyebrow":    "Monday Nights at Siena",
-    "price":      "26",
-    "tagline":    "for 26 Years in Austin",
-    "meta_left":  "Two Courses",
-    "meta_right": "Mondays Only"
+    "eyebrow_left":  "Two Courses",
+    "eyebrow_right": "Mondays Only",
+    "price":         "26",
+    "tagline":       "for 26 Years in Austin"
   },
   "sections": {
     "course-1": {
@@ -31,13 +30,20 @@ The menu data is a single JSON object. Its top-level shape:
       "items": [ /* 4 dishes */ ]
     }
   },
+  "pasta_addons": {
+    "enabled": true,
+    "label":   "Add to any pasta",
+    "items":   [ /* 5 items, each {id,name,price,enabled} */ ],
+    "tail":    "— or ask your server for other options."
+  },
   "weekly": {
-    "title": "Throughout the Week at Siena",
     "rows":  [ /* 4 rows */ ]
   },
   "policy_line": "<strong>No split checks.</strong> &nbsp;·&nbsp; <strong>Gratuity of 22% for parties of 6 or more.</strong>"
 }
 ```
+
+> **Changed in the latest redesign:** the old single `hero.eyebrow` + separate `.meta` line ("Two Courses ◆ Mondays Only") have been collapsed into one — the eyebrow position now shows `hero.eyebrow_left` ◆ `hero.eyebrow_right`, and the old bottom `.meta` line is gone entirely (it was a duplicate). `weekly.title` ("Throughout the Week at Siena") has been removed from both the template and the data model — the weekly card no longer has a title, just a gold rule at the top. Two roman numerals ("I" before Insalata o Zuppa, "II" before Pasta) were added as **static, non-editable template chrome** — there is no JSON field for them; don't add one.
 
 ### Dish shape
 
@@ -84,11 +90,10 @@ The editor must enforce these character limits as **hard caps**. They were tuned
 
 | Field | JSON path | Max chars | Notes |
 |---|---|---|---|
-| Eyebrow | `hero.eyebrow` | **48** | Italic Playfair 13pt, one line. |
+| Eyebrow left | `hero.eyebrow_left` | **22** | Bold Montserrat 10pt, uppercase, tracked. Sits above the price. |
+| Eyebrow right | `hero.eyebrow_right` | **22** | Same treatment. The ◆ between them is template-static. |
 | Price (number only) | `hero.price` | **3** | Renders inside `$XX`. The `$` is template-static. Pure digits. `"26"`, `"100"` OK; `"26.50"` will break the big hero. |
 | Tagline | `hero.tagline` | **38** | Italic Playfair 22pt, one line. Designed for "for 26 Years in Austin"-style phrasing. |
-| Meta left | `hero.meta_left` | **22** | Bold Montserrat 10pt, uppercase, tracked. |
-| Meta right | `hero.meta_right` | **22** | Same treatment. The ◆ between them is template-static. |
 
 ### Course sections (both `course-1` and `course-2` use the same rules)
 
@@ -104,10 +109,26 @@ The editor must enforce these character limits as **hard caps**. They were tuned
 
 | Field | JSON path | Max chars | Notes |
 |---|---|---|---|
-| Card title | `weekly.title` | **42** | Italic Playfair 15pt, centered, sits above a gold rule that spans the section. |
 | Day label | `weekly.rows[*].day_label` | **14** | Uppercase Montserrat 8.5pt, tracked. Use en-dash for ranges: "Thu – Sat". |
 | Headline | `weekly.rows[*].headline` | **26** | Italic Playfair 13.5pt, centered. |
 | Detail | `weekly.rows[*].detail` | **110** | Regular Montserrat 9.5pt, centered, `text-wrap: pretty`. Two to three lines per cell is the design target — beyond ~110 chars one cell grows visibly taller than its neighbors. |
+
+> There is no card title anymore — `weekly.title` was removed. The card is just a gold rule followed by the four cells.
+
+### Pasta add-on line
+
+A single line under the Pasta column: *Add to any pasta — **Chicken** 6.25 · **Shrimp** 8 · **Scallops** 12 · **Mushrooms** 6 · **Sausage** 4 — or ask your server for other options.* It sits full-width below both course columns (not inside the Pasta column), so it visually centers against the whole page.
+
+| Field | JSON path | Max chars | Notes |
+|---|---|---|---|
+| Block on/off | `pasta_addons.enabled` | — | `false` removes the entire line from the DOM. |
+| Label | `pasta_addons.label` | **20** | Gold italic Playfair 10.5pt. Current: "Add to any pasta". |
+| Item name | `pasta_addons.items[*].name` | **16** | Bold, inline with its price. |
+| Item price | `pasta_addons.items[*].price` | **6** | No `$` — bare numerals, matches the rest of this menu's price convention. |
+| Item on/off | `pasta_addons.items[*].enabled` | — | `false` drops just that one item; if ALL items end up disabled, the whole line is removed. |
+| Tail | `pasta_addons.tail` | **48** | Muted italic Playfair 9pt. Empty/missing → tail omitted. |
+
+Cardinality is **fixed at 5 items** (Chicken, Shrimp, Scallops, Mushrooms, Sausage) — the editor should expose enabled/price per item but not add/remove rows. Each item renders as a single non-breaking unit (`<span class="addon-item">`) specifically so a price can never get stranded alone on a wrapped line.
 
 ### Footer
 
@@ -123,6 +144,7 @@ The editor must enforce these character limits as **hard caps**. They were tuned
 |---|---|---|
 | `course-1` items (Insalata o Zuppa) | **2** | The two-dish column is sized for exactly 2 entries. |
 | `course-2` items (Pasta) | **4** | The four-dish column is the layout's vertical anchor. |
+| `pasta_addons.items` | **5** | Chicken, Shrimp, Scallops, Mushrooms, Sausage — fixed. |
 | `weekly.rows` | **4** | The card is a four-column grid; the count drives the grid template. |
 
 **The editor cannot add or remove items in any of these arrays.** If the owner wants a fifth pasta option or a fifth weekly cell, that's a design-level change — surface it as a request, don't try to make it editable.
@@ -134,10 +156,11 @@ The editor must enforce these character limits as **hard caps**. They were tuned
 The following are baked into `template.html` and are NOT exposed to the editor:
 
 - The literal `$` glyph in the hero (the price field is digits only).
-- The `◆` diamond separator between `hero.meta_left` and `hero.meta_right`.
+- The `◆` diamond separator between `hero.eyebrow_left` and `hero.eyebrow_right`.
+- The two roman numerals ("I", "II") beside the course titles — static chrome, no JSON field.
 - The horizontal gold rules above and below the price (`.price-rule`).
 - The gold underline beneath each course title.
-- The gold rule beneath the weekly-card title (`.weekly-head` `border-bottom`).
+- The gold rule at the top of the weekly card (there is no title anymore).
 - The masthead with the restaurant name and city — **deliberately omitted** from this menu (it slides into a hard menu cover that shows branding externally).
 - All CSS, fonts, page break behavior, page padding, and the weekly grid's inset margins.
 
@@ -149,18 +172,20 @@ If a manager asks to bring back the restaurant-name header or change colors, tha
 
 | Editable | JSON path |
 |---|---|
-| Hero eyebrow | `hero.eyebrow` |
+| Hero eyebrow left | `hero.eyebrow_left` |
+| Hero eyebrow right | `hero.eyebrow_right` |
 | Hero price | `hero.price` |
 | Hero tagline | `hero.tagline` |
-| Hero meta left | `hero.meta_left` |
-| Hero meta right | `hero.meta_right` |
 | Course section title | `sections.<id>.title` |
 | Course section subtitle | `sections.<id>.subtitle` |
 | Dish name | `sections.<id>.items[*].name` |
 | Dish description | `sections.<id>.items[*].desc` |
 | Dish price (optional) | `sections.<id>.items[*].price` |
 | Dish order within section | `sections.<id>.items` array order |
-| Weekly card title | `weekly.title` |
+| Pasta add-on on/off | `pasta_addons.enabled` |
+| Pasta add-on label | `pasta_addons.label` |
+| Pasta add-on item name/price/on-off | `pasta_addons.items[*].{name,price,enabled}` |
+| Pasta add-on tail | `pasta_addons.tail` |
 | Weekly day label | `weekly.rows[*].day_label` |
 | Weekly headline | `weekly.rows[*].headline` |
 | Weekly detail | `weekly.rows[*].detail` |
@@ -171,11 +196,12 @@ If a manager asks to bring back the restaurant-name header or change colors, tha
 
 - Number of sections (always two: `course-1`, `course-2`)
 - Number of items per section (always 2 and 4)
+- Number of pasta add-on items (always 5)
 - Number of weekly rows (always 4)
-- Section IDs, dish IDs, weekly row IDs
+- Section IDs, dish IDs, add-on item IDs, weekly row IDs
 - Which section a dish belongs to (no cross-section moves)
 - Any CSS, font, color, or layout property
-- The `$` symbol, the diamond, the rules, the weekly grid layout
+- The `$` symbol, the diamond, the roman numerals, the rules, the weekly grid layout
 
 ---
 
@@ -187,10 +213,9 @@ Two-pane layout:
 ┌────────────────────────┬─────────────────────────────────────┐
 │ EDITOR PANE            │ PREVIEW PANE (iframe → /preview)    │
 │ ─ Hero                 │                                     │
-│   [eyebrow]            │   [ live rendered single-page menu, │
+│   [eyebrow L] [eyebrow R] │  [ live rendered single-page menu, │
 │   [price]              │     same way the file renders in    │
 │   [tagline]            │     screen mode ]                   │
-│   [meta L] [meta R]    │                                     │
 │ ─ Course 1: Insalata   │                                     │
 │   [title]  [subtitle]  │                                     │
 │     ≡ Caesar Salad     │                                     │
@@ -204,8 +229,13 @@ Two-pane layout:
 │     ≡ Carbonara        │                                     │
 │     ≡ Amatriciana      │                                     │
 │     ≡ Pasta alla Gricia│                                     │
+│ ─ Add to any pasta     │                                     │
+│   [label]              │                                     │
+│     Chicken [price][on]│                                     │
+│     Shrimp  [price][on]│                                     │
+│     …                  │                                     │
+│   [tail]                │                                     │
 │ ─ Throughout the Week  │                                     │
-│   [card title]         │                                     │
 │     ≡ Tuesdays         │                                     │
 │       [day][headline]  │                                     │
 │       [detail]         │                                     │
@@ -244,7 +274,7 @@ Matches the original print HTML's behavior. The 500ms delay gives variable fonts
 
 ## Snapshot test
 
-`snapshot-test.spec.js` is the safety net. It does this:
+`snapshot-test.spec.mjs` is the safety net. It does this:
 
 1. Load `template.html`.
 2. Load `menu-data.json`.

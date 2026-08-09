@@ -1,10 +1,9 @@
 {
   "hero": {
-    "eyebrow": "Monday Nights at Siena",
+    "eyebrow_left": "Two Courses",
+    "eyebrow_right": "Mondays Only",
     "price": "26",
-    "tagline": "for 26 Years in Austin",
-    "meta_left": "Two Courses",
-    "meta_right": "Mondays Only"
+    "tagline": "for 26 Years in Austin"
   },
   "sections": {
     "course-1": {
@@ -26,38 +25,49 @@
       ]
     },
     "course-2": {
-      "title": "Pasta",
+      "title": "Sicilian Pastas",
       "subtitle": "Choose One",
       "items": [
         {
           "id": "d-c2a1",
-          "name": "Cacio e Pepe",
-          "desc": "Fresh tagliatelle, Pecorino Romano, toasted cracked pepper",
+          "name": "Casarecce alla Norma ",
+          "desc": "Pan Roasted Eggplant, Fresh Basil, Extra Virgin Olive Oil, Ricotta Salata\n",
           "price": ""
         },
         {
           "id": "d-c2b2",
-          "name": "Carbonara",
-          "desc": "Fresh tagliatelle, Pecorino Romano, egg yolk, guanciale, cracked pepper",
+          "name": "Penne alla Trapanese",
+          "desc": "Penne Pasta, Cracked Pepper, Cherry Tomato Pesto, Pecorino Cheese",
           "price": ""
         },
         {
           "id": "d-c2c3",
-          "name": "Amatriciana",
-          "desc": "Penne, guanciale, red onion, tomato sauce, Pecorino Romano, cracked pepper",
+          "name": "Bucatini Pesto di Pistaccio",
+          "desc": "Pistachio and Mint, Basil Pesto, Whipped Ricotta, Extra Virgin Olive Oil",
           "price": ""
         },
         {
           "id": "d-c2d4",
-          "name": "Pasta alla Gricia",
-          "desc": "Penne, guanciale, Pecorino Romano, fresh cracked pepper",
+          "name": "Linguine alla Carrettiera",
+          "desc": "Fresh Linguine Pasta, Garlic, Extra Virgin Olive Oil, Crushed Red Pepper, Pecorino Cheese",
           "price": ""
         }
       ]
     }
   },
+  "pasta_addons": {
+    "enabled": true,
+    "label": "Add to any pasta",
+    "items": [
+      { "id": "pa-1", "name": "Chicken", "price": "6.25", "enabled": true },
+      { "id": "pa-2", "name": "Shrimp", "price": "8", "enabled": true },
+      { "id": "pa-3", "name": "Scallops", "price": "12", "enabled": true },
+      { "id": "pa-4", "name": "Mushrooms", "price": "6", "enabled": true },
+      { "id": "pa-5", "name": "Sausage", "price": "4", "enabled": true }
+    ],
+    "tail": "— or ask your server for other options."
+  },
   "weekly": {
-    "title": "Throughout the Week at Siena",
     "rows": [
       {
         "id": "w-tue",

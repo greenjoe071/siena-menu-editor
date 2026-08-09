@@ -32,20 +32,33 @@ interface WeeklyRow {
   detail: string;
 }
 
+interface PastaAddonItem {
+  id: string;
+  name: string;
+  price: string;
+  enabled: boolean;
+}
+
+interface PastaAddons {
+  enabled: boolean;
+  label: string;
+  items: PastaAddonItem[];
+  tail: string;
+}
+
 interface MondayMenuData {
   hero: {
-    eyebrow: string;
+    eyebrow_left: string;
+    eyebrow_right: string;
     price: string;
     tagline: string;
-    meta_left: string;
-    meta_right: string;
   };
   sections: {
     'course-1': MondaySection;
     'course-2': MondaySection;
   };
+  pasta_addons: PastaAddons;
   weekly: {
-    title: string;
     rows: WeeklyRow[];
   };
   policy_line: string;
@@ -56,21 +69,23 @@ type CourseId = 'course-1' | 'course-2';
 // ── Character limits (must match BUILD-SPEC.md and monday-schema.ts) ──────
 
 const L = {
-  heroEyebrow:     48,
-  heroPrice:        3,
-  heroTagline:     38,
-  heroMetaLeft:    22,
-  heroMetaRight:   22,
-  sectionTitle:    24,
-  sectionSubtitle: 16,
-  dishName:        30,
-  dishDesc:       140,
-  dishPrice:        6,
-  weeklyTitle:     42,
-  weeklyDayLabel:  14,
-  weeklyHeadline:  28,
-  weeklyDetail:   130,
-  policyLine:     120,
+  heroEyebrowLeft:  22,
+  heroEyebrowRight: 22,
+  heroPrice:         3,
+  heroTagline:      38,
+  sectionTitle:     24,
+  sectionSubtitle:  16,
+  dishName:         30,
+  dishDesc:        140,
+  dishPrice:         6,
+  addonsLabel:      20,
+  addonsItemName:   16,
+  addonsItemPrice:   6,
+  addonsTail:       48,
+  weeklyDayLabel:   14,
+  weeklyHeadline:   28,
+  weeklyDetail:    130,
+  policyLine:      120,
 } as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -85,13 +100,11 @@ function useDebounce<T>(value: T, ms: number): T {
 }
 
 function menuHasOverLimit(m: MondayMenuData): boolean {
-  if (m.hero.eyebrow.length    > L.heroEyebrow)    return true;
-  if (m.hero.price.length      > L.heroPrice)      return true;
-  if (m.hero.tagline.length    > L.heroTagline)    return true;
-  if (m.hero.meta_left.length  > L.heroMetaLeft)   return true;
-  if (m.hero.meta_right.length > L.heroMetaRight)  return true;
-  if (m.weekly.title.length    > L.weeklyTitle)    return true;
-  if (m.policy_line.length     > L.policyLine)     return true;
+  if (m.hero.eyebrow_left.length  > L.heroEyebrowLeft)  return true;
+  if (m.hero.eyebrow_right.length > L.heroEyebrowRight) return true;
+  if (m.hero.price.length         > L.heroPrice)        return true;
+  if (m.hero.tagline.length       > L.heroTagline)      return true;
+  if (m.policy_line.length        > L.policyLine)       return true;
   for (const sid of ['course-1', 'course-2'] as const) {
     const s = m.sections[sid];
     if (s.title.length    > L.sectionTitle)    return true;
@@ -101,6 +114,12 @@ function menuHasOverLimit(m: MondayMenuData): boolean {
       if (d.desc.length          > L.dishDesc)  return true;
       if ((d.price ?? '').length > L.dishPrice) return true;
     }
+  }
+  if (m.pasta_addons.label.length > L.addonsLabel) return true;
+  if (m.pasta_addons.tail.length  > L.addonsTail)  return true;
+  for (const item of m.pasta_addons.items) {
+    if (item.name.length  > L.addonsItemName)  return true;
+    if (item.price.length > L.addonsItemPrice) return true;
   }
   for (const r of m.weekly.rows) {
     if (r.day_label.length > L.weeklyDayLabel)  return true;
@@ -257,6 +276,112 @@ function CourseSectionBlock({
   );
 }
 
+// ── Pasta add-on item row ────────────────────────────────────────────────
+
+function PastaAddonItemRow({
+  item, onChange,
+}: {
+  item: PastaAddonItem;
+  onChange: (updated: PastaAddonItem) => void;
+}) {
+  function set(field: keyof PastaAddonItem, value: string | boolean) {
+    onChange({ ...item, [field]: value });
+  }
+
+  return (
+    <div className="dish-row">
+      <div className="dish-fields">
+        <div className="dish-field-row">
+          <div className="field-group">
+            <div className="field-label-row">
+              <label>Name</label>
+              <CharCount value={item.name} max={L.addonsItemName} />
+            </div>
+            <input value={item.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Chicken" />
+          </div>
+          <div className="field-group" style={{ flex: '0 0 90px' }}>
+            <div className="field-label-row">
+              <label>Price (no $)</label>
+              <CharCount value={item.price} max={L.addonsItemPrice} />
+            </div>
+            <input value={item.price} onChange={e => set('price', e.target.value)} placeholder="6.25" />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+            <input type="checkbox" checked={item.enabled} onChange={e => set('enabled', e.target.checked)} />
+            On
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Pasta add-ons block ──────────────────────────────────────────────────
+
+function PastaAddonsBlock({
+  addons, onChange,
+}: {
+  addons: PastaAddons;
+  onChange: (updated: PastaAddons) => void;
+}) {
+  const [open, setOpen] = useState(true);
+
+  function setItem(index: number, updated: PastaAddonItem) {
+    const items = [...addons.items];
+    items[index] = updated;
+    onChange({ ...addons, items });
+  }
+
+  return (
+    <div className="section-block">
+      <div className="section-block-header" onClick={() => setOpen(o => !o)}>
+        <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
+        <span className="section-title-label">Pasta Add-Ons</span>
+        <span className="section-count">{addons.enabled ? 'On' : 'Off'}</span>
+      </div>
+
+      <div className={`collapsible-content ${open ? 'open' : ''}`}>
+        <div className="section-body">
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <input
+              type="checkbox"
+              checked={addons.enabled}
+              onChange={e => onChange({ ...addons, enabled: e.target.checked })}
+            />
+            Show this line on the menu
+          </label>
+
+          <div className="field-group">
+            <div className="field-label-row">
+              <label>Label</label>
+              <CharCount value={addons.label} max={L.addonsLabel} />
+            </div>
+            <input value={addons.label} onChange={e => onChange({ ...addons, label: e.target.value })} placeholder="Add to any pasta" />
+          </div>
+
+          <div className="dish-list">
+            {addons.items.map((item, i) => (
+              <PastaAddonItemRow key={item.id} item={item} onChange={updated => setItem(i, updated)} />
+            ))}
+          </div>
+
+          <div className="field-group">
+            <div className="field-label-row">
+              <label>Tail (optional closing note)</label>
+              <CharCount value={addons.tail} max={L.addonsTail} />
+            </div>
+            <input
+              value={addons.tail}
+              onChange={e => onChange({ ...addons, tail: e.target.value })}
+              placeholder="— or ask your server for other options."
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Weekly row item ───────────────────────────────────────────────────────
 
 function WeeklyRowItem({
@@ -338,10 +463,9 @@ function WeeklyRowItem({
 // ── Weekly block ──────────────────────────────────────────────────────────
 
 function WeeklyBlock({
-  weekly, onTitleChange, onRowChange,
+  weekly, onRowChange,
 }: {
   weekly: MondayMenuData['weekly'];
-  onTitleChange: (title: string) => void;
   onRowChange: (index: number, updated: WeeklyRow) => void;
 }) {
   const [open, setOpen] = useState(true);
@@ -356,14 +480,6 @@ function WeeklyBlock({
 
       <div className={`collapsible-content ${open ? 'open' : ''}`}>
         <div className="section-body">
-          <div className="field-group section-title-field">
-            <div className="field-label-row">
-              <label>Card title</label>
-              <CharCount value={weekly.title} max={L.weeklyTitle} />
-            </div>
-            <input value={weekly.title} onChange={e => onTitleChange(e.target.value)} />
-          </div>
-
           <Droppable droppableId="weekly-rows" type="weekly-row">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps} className="dish-list">
@@ -474,8 +590,8 @@ export default function MondayEditorPage() {
     });
   }
 
-  function handleWeeklyTitleChange(title: string) {
-    setMenu(m => m && { ...m, weekly: { ...m.weekly, title } });
+  function handlePastaAddonsChange(updated: PastaAddons) {
+    setMenu(m => m && { ...m, pasta_addons: updated });
   }
 
   function handleWeeklyRowChange(index: number, updated: WeeklyRow) {
@@ -576,12 +692,21 @@ export default function MondayEditorPage() {
             <div className="page-group">
               <div className="page-group-label">Hero — top of page</div>
 
-              <div className="field-group">
-                <div className="field-label-row">
-                  <label>Eyebrow line</label>
-                  <CharCount value={menu.hero.eyebrow} max={L.heroEyebrow} />
+              <div className="dish-field-row">
+                <div className="field-group">
+                  <div className="field-label-row">
+                    <label>Left eyebrow</label>
+                    <CharCount value={menu.hero.eyebrow_left} max={L.heroEyebrowLeft} />
+                  </div>
+                  <input value={menu.hero.eyebrow_left} onChange={e => setHero('eyebrow_left', e.target.value)} placeholder="Two Courses" />
                 </div>
-                <input value={menu.hero.eyebrow} onChange={e => setHero('eyebrow', e.target.value)} placeholder="e.g. Monday Nights at Siena" />
+                <div className="field-group">
+                  <div className="field-label-row">
+                    <label>Right eyebrow</label>
+                    <CharCount value={menu.hero.eyebrow_right} max={L.heroEyebrowRight} />
+                  </div>
+                  <input value={menu.hero.eyebrow_right} onChange={e => setHero('eyebrow_right', e.target.value)} placeholder="Mondays Only" />
+                </div>
               </div>
 
               <div className="field-group">
@@ -604,23 +729,6 @@ export default function MondayEditorPage() {
                 </div>
                 <input value={menu.hero.tagline} onChange={e => setHero('tagline', e.target.value)} placeholder="e.g. for 26 Years in Austin" />
               </div>
-
-              <div className="dish-field-row">
-                <div className="field-group">
-                  <div className="field-label-row">
-                    <label>Left badge</label>
-                    <CharCount value={menu.hero.meta_left} max={L.heroMetaLeft} />
-                  </div>
-                  <input value={menu.hero.meta_left} onChange={e => setHero('meta_left', e.target.value)} placeholder="Two Courses" />
-                </div>
-                <div className="field-group">
-                  <div className="field-label-row">
-                    <label>Right badge</label>
-                    <CharCount value={menu.hero.meta_right} max={L.heroMetaRight} />
-                  </div>
-                  <input value={menu.hero.meta_right} onChange={e => setHero('meta_right', e.target.value)} placeholder="Mondays Only" />
-                </div>
-              </div>
             </div>
 
             {/* Courses */}
@@ -638,12 +746,20 @@ export default function MondayEditorPage() {
               ))}
             </div>
 
+            {/* Pasta add-ons */}
+            <div className="page-group">
+              <div className="page-group-label">Pasta add-ons</div>
+              <PastaAddonsBlock
+                addons={menu.pasta_addons}
+                onChange={handlePastaAddonsChange}
+              />
+            </div>
+
             {/* Weekly */}
             <div className="page-group">
               <div className="page-group-label">Throughout the week card</div>
               <WeeklyBlock
                 weekly={menu.weekly}
-                onTitleChange={handleWeeklyTitleChange}
                 onRowChange={handleWeeklyRowChange}
               />
             </div>

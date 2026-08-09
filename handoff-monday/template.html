@@ -57,19 +57,20 @@ body {
   position: relative;
 }
 .hero .eyebrow {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 500;
-  font-size: 13pt;
-  color: #6b4c2a;
-  letter-spacing: 0.02em;
-  margin-bottom: 6pt;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 10pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #b8821e;
 }
+.hero .eyebrow .dot { margin: 0 8pt; color: #c9a87a; }
 .hero .price-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 18pt;
+  margin-top: 10pt;
 }
 .hero .price-rule {
   height: 0.75pt;
@@ -103,23 +104,10 @@ body {
   margin-top: 4pt;
   line-height: 1.1;
 }
-.hero .meta {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 10pt;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #b8821e;
-  margin-top: 10pt;
-}
-.hero .meta .dot {
-  margin: 0 8pt;
-  color: #c9a87a;
-}
 
 /* ── Two-course block ── */
 .course-block {
-  padding: 20pt 0 14pt;
+  padding: 20pt 0 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -130,7 +118,6 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 0 40pt;
   align-items: stretch;
-  flex: 1;
   position: relative;
 }
 
@@ -138,7 +125,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .course-head {
@@ -149,12 +136,36 @@ body {
   /* last baseline — so "Choose One" aligns with the LAST line of a
      wrapping title (e.g. "Insalata o Zuppa" wraps to two lines and
      we want "Choose One" beside "Zuppa", hugging the gold rule,
-     not floating up beside "Insalata o"). */
+     not floating up beside "Insalata o"). Only course-name and
+     course-sub participate in this flex alignment — the roman
+     numeral is absolutely positioned inside a reserved left gutter
+     (padding-left) so it never disturbs that baseline math. */
   align-items: last baseline;
   justify-content: space-between;
   gap: 12pt;
   padding-bottom: 6pt;
+  padding-left: 24pt;
   border-bottom: 0.75pt solid #b8821e;
+  position: relative;
+}
+/* Roman numeral — static template chrome, not editable. Bottom-aligned
+   inside its own gutter so it always sits flush with the gold rule,
+   next to whichever line of the (possibly-wrapping) title is last. */
+.course-numeral {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 6pt;
+  width: 18pt;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 22pt;
+  color: #b8821e;
+  line-height: 1;
 }
 .course-name {
   font-family: 'Playfair Display', serif;
@@ -214,29 +225,57 @@ body {
   text-align: right;
 }
 
-/* ── Weekly specials footer ──
-   Open layout, no boxed card. The section is held together by a single
-   gold rule beneath the title (matching the course-header rule pattern
-   above). The bottom corners of this menu slide into a hard cover, so
-   the row of day cells is inset from the page edges to stay fully
-   visible. */
-.weekly-wrap {
-  margin: 22pt 0 0;
-  position: relative;
-}
-.weekly-head {
+/* ── Pasta add-on line — sits below both course columns, full width,
+   so it centers against the whole page rather than one column. ── */
+.pasta-addons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
   text-align: center;
-  margin-bottom: 14pt;
-  padding-bottom: 6pt;
-  border-bottom: 0.75pt solid #b8821e;
+  gap: 3pt 8pt;
+  margin: auto auto;
+  width: fit-content;
 }
-.weekly-title {
+.pasta-addons .addons-label {
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 600;
-  font-size: 15pt;
-  color: #5a2e0e;
-  line-height: 1;
+  font-size: 10.5pt;
+  color: #b8821e;
+  white-space: nowrap;
+}
+.pasta-addons .addons-items {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 9pt;
+  color: #333;
+  line-height: 1.5;
+}
+.pasta-addons .addons-items strong { font-weight: 700; color: #111; }
+.pasta-addons .addons-items .addon-item { white-space: nowrap; }
+.pasta-addons .addons-items .dot { color: #c9a87a; margin: 0 3pt; }
+.pasta-addons .addons-tail {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 9pt;
+  color: #6b4c2a;
+}
+
+/* ── Weekly specials footer ──
+   Open layout, no boxed card, no title. A single gold rule sits at the
+   very top of this block — its top edge IS the block's top edge, so the
+   space above it (auto-centered against the pasta-addons line above) and
+   below it are governed purely by flex auto-margins, with no extra
+   padding/title to throw off the symmetry. The bottom corners of this
+   menu slide into a hard cover, so the row of day cells is inset from
+   the page edges to stay fully visible. */
+.weekly-wrap {
+  margin: 0;
+  border-top: 0.75pt solid #b8821e;
+  padding-top: 14pt;
+  position: relative;
 }
 .weekly-grid {
   display: grid;
@@ -297,18 +336,17 @@ body {
 
   <!-- HERO -->
   <div class="hero">
-    <div class="eyebrow" data-text-id="hero-eyebrow">Monday Nights at Siena</div>
+    <div class="eyebrow">
+      <span data-text-id="hero-eyebrow-left">Two Courses</span>
+      <span class="dot">◆</span>
+      <span data-text-id="hero-eyebrow-right">Mondays Only</span>
+    </div>
     <div class="price-row">
       <div class="price-rule"></div>
       <div class="price"><span class="dollar">$</span><span data-text-id="hero-price">26</span></div>
       <div class="price-rule"></div>
     </div>
     <div class="for-26" data-text-id="hero-tagline">for 26 Years in Austin</div>
-    <div class="meta">
-      <span data-text-id="hero-meta-left">Two Courses</span>
-      <span class="dot">◆</span>
-      <span data-text-id="hero-meta-right">Mondays Only</span>
-    </div>
   </div>
 
   <!-- TWO COURSE BLOCK -->
@@ -320,6 +358,7 @@ body {
       <div class="course" data-section-id="course-1">
         <div class="course-head">
           <div class="course-title-row">
+            <span class="course-numeral">I</span>
             <div class="course-name" data-section-title-for="course-1">Insalata o Zuppa</div>
             <div class="course-sub" data-section-subtitle-for="course-1">Choose One</div>
           </div>
@@ -344,6 +383,7 @@ body {
       <div class="course" data-section-id="course-2">
         <div class="course-head">
           <div class="course-title-row">
+            <span class="course-numeral">II</span>
             <div class="course-name" data-section-title-for="course-2">Pasta</div>
             <div class="course-sub" data-section-subtitle-for="course-2">Choose One</div>
           </div>
@@ -380,13 +420,16 @@ body {
 
     </div><!-- /course-row -->
 
+    <div class="pasta-addons" data-addons-block-id="pasta">
+      <span class="addons-label" data-addons-label-for="pasta">Add to any pasta</span>
+      <span class="addons-items" data-addons-items-for="pasta"></span>
+      <span class="addons-tail" data-addons-tail-for="pasta"></span>
+    </div>
+
   </div><!-- /course-block -->
 
-  <!-- WEEKLY SPECIALS — open layout, gold rule beneath the title -->
+  <!-- WEEKLY SPECIALS — open layout, gold rule at the top, no title -->
   <div class="weekly-wrap">
-    <div class="weekly-head">
-      <span class="weekly-title" data-text-id="weekly-title">Throughout the Week at Siena</span>
-    </div>
 
     <div class="weekly-grid">
 
