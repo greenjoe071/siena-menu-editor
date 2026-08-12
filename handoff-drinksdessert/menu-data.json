@@ -99,17 +99,14 @@
     "design": "a",
     "items": [
       { "id": "sp-1", "name": "Aperol", "desc": "Orange and rhubarb, gently bitter, easy sipping.", "category": "bright" },
-      { "id": "sp-2", "name": "Campari", "desc": "Bold and bitter, cherry and herbs, bright red.", "category": "bright" },
-      { "id": "sp-3", "name": "Select", "desc": "Venetian aperitivo, juniper and rhubarb, lighter than Campari.", "category": "bright" },
-      { "id": "sp-4", "name": "Cappelletti", "desc": "Vibrant red, tart cherry and orange peel, mild bitterness.", "category": "bright" },
-      { "id": "sp-5", "name": "Cocchi Americano", "desc": "Quinine bitterness, citrus and honey, aromatic wine base.", "category": "herbal" },
-      { "id": "sp-6", "name": "Contratto Aperitif", "desc": "Herbal and floral, orange zest, balanced sweetness.", "category": "herbal" },
-      { "id": "sp-7", "name": "Luxardo Bitter", "desc": "Dark red, bittersweet orange, rich botanical finish.", "category": "herbal" },
-      { "id": "sp-8", "name": "Montenegro", "desc": "Italian amaro, orange and vanilla, soft herbal spice.", "category": "herbal" },
-      { "id": "sp-9", "name": "Suze", "desc": "Gentian root, earthy and bittersweet, bright yellow hue.", "category": "earthy" },
-      { "id": "sp-10", "name": "Lillet Blanc", "desc": "French aperitif wine, citrus and honey, delicate finish.", "category": "earthy" },
-      { "id": "sp-11", "name": "Cynar", "desc": "Artichoke and caramel, deep bitter-sweet, dark and rich.", "category": "earthy" },
-      { "id": "sp-12", "name": "Salers", "desc": "Gentian based, herbaceous and tangy, vivid gold color.", "category": "earthy" }
+      { "id": "sp-2", "name": "Campari", "desc": "Bold and bitter, cherry and herbs, bright red. Hints of quinine.", "category": "bright" },
+      { "id": "sp-13", "name": "Paulas Orange", "desc": "All Natural Orange Liqueur crafted in Austin", "category": "bright" },
+      { "id": "sp-10", "name": "Lillet Blanc", "desc": "Honey, Candied Citrus, Gentle Floral", "category": "herbal" },
+      { "id": "sp-14", "name": "Italicus Rosolio di Bergamotto", "desc": "Zesty bergamot citrus, soft honey sweetness, floral finish.", "category": "herbal" },
+      { "id": "sp-15", "name": "St. Germain", "desc": "Wild elderflower, bright citrus.", "category": "herbal" },
+      { "id": "sp-16", "name": "Caravella Lemoncello", "desc": "Fresh lemon zest, lemon-drop candy, herbal and floral", "category": "herbal" },
+      { "id": "sp-6", "name": "Contratto Aperitif", "desc": "Herbal and floral, orange zest, balanced sweetness.", "category": "earthy" },
+      { "id": "sp-11", "name": "Cynar", "desc": "Artichoke and caramel, deep bitter-sweet, dark and rich.", "category": "earthy" }
     ]
   }
 }

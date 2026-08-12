@@ -2,6 +2,26 @@
 
 Read `README.md` first.
 
+## Changelog — latest revision
+
+This revision touched **the Spritz Menu card only**. Signature Cocktails,
+Spirits & Beer, Liquori, and the Dessert Menu package are unchanged from
+the prior handoff. Spritz changes:
+
+- New item roster in `menu-data.json` (9 items across the same three
+  fixed categories — see §1a/§3).
+- A 0.5in top margin added before the "Bitter & Bright" group (closes an
+  odd gap that used to sit below it, before "Herbal & Aromatic").
+- Every group AFTER "Bitter & Bright" ("Herbal & Aromatic", "Rich &
+  Earthy") runs 1pt larger — group heading, item name, and description —
+  than "Bitter & Bright" itself. Deliberate, not a bug.
+- The "every spritz is topped with prosecco and soda" tagline is now
+  italic; its small rule underneath was removed.
+- A static illustration (`assets/spritz-garnish-sketch.png`) is now
+  pinned to the bottom of the Spritz card, below the last group — same
+  pattern as the Dolci card's affogato sketch in `../handoff-dessert/`.
+  It's exempt from the holder crop-line check (§1b) — see §5.
+
 This is a **new, structurally different menu** from the others in this
 project (Dinner, Happy Hour, Monday, Tue–Wed, Weekend). Read this whole
 document before wiring the editor.
@@ -329,7 +349,18 @@ Baked into `template.html`, no data hooks, not surfaced in the editor:
   split is a deliberate, current design decision.
 - The entire Spritz header block: the "new" kicker, "Choose Your Spirit"
   subhead, and tagline — identical in both designs; the manager can only
-  edit `spritz.price` within it.
+  edit `spritz.price` within it. The tagline ("every spritz is topped
+  with prosecco and soda") is set in italic; it no longer has a rule
+  beneath it.
+- The 1pt type bump on Design B's "Herbal & Aromatic" and "Rich &
+  Earthy" groups relative to "Bitter & Bright" (heading, item name, and
+  description all +1pt) — a deliberate, current design decision.
+- The Spritz card's static bottom illustration
+  (`assets/spritz-garnish-sketch.png`, `.spritz-image`, marked
+  `data-decorative`) — not a data field, no editor control. It's exempt
+  from the holder crop-line check (§1b) since it carries no text a guest
+  needs to read; `validate.js`'s `contentBottomIn` skips any
+  `[data-decorative]` element on purpose.
 - The three Spritz Design B group headings and their order ("Bitter &
   Bright", "Herbal & Aromatic", "Rich & Earthy"), each flanked by small
   ornamental rules — fixed; the editor cannot add, rename, reorder, or

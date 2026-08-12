@@ -56,6 +56,16 @@
   The header block (kicker, title, "Choose Your Spirit" subhead, price,
   tagline) is IDENTICAL between designs and lives once in the DOM — only
   the item-list portion below it swaps. See BUILD-SPEC.md §1a.
+
+  LATEST REVISION — Spritz Menu content/styling ONLY.
+  =====================================================
+  This revision touched the Spritz Menu card exclusively: new item roster
+  (see menu-data.json), a 0.5in gap added before the "Bitter & Bright"
+  group, a 1pt type bump on every group after "Bitter & Bright", the
+  tagline set to italic with its rule removed, and a static illustration
+  pinned to the card's bottom. Signature Cocktails, Spirits & Beer,
+  Liquori, and the Dessert Menu package are UNCHANGED from the prior
+  handoff — see BUILD-SPEC.md's top-of-file changelog note.
 */
 @page { size: 8.5in 11in; margin: 0; }
 
@@ -145,8 +155,7 @@ body {
 .spritz-price { text-align: center; margin: 0 0 7.5px; }
 .spritz-price-text { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 24pt; color: #3a1a06; }
 .spritz-tagline-wrap { display: flex; flex-direction: column; align-items: center; gap: 3.75px; margin: 0 0 9px; }
-.spritz-tagline { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 9.75pt; color: #4a3a26; line-height: 1.4; text-align: center; padding: 0 6px; }
-.spritz-tagline-rule { height: 1px; width: 27px; background: #3a1a06; opacity: 0.35; }
+.spritz-tagline { font-family: 'Montserrat', sans-serif; font-weight: 700; font-style: italic; font-size: 9.75pt; color: #4a3a26; line-height: 1.4; text-align: center; padding: 0 6px; }
 
 /* Design toggle — default is design "a"; render.js adds spritz-design-b to
    <body> when data.spritz.design === "b" (or the render() opts override
@@ -165,13 +174,24 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .item-list[data-list-id^="spritz-b-"] .item { margin-bottom: 6.75px; }
 .item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 12pt; }
 .item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 9.75pt; margin-top: 0.75px; }
+/* Groups AFTER "Bitter & Bright" (Herbal & Aromatic, Rich & Earthy) run
+   1pt larger than Bitter & Bright itself — a deliberate, current design
+   decision, not a bug. Bitter & Bright stays at the base size above. */
+.item-list[data-list-id="spritz-b-herbal"] .spritz-name,
+.item-list[data-list-id="spritz-b-earthy"] .spritz-name { font-size: 13pt; }
+.item-list[data-list-id="spritz-b-herbal"] .spritz-desc,
+.item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 10.75pt; margin-top: 0.75px; }
 
 /* Spritz Design B group headings — Bitter & Bright / Herbal & Aromatic /
    Rich & Earthy — get small flanking rules either side of the label
    (added on top of the plain subsection-title treatment below). Fixed
    labels/order, not editable — see BUILD-SPEC.md §5. */
 .page[data-page-id="spritz"] .subsection-title-row { margin: 4.5px 0 4.5px; }
-.page[data-page-id="spritz"] .subsection-title-row:first-of-type { margin-top: 0; }
+/* "Bitter & Bright" (the first group) gets an extra 0.5in of clearance
+   above it, pushing the whole group down — this closes what used to be
+   an odd-looking gap between it and "Herbal & Aromatic" below. */
+.page[data-page-id="spritz"] .subsection-title-row:first-of-type { margin-top: 0.5in; }
+.page[data-page-id="spritz"] .subsection-title-row:not(:first-of-type) .subsection-title { font-size: 11.5pt; }
 .subsection-title-rule--sub { height: 1px; width: 9px; background: #3a1a06; opacity: 0.5; }
 
 .subsection-title-row { display: flex; align-items: center; justify-content: center; gap: 4.5px; }
@@ -233,6 +253,14 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 11pt; }
 .page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-desc,
 .page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 8.75pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-b-herbal"] .spritz-name,
+.page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-name { font-size: 12pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-b-herbal"] .spritz-desc,
+.page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 9.75pt; }
+/* Static asset — never shrunk, never measured against the holder crop
+   line (see validate.js's contentBottomIn, which skips [data-decorative]
+   elements). See BUILD-SPEC.md §1a/§5. */
+.spritz-image { width: 108px; margin: 7.5px auto 0; display: block; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -262,21 +290,22 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
     <div class="spritz-price"><span class="spritz-price-text">$12</span></div>
     <div class="spritz-tagline-wrap">
       <div class="spritz-tagline"></div>
-      <div class="spritz-tagline-rule"></div>
     </div>
 
     <!-- Design A: single flat list, ignores item.category -->
-    <div class="item-list spritz-body-a" data-list-id="spritz-a"><div class="item" data-item-id="sp-1"><div class="spritz-name">Aperol</div><div class="spritz-desc">Orange and rhubarb, gently bitter, easy sipping.</div></div><div class="item" data-item-id="sp-2"><div class="spritz-name">Campari</div><div class="spritz-desc">Bold and bitter, cherry and herbs, bright red.</div></div><div class="item" data-item-id="sp-3"><div class="spritz-name">Select</div><div class="spritz-desc">Venetian aperitivo, juniper and rhubarb, lighter than Campari.</div></div><div class="item" data-item-id="sp-4"><div class="spritz-name">Cappelletti</div><div class="spritz-desc">Vibrant red, tart cherry and orange peel, mild bitterness.</div></div><div class="item" data-item-id="sp-5"><div class="spritz-name">Cocchi Americano</div><div class="spritz-desc">Quinine bitterness, citrus and honey, aromatic wine base.</div></div><div class="item" data-item-id="sp-6"><div class="spritz-name">Contratto Aperitif</div><div class="spritz-desc">Herbal and floral, orange zest, balanced sweetness.</div></div><div class="item" data-item-id="sp-7"><div class="spritz-name">Luxardo Bitter</div><div class="spritz-desc">Dark red, bittersweet orange, rich botanical finish.</div></div><div class="item" data-item-id="sp-8"><div class="spritz-name">Montenegro</div><div class="spritz-desc">Italian amaro, orange and vanilla, soft herbal spice.</div></div><div class="item" data-item-id="sp-9"><div class="spritz-name">Suze</div><div class="spritz-desc">Gentian root, earthy and bittersweet, bright yellow hue.</div></div><div class="item" data-item-id="sp-10"><div class="spritz-name">Lillet Blanc</div><div class="spritz-desc">French aperitif wine, citrus and honey, delicate finish.</div></div><div class="item" data-item-id="sp-11"><div class="spritz-name">Cynar</div><div class="spritz-desc">Artichoke and caramel, deep bitter-sweet, dark and rich.</div></div><div class="item" data-item-id="sp-12"><div class="spritz-name">Salers</div><div class="spritz-desc">Gentian based, herbaceous and tangy, vivid gold color.</div></div></div>
+    <div class="item-list spritz-body-a" data-list-id="spritz-a"><div class="item" data-item-id="sp-1"><div class="spritz-name">Aperol</div><div class="spritz-desc">Orange and rhubarb, gently bitter, easy sipping.</div></div><div class="item" data-item-id="sp-2"><div class="spritz-name">Campari</div><div class="spritz-desc">Bold and bitter, cherry and herbs, bright red. Hints of quinine.</div></div><div class="item" data-item-id="sp-13"><div class="spritz-name">Paulas Orange</div><div class="spritz-desc">All Natural Orange Liqueur crafted in Austin</div></div><div class="item" data-item-id="sp-10"><div class="spritz-name">Lillet Blanc</div><div class="spritz-desc">Honey, Candied Citrus, Gentle Floral</div></div><div class="item" data-item-id="sp-14"><div class="spritz-name">Italicus Rosolio di Bergamotto</div><div class="spritz-desc">Zesty bergamot citrus, soft honey sweetness, floral finish.</div></div><div class="item" data-item-id="sp-15"><div class="spritz-name">St. Germain</div><div class="spritz-desc">Wild elderflower, bright citrus.</div></div><div class="item" data-item-id="sp-16"><div class="spritz-name">Caravella Lemoncello</div><div class="spritz-desc">Fresh lemon zest, lemon-drop candy, herbal and floral</div></div><div class="item" data-item-id="sp-6"><div class="spritz-name">Contratto Aperitif</div><div class="spritz-desc">Herbal and floral, orange zest, balanced sweetness.</div></div><div class="item" data-item-id="sp-11"><div class="spritz-name">Cynar</div><div class="spritz-desc">Artichoke and caramel, deep bitter-sweet, dark and rich.</div></div></div>
 
     <!-- Design B: grouped by item.category. Fixed group order/labels, each
          flanked by small rules — not editable. -->
     <div class="spritz-body-b">
       <div class="subsection-title-row"><div class="subsection-title-rule--sub"></div><div class="subsection-title">Bitter &amp; Bright</div><div class="subsection-title-rule--sub"></div></div>
-      <div class="item-list" data-list-id="spritz-b-bright"><div class="item" data-item-id="sp-1"><div class="spritz-name">Aperol</div><div class="spritz-desc">Orange and rhubarb, gently bitter, easy sipping.</div></div><div class="item" data-item-id="sp-2"><div class="spritz-name">Campari</div><div class="spritz-desc">Bold and bitter, cherry and herbs, bright red.</div></div><div class="item" data-item-id="sp-3"><div class="spritz-name">Select</div><div class="spritz-desc">Venetian aperitivo, juniper and rhubarb, lighter than Campari.</div></div><div class="item" data-item-id="sp-4"><div class="spritz-name">Cappelletti</div><div class="spritz-desc">Vibrant red, tart cherry and orange peel, mild bitterness.</div></div></div>
+      <div class="item-list" data-list-id="spritz-b-bright"><div class="item" data-item-id="sp-1"><div class="spritz-name">Aperol</div><div class="spritz-desc">Orange and rhubarb, gently bitter, easy sipping.</div></div><div class="item" data-item-id="sp-2"><div class="spritz-name">Campari</div><div class="spritz-desc">Bold and bitter, cherry and herbs, bright red. Hints of quinine.</div></div><div class="item" data-item-id="sp-13"><div class="spritz-name">Paulas Orange</div><div class="spritz-desc">All Natural Orange Liqueur crafted in Austin</div></div></div>
       <div class="subsection-title-row"><div class="subsection-title-rule--sub"></div><div class="subsection-title">Herbal &amp; Aromatic</div><div class="subsection-title-rule--sub"></div></div>
-      <div class="item-list" data-list-id="spritz-b-herbal"><div class="item" data-item-id="sp-5"><div class="spritz-name">Cocchi Americano</div><div class="spritz-desc">Quinine bitterness, citrus and honey, aromatic wine base.</div></div><div class="item" data-item-id="sp-6"><div class="spritz-name">Contratto Aperitif</div><div class="spritz-desc">Herbal and floral, orange zest, balanced sweetness.</div></div><div class="item" data-item-id="sp-7"><div class="spritz-name">Luxardo Bitter</div><div class="spritz-desc">Dark red, bittersweet orange, rich botanical finish.</div></div><div class="item" data-item-id="sp-8"><div class="spritz-name">Montenegro</div><div class="spritz-desc">Italian amaro, orange and vanilla, soft herbal spice.</div></div></div>
+      <div class="item-list" data-list-id="spritz-b-herbal"><div class="item" data-item-id="sp-10"><div class="spritz-name">Lillet Blanc</div><div class="spritz-desc">Honey, Candied Citrus, Gentle Floral</div></div><div class="item" data-item-id="sp-14"><div class="spritz-name">Italicus Rosolio di Bergamotto</div><div class="spritz-desc">Zesty bergamot citrus, soft honey sweetness, floral finish.</div></div><div class="item" data-item-id="sp-15"><div class="spritz-name">St. Germain</div><div class="spritz-desc">Wild elderflower, bright citrus.</div></div><div class="item" data-item-id="sp-16"><div class="spritz-name">Caravella Lemoncello</div><div class="spritz-desc">Fresh lemon zest, lemon-drop candy, herbal and floral</div></div></div>
       <div class="subsection-title-row"><div class="subsection-title-rule--sub"></div><div class="subsection-title">Rich &amp; Earthy</div><div class="subsection-title-rule--sub"></div></div>
-      <div class="item-list" data-list-id="spritz-b-earthy"><div class="item" data-item-id="sp-9"><div class="spritz-name">Suze</div><div class="spritz-desc">Gentian root, earthy and bittersweet, bright yellow hue.</div></div><div class="item" data-item-id="sp-10"><div class="spritz-name">Lillet Blanc</div><div class="spritz-desc">French aperitif wine, citrus and honey, delicate finish.</div></div><div class="item" data-item-id="sp-11"><div class="spritz-name">Cynar</div><div class="spritz-desc">Artichoke and caramel, deep bitter-sweet, dark and rich.</div></div><div class="item" data-item-id="sp-12"><div class="spritz-name">Salers</div><div class="spritz-desc">Gentian based, herbaceous and tangy, vivid gold color.</div></div></div>
+      <div class="item-list" data-list-id="spritz-b-earthy"><div class="item" data-item-id="sp-6"><div class="spritz-name">Contratto Aperitif</div><div class="spritz-desc">Herbal and floral, orange zest, balanced sweetness.</div></div><div class="item" data-item-id="sp-11"><div class="spritz-name">Cynar</div><div class="spritz-desc">Artichoke and caramel, deep bitter-sweet, dark and rich.</div></div></div>
+      <!-- Static asset, not a data field — see BUILD-SPEC.md §5. -->
+      <img class="spritz-image" src="assets/spritz-garnish-sketch.png" alt="" data-decorative="">
     </div>
   </div>
 

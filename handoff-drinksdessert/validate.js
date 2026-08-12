@@ -102,13 +102,19 @@
 
   // Distance from the page's top edge to the bottom-most VISIBLE pixel of
   // content inside it, ignoring collapsed/display:none elements (e.g. the
-  // inactive Spritz design). This is independent of overflow: a page can
-  // be well within its 11in height and still cross the crop line.
+  // inactive Spritz design) AND elements marked [data-decorative] (e.g.
+  // the Spritz card's static bottom illustration) — a decorative image is
+  // exempt from the holder crop line on purpose; it doesn't carry text a
+  // guest needs to read, so it's fine if it sits partly in the hidden
+  // zone. See template.html's ".spritz-image" and BUILD-SPEC.md §1a/§5.
+  // This is independent of overflow: a page can be well within its 11in
+  // height and still cross the crop line.
   function contentBottomIn(page) {
     const top = page.getBoundingClientRect().top;
     let maxBottom = top;
     const all = page.querySelectorAll('*');
     for (let i = 0; i < all.length; i++) {
+      if (all[i].hasAttribute && all[i].hasAttribute('data-decorative')) continue;
       const r = all[i].getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
       if (r.bottom > maxBottom) maxBottom = r.bottom;

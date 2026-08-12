@@ -1,5 +1,11 @@
 # Siena Drinks Menu — Developer Handoff
 
+**Latest revision touched the Spritz Menu card only** — new item roster,
+0.5in gap before "Bitter & Bright", a 1pt type bump on every group after
+it, an italicized tagline (rule removed), and a static bottom
+illustration. See `BUILD-SPEC.md`'s changelog note at the top. Cocktails,
+Spirits & Beer, Liquori, and the Dessert Menu package are unchanged.
+
 Four insert cards (Signature Cocktails, Spritz Menu, Spirits & Beer,
 Liquori) produced from two physical 8.5×11 sheets, each cut in half.
 Dolci is not part of this package — it's its own standalone insert (see
@@ -22,6 +28,7 @@ crop line), and §1c for why Liquori isn't edited like the other cards.
 | `expected-render.html` | `render(template, menu-data.json)` output. Snapshot baseline. |
 | `snapshot-test.spec.mjs` | Vitest test: snapshot match, optional-field behavior (cocktail note), open-ended cardinality, the Liquori fixed-category contract, and the Spritz shared-data/dual-design contract. Resolves paths from its own file location, not CWD. |
 | `BUILD-SPEC.md` | Full spec — physical product, constraint model, data shape, editable fields, gotchas. **Read this before writing the editor.** |
+| `assets/spritz-garnish-sketch.png` | Static illustration pinned to the bottom of the Spritz card — not a data field, see BUILD-SPEC §5. |
 | `fonts/` | Self-hosted Playfair Display variable fonts (regular + italic). Montserrat loads from Google Fonts at runtime. |
 
 ## Quickstart
