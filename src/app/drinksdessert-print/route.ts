@@ -7,11 +7,11 @@ export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-drinksdessert');
 
-const ALLOWED_PAGES = ['cocktails', 'spritz', 'spirits', 'dopacena'];
+const ALLOWED_PAGES = ['cocktails', 'spritz', 'spirits', 'liquori'];
 
 // ?src=current (default) | draft | drinksdessert-published-<ts>
 // ?sheet=a | b (omit for both) — print one of the two physical sheets.
-// ?page=cocktails|spritz|spirits|dopacena — print ONE sheet with the chosen
+// ?page=cocktails|spritz|spirits|liquori — print ONE sheet with the chosen
 // card duplicated on BOTH halves (cut down the middle for 2 identical
 // copies from a single piece of paper). Takes priority over ?sheet if both
 // are given.
@@ -31,8 +31,8 @@ export async function GET(request: Request) {
   let html = await renderDrinksDessertMenu(data);
   html = html.replace(/<script src="validate\.js"><\/script>/g, '');
 
-  // render.js permanently removes the cocktail note / dopaCena description
-  // (.remove()) when empty. The server-side render above used whatever was
+  // render.js permanently removes the cocktail note (.remove()) when empty.
+  // The server-side render above used whatever was
   // saved at request time; re-rendering the localStorage bridge payload onto
   // that SAME document can't bring a removed element back. Fix: parse a
   // fresh DOM from the raw template before re-rendering, then swap it in —
@@ -74,8 +74,8 @@ ${validateSrc}
     localStorage.removeItem('siena-drinksdessert-print-scope');
   }
 
-  var SHEET_OF    = { cocktails: 'a', spritz: 'a', spirits: 'b', dopacena: 'b' };
-  var SIBLING_OF  = { cocktails: 'spritz', spritz: 'cocktails', spirits: 'dopacena', dopacena: 'spirits' };
+  var SHEET_OF    = { cocktails: 'a', spritz: 'a', spirits: 'b', liquori: 'b' };
+  var SIBLING_OF  = { cocktails: 'spritz', spritz: 'cocktails', spirits: 'liquori', liquori: 'spirits' };
 
   // Keep exactly one physical sheet and make sure it never leaves a trailing
   // blank page behind it. .sheet's default page-break-after:always assumes

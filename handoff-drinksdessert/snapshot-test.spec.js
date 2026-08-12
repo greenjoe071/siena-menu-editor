@@ -1,8 +1,7 @@
 /**
  * Snapshot test — guards against formatting drift in the Drinks menu,
- * plus pins the optional-field contracts (cocktail note, dopa-cena
- * per-item description) and the Spritz Menu's shared-data/dual-design
- * contract.
+ * plus pins the optional-field contract (cocktail note) and the Spritz
+ * Menu's shared-data/dual-design contract.
  *
  * Resolves the handoff directory from this spec file's own location, not
  * the CWD — the test may run from the repo root.
@@ -67,9 +66,9 @@ export async function runSnapshotTest() {
 /**
  * Optional-field coverage:
  *   - cocktails[i].note missing/empty → .cocktail-note element removed.
- *   - dopaCena.<sub>[i].desc missing/empty → .item-desc element removed.
- *   - dopaCena.<sub>[i].desc present on an item OTHER than the seed's
- *     Il Poggione → still renders (proves desc is not hardcoded to one slot).
+ *   - cocktails[i].note present → .cocktail-note element renders it.
+ * Spirits & Beer and Liquori items have NO optional/description field —
+ * name and price only, always. There is nothing to toggle there.
  */
 export async function runOptionalFieldsTest() {
   const [template, dataRaw, renderer] = await Promise.all([
@@ -79,49 +78,24 @@ export async function runOptionalFieldsTest() {
   ]);
   const base = JSON.parse(dataRaw);
 
-  // Case 1: cocktail with no note → no .cocktail-note element.
-  {
-    const dom = new JSDOM(template);
-    renderer.render(dom.window.document, base);
-    const godfather = dom.window.document.querySelector('[data-item-id="ck-1"]');
-    if (godfather.querySelector('.cocktail-note')) {
-      throw new Error('cocktail ck-1 has no `note` in seed data but rendered a .cocktail-note element.');
-    }
-    const margarita = dom.window.document.querySelector('[data-item-id="ck-7"]');
-    const noteEl = margarita.querySelector('.cocktail-note');
-    if (!noteEl || noteEl.textContent !== base.cocktails[6].note) {
-      throw new Error('cocktail ck-7 note did not render correctly.');
-    }
+  const dom = new JSDOM(template);
+  renderer.render(dom.window.document, base);
+  const godfather = dom.window.document.querySelector('[data-item-id="ck-1"]');
+  if (godfather.querySelector('.cocktail-note')) {
+    throw new Error('cocktail ck-1 has no `note` in seed data but rendered a .cocktail-note element.');
   }
-
-  // Case 2: dopa-cena item with no desc → no .item-desc element.
-  {
-    const dom = new JSDOM(template);
-    renderer.render(dom.window.document, base);
-    const aperol = dom.window.document.querySelector('[data-item-id="dc-d1"]');
-    if (aperol.querySelector('.item-desc')) {
-      throw new Error('dopaCena.digestivo[0] (Aperol) has no `desc` in seed data but rendered .item-desc.');
-    }
-  }
-
-  // Case 3: desc added to an item that normally has none → renders fine
-  // (proves desc isn't hardcoded to the Il Poggione slot).
-  {
-    const withExtraDesc = JSON.parse(JSON.stringify(base));
-    withExtraDesc.dopaCena.digestivo[0].desc = 'A test description';
-    const dom = new JSDOM(template);
-    renderer.render(dom.window.document, withExtraDesc);
-    const aperol = dom.window.document.querySelector('[data-item-id="dc-d1"]');
-    const descEl = aperol.querySelector('.item-desc');
-    if (!descEl || descEl.textContent !== 'A test description') {
-      throw new Error('Adding `desc` to an arbitrary dopaCena item did not render it.');
-    }
+  const margarita = dom.window.document.querySelector('[data-item-id="ck-7"]');
+  const noteEl = margarita.querySelector('.cocktail-note');
+  if (!noteEl || noteEl.textContent !== base.cocktails[6].note) {
+    throw new Error('cocktail ck-7 note did not render correctly.');
   }
 }
 
 /**
- * Open-ended cardinality: adding/removing items from any list must not
- * throw and must change the rendered item count 1:1.
+ * Open-ended cardinality: adding/removing items from any open-ended list
+ * (Cocktails, Spirits, Spritz) must not throw and must change the
+ * rendered item count 1:1. Liquori is intentionally excluded — its four
+ * lists are hand-curated, not open-ended editor input (see BUILD-SPEC §1c).
  */
 export async function runCardinalityTest() {
   const [template, dataRaw, renderer] = await Promise.all([
@@ -149,6 +123,34 @@ export async function runCardinalityTest() {
 }
 
 /**
+ * Liquori: four fixed categories (Tequila, Gin, Vodka, Rum), each a plain
+ * name+price list like Spirits & Beer — no description field. Confirms
+ * render.js wires all four `liquori.*` arrays to their `liquori-*` lists.
+ */
+export async function runLiquoriTest() {
+  const [template, dataRaw, renderer] = await Promise.all([
+    readFile(join(here, 'template.html'), 'utf8'),
+    readFile(join(here, 'menu-data.json'), 'utf8'),
+    loadRenderer(),
+  ]);
+  const base = JSON.parse(dataRaw);
+  const dom = new JSDOM(template);
+  renderer.render(dom.window.document, base);
+
+  ['tequila', 'gin', 'vodka', 'rum'].forEach((cat) => {
+    const rendered = dom.window.document.querySelectorAll('[data-list-id="liquori-' + cat + '"] .item').length;
+    if (rendered !== base.liquori[cat].length) {
+      throw new Error('liquori.' + cat + ' did not render 1:1 (expected ' + base.liquori[cat].length + ', got ' + rendered + ').');
+    }
+  });
+
+  const first = dom.window.document.querySelector('[data-list-id="liquori-tequila"] .item');
+  if (first.querySelector('.item-desc') || first.querySelector('.cocktail-desc')) {
+    throw new Error('A Liquori item rendered a description element — Liquori has no desc field.');
+  }
+}
+
+/**
  * Spritz Menu — one shared data set drives both designs; category only
  * sorts Design B; render() accepts a spritzDesign override for the
  * "choose your design" comparison screen.
@@ -168,9 +170,6 @@ export async function runSpritzTest() {
     const flat = dom.window.document.querySelectorAll('[data-list-id="spritz-a"] .item');
     if (flat.length !== base.spritz.items.length) {
       throw new Error('Design A flat list did not render every spritz item.');
-    }
-    if (!dom.window.document.body.classList.contains('spritz-design-b') === false) {
-      // body should NOT have spritz-design-b when forced to 'a'
     }
     if (dom.window.document.body.classList.contains('spritz-design-b')) {
       throw new Error('spritzDesign "a" override left spritz-design-b on <body>.');
@@ -219,12 +218,16 @@ if (typeof globalThis.describe === 'function') {
       await runSnapshotTest();
     });
     // eslint-disable-next-line no-undef
-    test('optional cocktail note / dopa-cena description render only when filled', async () => {
+    test('optional cocktail note renders only when filled', async () => {
       await runOptionalFieldsTest();
     });
     // eslint-disable-next-line no-undef
     test('open-ended list cardinality: add/remove items 1:1', async () => {
       await runCardinalityTest();
+    });
+    // eslint-disable-next-line no-undef
+    test('Liquori: four fixed categories render 1:1, no description field', async () => {
+      await runLiquoriTest();
     });
     // eslint-disable-next-line no-undef
     test('Spritz Menu: shared data drives both designs, category sorts design B only, $ price', async () => {
@@ -233,8 +236,8 @@ if (typeof globalThis.describe === 'function') {
   });
 }
 
-if (process.argv[1] && process.argv[1].endsWith('snapshot-test.spec.mjs')) {
-  Promise.all([runSnapshotTest(), runOptionalFieldsTest(), runCardinalityTest(), runSpritzTest()])
-    .then(() => { console.log('✓ Drinks menu snapshot + optional-field + cardinality + spritz tests passed.'); })
+if (process.argv[1] && process.argv[1].endsWith('snapshot-test.spec.js')) {
+  Promise.all([runSnapshotTest(), runOptionalFieldsTest(), runCardinalityTest(), runLiquoriTest(), runSpritzTest()])
+    .then(() => { console.log('✓ Drinks menu snapshot + optional-field + cardinality + liquori + spritz tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

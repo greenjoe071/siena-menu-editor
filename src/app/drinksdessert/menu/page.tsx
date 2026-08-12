@@ -19,11 +19,11 @@ export default async function DrinksMenuLandingPage() {
       printVariants={[
         { label: 'Entire menu (all 4 pages)', group: 'Full menu' },
         { label: 'Signature Cocktails & Spritz Menu', query: '&sheet=a', group: 'By sheet (2 pages)' },
-        { label: 'Spirits and Beer & Siena Dopa Cena', query: '&sheet=b', group: 'By sheet (2 pages)' },
+        { label: 'Spirits and Beer & Liquori', query: '&sheet=b', group: 'By sheet (2 pages)' },
         { label: 'Signature Cocktails only', query: '&page=cocktails', group: 'Single page' },
         { label: 'Spritz Menu only', query: '&page=spritz', group: 'Single page' },
         { label: 'Spirits and Beer only', query: '&page=spirits', group: 'Single page' },
-        { label: 'Siena Dopa Cena only', query: '&page=dopacena', group: 'Single page' },
+        { label: 'Liquori only', query: '&page=liquori', group: 'Single page' },
       ]}
     />
   );

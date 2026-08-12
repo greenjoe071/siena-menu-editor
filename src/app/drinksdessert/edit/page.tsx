@@ -39,9 +39,7 @@ interface Spritz {
 interface DrinksDessertMenuData {
   cocktails: Item[];
   spirits: { bourbon: Item[]; scotch: Item[]; beer: Item[] };
-  dopaCena: {
-    digestivo: Item[]; grappa: Item[]; ports: Item[]; cognac: Item[]; traditionalItalian: Item[];
-  };
+  liquori: { tequila: Item[]; gin: Item[]; vodka: Item[]; rum: Item[] };
   spritz: Spritz;
 }
 
@@ -52,7 +50,7 @@ interface ValidateReport { fits: boolean; pages: PageReport[]; error?: string; }
 // ── Static config ─────────────────────────────────────────────────────────
 
 type SpiritKey = 'bourbon' | 'scotch' | 'beer';
-type DopaKey = 'digestivo' | 'grappa' | 'ports' | 'cognac' | 'traditionalItalian';
+type LiquoriKey = 'tequila' | 'gin' | 'vodka' | 'rum';
 
 const SPIRIT_SUBS: { key: SpiritKey; listId: string; title: string }[] = [
   { key: 'bourbon', listId: 'spirits-bourbon', title: 'Rye / Whiskey / Bourbon' },
@@ -60,12 +58,11 @@ const SPIRIT_SUBS: { key: SpiritKey; listId: string; title: string }[] = [
   { key: 'beer',    listId: 'spirits-beer',    title: 'Bottled Beer' },
 ];
 
-const DOPA_SUBS: { key: DopaKey; listId: string; title: string }[] = [
-  { key: 'digestivo',          listId: 'dopacena-digestivo',          title: 'Digestivo' },
-  { key: 'grappa',             listId: 'dopacena-grappa',             title: 'Grappa · 2.5 oz' },
-  { key: 'ports',              listId: 'dopacena-ports',              title: 'Ports · 2.5 oz' },
-  { key: 'cognac',             listId: 'dopacena-cognac',             title: 'Cognac & Calvados' },
-  { key: 'traditionalItalian', listId: 'dopacena-traditionalItalian', title: 'Traditional Italian · 2.5 oz' },
+const LIQUORI_SUBS: { key: LiquoriKey; listId: string; title: string }[] = [
+  { key: 'tequila', listId: 'liquori-tequila', title: 'Tequila' },
+  { key: 'gin',     listId: 'liquori-gin',     title: 'Gin' },
+  { key: 'vodka',   listId: 'liquori-vodka',   title: 'Vodka' },
+  { key: 'rum',     listId: 'liquori-rum',     title: 'Rum' },
 ];
 
 const SPRITZ_CATEGORIES: { key: SpritzCategory; label: string }[] = [
@@ -80,11 +77,10 @@ const LIST_LABELS: Record<string, string> = {
   'spirits-bourbon': 'Rye / Whiskey / Bourbon',
   'spirits-scotch': 'Single Malt Scotch',
   'spirits-beer': 'Bottled Beer',
-  'dopacena-digestivo': 'Digestivo',
-  'dopacena-grappa': 'Grappa',
-  'dopacena-ports': 'Ports',
-  'dopacena-cognac': 'Cognac & Calvados',
-  'dopacena-traditionalItalian': 'Traditional Italian',
+  'liquori-tequila': 'Tequila',
+  'liquori-gin': 'Gin',
+  'liquori-vodka': 'Vodka',
+  'liquori-rum': 'Rum',
   'spritz-a': 'the spritz list',
   'spritz-b-bright': 'Bitter & Bright',
   'spritz-b-herbal': 'Herbal & Aromatic',
@@ -92,7 +88,7 @@ const LIST_LABELS: Record<string, string> = {
 };
 
 const CARD_LABELS: Record<string, string> = {
-  cocktails: 'Signature Cocktails', spritz: 'Spritz Menu', spirits: 'Spirits & Beer', dopacena: 'Dopa Cena',
+  cocktails: 'Signature Cocktails', spritz: 'Spritz Menu', spirits: 'Spirits & Beer', liquori: 'Liquori',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -403,22 +399,7 @@ export default function DrinksDessertEditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   const pendingSaveRef = useRef<DrinksDessertMenuData | null>(null);
-  const dopaCenaRef = useRef<HTMLDivElement>(null);
   const printSelectRef = useRef<HTMLSelectElement>(null);
-
-  // Dopa Cena editing-mode hook: tells the preview to tighten subsection-title
-  // spacing while a field in that panel has focus (template.html's `is-editing`
-  // class). validate.js always ignores this and measures the print spacing.
-  function handleDopaFocus() {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_EDITING', editing: true }, '*');
-  }
-  function handleDopaBlur() {
-    requestAnimationFrame(() => {
-      const active = document.activeElement;
-      if (dopaCenaRef.current && active && dopaCenaRef.current.contains(active)) return; // focus moved within the panel
-      iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_DRINKSDESSERT_EDITING', editing: false }, '*');
-    });
-  }
 
   useEffect(() => {
     fetch(apiPath)
@@ -496,7 +477,7 @@ export default function DrinksDessertEditorPage() {
 
   function setCocktails(items: Item[]) { setMenu(m => m && { ...m, cocktails: items }); }
   function setSpirits(key: SpiritKey, items: Item[]) { setMenu(m => m && { ...m, spirits: { ...m.spirits, [key]: items } }); }
-  function setDopa(key: DopaKey, items: Item[]) { setMenu(m => m && { ...m, dopaCena: { ...m.dopaCena, [key]: items } }); }
+  function setLiquori(key: LiquoriKey, items: Item[]) { setMenu(m => m && { ...m, liquori: { ...m.liquori, [key]: items } }); }
   function setSpritzItems(items: SpritzItem[]) { setMenu(m => m && { ...m, spritz: { ...m.spritz, items } }); }
   function setSpritzPrice(price: string) { setMenu(m => m && { ...m, spritz: { ...m.spritz, price } }); }
   function setSpritzShowNew(showNew: boolean) { setMenu(m => m && { ...m, spritz: { ...m.spritz, showNew } }); }
@@ -524,8 +505,8 @@ export default function DrinksDessertEditorPage() {
     else {
       const sp = SPIRIT_SUBS.find(s => s.listId === listId);
       if (sp) { setSpirits(sp.key, reorder(menu!.spirits[sp.key])); return; }
-      const dc = DOPA_SUBS.find(s => s.listId === listId);
-      if (dc) setDopa(dc.key, reorder(menu!.dopaCena[dc.key]));
+      const lq = LIQUORI_SUBS.find(s => s.listId === listId);
+      if (lq) setLiquori(lq.key, reorder(menu!.liquori[lq.key]));
     }
   }
 
@@ -560,7 +541,7 @@ export default function DrinksDessertEditorPage() {
 
           <div className="editor-scroll chef-mode">
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
-              <p>Four cards, printed on <strong>two sheets</strong> (A: Signature Cocktails + Spritz Menu · B: Spirits &amp; Beer + Siena Dopa Cena). Add or remove items freely — a card will tell you if it runs out of room.</p>
+              <p>Four cards, printed on <strong>two sheets</strong> (A: Signature Cocktails + Spritz Menu · B: Spirits &amp; Beer + Liquori). Add or remove items freely on Cocktails, Spirits &amp; Beer, and Spritz — a card will tell you if it runs out of room. Liquori is a curated top-shelf list; talk to Joe before changing it rather than adding/removing freely.</p>
             </div>
 
             {/* Cocktails */}
@@ -647,26 +628,23 @@ export default function DrinksDessertEditorPage() {
               </CardPanel>
             </div>
 
-            {/* Dopa Cena */}
+            {/* Liquori */}
             <div className="page-group">
               <div className="page-group-label">Sheet B · Right card</div>
-              <CardPanel title="Siena Dopa Cena" pageId="dopacena" report={report} variant="dopacena">
-                {/* While a field in this panel has focus, the preview switches to a
-                    tighter "is-editing" spacing on the subsection titles so the card
-                    doesn't jump around while typing. The printed/validated layout
-                    always uses the spread-out spacing — see template.html. */}
-                <div ref={dopaCenaRef} onFocus={handleDopaFocus} onBlur={handleDopaBlur}>
-                  {DOPA_SUBS.map(sub => (
-                    <div key={sub.key} className="dd-subsection">
-                      <div className="dd-subsection-title">{sub.title}</div>
-                      <EditableList
-                        listId={sub.listId} items={menu.dopaCena[sub.key]} descMode="optional" note={false}
-                        addLabel="+ Add" namePlaceholder="e.g. Amaro Nonino"
-                        onItemsChange={items => setDopa(sub.key, items)}
-                      />
-                    </div>
-                  ))}
+              <CardPanel title="Liquori" pageId="liquori" report={report} variant="liquori">
+                <div className="weekend-instructions" style={{ margin: '0 0 10px' }}>
+                  <p>Curated top-shelf list — highest price to lowest within each category, trimmed to keep all four roughly even. Treat changes here as a mini re-curation pass, not a routine add/remove.</p>
                 </div>
+                {LIQUORI_SUBS.map(sub => (
+                  <div key={sub.key} className="dd-subsection">
+                    <div className="dd-subsection-title">{sub.title}</div>
+                    <EditableList
+                      listId={sub.listId} items={menu.liquori[sub.key]} descMode="none" note={false}
+                      addLabel="+ Add" namePlaceholder="e.g. Don Julio 1942"
+                      onItemsChange={items => setLiquori(sub.key, items)}
+                    />
+                  </div>
+                ))}
               </CardPanel>
             </div>
           </div>{/* end editor-scroll */}
@@ -683,13 +661,13 @@ export default function DrinksDessertEditorPage() {
               </optgroup>
               <optgroup label="By sheet (2 pages)">
                 <option value="&sheet=a">Signature Cocktails &amp; Spritz Menu</option>
-                <option value="&sheet=b">Spirits and Beer &amp; Siena Dopa Cena</option>
+                <option value="&sheet=b">Spirits and Beer &amp; Liquori</option>
               </optgroup>
               <optgroup label="Single page">
                 <option value="&page=cocktails">Signature Cocktails only</option>
                 <option value="&page=spritz">Spritz Menu only</option>
                 <option value="&page=spirits">Spirits and Beer only</option>
-                <option value="&page=dopacena">Siena Dopa Cena only</option>
+                <option value="&page=liquori">Liquori only</option>
               </optgroup>
             </select>
             <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : undefined} onClick={handlePrint}>Print</button>

@@ -574,18 +574,18 @@ button {
 .section-block-header--spirits:hover { background: #47341d; }
 .chef-mode .section-block--spirits .section-body { background: #f2e9dc; }
 
-.section-block-header--dopacena { background: #6e2a3a; }
-.section-block-header--dopacena:hover { background: #58212d; }
-.chef-mode .section-block--dopacena .section-body { background: #f5e6ea; }
+.section-block-header--liquori { background: #6e2a3a; }
+.section-block-header--liquori:hover { background: #58212d; }
+.chef-mode .section-block--liquori .section-body { background: #f5e6ea; }
 
 .section-block-header--cocktails .section-title-label,
 .section-block-header--spritz .section-title-label,
 .section-block-header--spirits .section-title-label,
-.section-block-header--dopacena .section-title-label { color: #fff; }
+.section-block-header--liquori .section-title-label { color: #fff; }
 .section-block-header--cocktails .section-toggle,
 .section-block-header--spritz .section-toggle,
 .section-block-header--spirits .section-toggle,
-.section-block-header--dopacena .section-toggle { color: rgba(255,255,255,0.6); }
+.section-block-header--liquori .section-toggle { color: rgba(255,255,255,0.6); }
 
 /* ── Desserts (Dolci) card — same holder as the 4 Drinks Menu cards, own color ── */
 .section-block-header--dessert { background: #3d2817; }

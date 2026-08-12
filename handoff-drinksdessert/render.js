@@ -2,12 +2,15 @@
  * Siena Drinks Menu Renderer.
  *
  * Hydrates the 4-card template (Signature Cocktails, Spritz Menu, Spirits
- * & Beer, Siena Dopa Cena) from a JSON data object. Cardinality is
- * OPEN-ENDED on every list — this renderer clears each `[data-list-id]`
- * container and clones the matching `<template>` blueprint once per JSON
- * item, in array order. Page/subsection titles are static template chrome
- * and are never touched here — see BUILD-SPEC.md "Static / not editable".
- * Dolci is no longer part of this package — it's its own insert now.
+ * & Beer, Liquori) from a JSON data object. Cardinality is OPEN-ENDED on
+ * Cocktails, Spirits, and Spritz — this renderer clears each
+ * `[data-list-id]` container and clones the matching `<template>`
+ * blueprint once per JSON item, in array order. Liquori is the one
+ * exception: see BUILD-SPEC.md §1c — its four category lists are curated
+ * by hand (highest price to lowest, trimmed to fit), not open-ended
+ * editor input. Page/subsection titles are static template chrome and
+ * are never touched here — see BUILD-SPEC.md "Static / not editable".
+ * Dolci is not part of this package — it's its own insert.
  *
  * SPRITZ MENU — one data set, two designs:
  *   data.spritz = { price: "12", design: "a"|"b", items: [{id,name,desc,category}] }
@@ -38,19 +41,33 @@
  *   render(dom.window.document, menuData);
  *
  * Price convention: JSON prices are bare strings WITHOUT the `$` glyph
- * (e.g. "13.00", "11") — the menu never prints a `$` anywhere. The
- * renderer also formats for display: a trailing ".00" is dropped ("13.00"
- * → "13"), any other cents are kept as-is ("6.50" stays "6.50"). Do not
- * pre-strip ".00" in the JSON yourself — store full precision, let
- * `formatPrice()` below handle display.
+ * (e.g. "13.00", "11") — the menu never prints a `$` anywhere except the
+ * Spritz price. The renderer also formats for display: a trailing ".00"
+ * is dropped ("13.00" → "13"), any other cents are kept as-is ("6.50"
+ * stays "6.50"). Do not pre-strip ".00" in the JSON yourself — store
+ * full precision, let `formatPrice()` below handle display.
  *
  * Optional fields:
  *   - cocktails[i].note        — empty/missing → the note line is removed.
- *   - dopaCena.<sub>[i].desc   — empty/missing → the description line is
- *     removed. ANY item in ANY Dopa Cena subsection may carry a desc; it
- *     is not reserved for a particular item.
  *   - spritz.items[i].desc     — tasting note, required (design A shows it
  *     under every name; design B does too, inside its category group).
+ *
+ * Liquori and Spirits & Beer items have NO description field — name and
+ * price only, by design. Don't add a `desc` key to either; render.js has
+ * no code path for it.
+ *
+ * SPRITZ HEADER — showNew / tagline (NOT part of this handoff's contract;
+ * kept from the prior implementation per owner request, layered on top of
+ * this redesign):
+ *   data.spritz.showNew — boolean, default true. Toggles the "new" kicker
+ *     above the Spritz Menu title. Hiding it collapses its own space (it's
+ *     a flex-column child), so nothing below leaves a gap.
+ *   data.spritz.tagline — free text, must stay on one line (see
+ *     validate.js's spritz-tagline wrap check). Replaces the template's
+ *     static fallback text.
+ * This handoff's own template/BUILD-SPEC treat both as fixed static chrome
+ * — don't remove this data-driven behavior when bringing in a future
+ * handoff revision without checking with Joe first.
  *
  * This module does NOT check whether content fits its page — that is
  * validate.js's job, and it requires a real browser layout engine (it
@@ -124,27 +141,6 @@
     });
   }
 
-  function renderDescriptiveList(doc, listId, items) {
-    const list = clearList(doc, listId);
-    if (!list) return;
-    const tpl = doc.getElementById('descriptive-item-template');
-    const blueprint = tpl && tpl.content.firstElementChild;
-    if (!blueprint) throw new Error('Missing #descriptive-item-template blueprint.');
-    (items || []).forEach(function (it) {
-      const node = blueprint.cloneNode(true);
-      node.setAttribute('data-item-id', it.id);
-      node.querySelector('.item-name').textContent = it.name;
-      node.querySelector('.item-price').textContent = formatPrice(it.price);
-      const descEl = node.querySelector('.item-desc');
-      if (isFilled(it.desc)) {
-        descEl.textContent = it.desc;
-      } else {
-        descEl.remove();
-      }
-      list.appendChild(node);
-    });
-  }
-
   function renderSpritzItem(blueprint, it) {
     const node = blueprint.cloneNode(true);
     node.setAttribute('data-item-id', it.id);
@@ -160,16 +156,16 @@
     const blueprint = tpl && tpl.content.firstElementChild;
     if (!blueprint) throw new Error('Missing #spritz-item-template blueprint.');
 
-    // "new" kicker — owner can retire it once the page stops being new. The
-    // header is a simple flex-column child, so hiding it collapses its own
-    // space and everything below shifts up with no leftover gap. Not part
-    // of the original handoff contract; added per owner request.
+    // "new" kicker — owner can retire it once the page stops being new. Not
+    // part of this handoff's contract; added per owner request (see file
+    // header). The header is a simple flex-column child, so hiding it
+    // collapses its own space and everything below shifts up with no gap.
     const kickerEl = doc.querySelector('.spritz-kicker');
     if (kickerEl) kickerEl.style.display = spritz.showNew === false ? 'none' : '';
 
     // Tagline — owner-editable, but must always render on a single line
-    // (see validate.js's spritz-tagline wrap check). Not part of the
-    // original handoff contract; added per owner request.
+    // (see validate.js's spritz-tagline wrap check). Not part of this
+    // handoff's contract; added per owner request.
     const taglineEl = doc.querySelector('.spritz-tagline');
     if (taglineEl) taglineEl.textContent = spritz.tagline || '';
 
@@ -197,7 +193,7 @@
     data = data || {};
     opts = opts || {};
     const spirits = data.spirits || {};
-    const dopaCena = data.dopaCena || {};
+    const liquori = data.liquori || {};
     const spritz = data.spritz || {};
 
     renderCocktails(doc, data.cocktails);
@@ -206,11 +202,10 @@
     renderPlainList(doc, 'spirits-scotch', spirits.scotch);
     renderPlainList(doc, 'spirits-beer', spirits.beer);
 
-    renderDescriptiveList(doc, 'dopacena-digestivo', dopaCena.digestivo);
-    renderDescriptiveList(doc, 'dopacena-grappa', dopaCena.grappa);
-    renderDescriptiveList(doc, 'dopacena-ports', dopaCena.ports);
-    renderDescriptiveList(doc, 'dopacena-cognac', dopaCena.cognac);
-    renderDescriptiveList(doc, 'dopacena-traditionalItalian', dopaCena.traditionalItalian);
+    renderPlainList(doc, 'liquori-tequila', liquori.tequila);
+    renderPlainList(doc, 'liquori-gin', liquori.gin);
+    renderPlainList(doc, 'liquori-vodka', liquori.vodka);
+    renderPlainList(doc, 'liquori-rum', liquori.rum);
 
     renderSpritz(doc, spritz);
     const design = opts.spritzDesign || spritz.design || 'a';

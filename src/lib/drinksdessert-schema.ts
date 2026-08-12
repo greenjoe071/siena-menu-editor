@@ -31,12 +31,12 @@ const SpiritItemSchema = z.object({
   price,
 });
 
-// Dopa Cena: name + price, optional desc (available on any item).
-const DopaCenaItemSchema = z.object({
+// Liquori: name + price only (no description, same as Spirits & Beer).
+// Curated by hand, not open-ended editor input — see BUILD-SPEC.md §1c.
+const LiquoriItemSchema = z.object({
   id:    z.string(),
   name:  z.string().min(1, 'Name is required').max(L.name),
   price,
-  desc:  z.string().max(L.desc).optional(),
 });
 
 // Spritz: shared by both designs — see BUILD-SPEC.md §1a. Design A ignores
@@ -50,10 +50,13 @@ const SpritzItemSchema = z.object({
   category: SpritzCategorySchema,
 });
 
-// ── Top-level: 4 cards. Spirits/DopaCena have FIXED subsections, each an
-//    open-ended item array. Cocktails/Spritz items are flat open-ended
-//    arrays. Dolci is no longer part of this menu — it's its own standalone
-//    insert now; see drinksdessert-dolci-archive.json for the archived data. ──
+// ── Top-level: 4 cards. Spirits/Liquori have FIXED subsections/categories,
+//    each an item array (Spirits open-ended; Liquori curated by hand, see
+//    BUILD-SPEC.md §1c). Cocktails/Spritz items are flat open-ended arrays.
+//    Dolci is no longer part of this menu — it's its own standalone insert
+//    now; see drinksdessert-dolci-archive.json for the archived data. Dopa
+//    Cena was replaced by Liquori (Aug 2026); see
+//    drinksdessert-dopacena-archive.json for the archived data. ──
 export const DrinksDessertMenuSchema = z.object({
   cocktails: z.array(CocktailSchema),
   spirits: z.object({
@@ -61,12 +64,11 @@ export const DrinksDessertMenuSchema = z.object({
     scotch:  z.array(SpiritItemSchema),
     beer:    z.array(SpiritItemSchema),
   }),
-  dopaCena: z.object({
-    digestivo:          z.array(DopaCenaItemSchema),
-    grappa:             z.array(DopaCenaItemSchema),
-    ports:              z.array(DopaCenaItemSchema),
-    cognac:             z.array(DopaCenaItemSchema),
-    traditionalItalian: z.array(DopaCenaItemSchema),
+  liquori: z.object({
+    tequila: z.array(LiquoriItemSchema),
+    gin:     z.array(LiquoriItemSchema),
+    vodka:   z.array(LiquoriItemSchema),
+    rum:     z.array(LiquoriItemSchema),
   }),
   spritz: z.object({
     price:   price,
