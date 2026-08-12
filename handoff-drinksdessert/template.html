@@ -99,6 +99,9 @@ body {
      reprint a single sheet. Default (neither class) prints both. */
   body.print-sheet-a-only .sheet[data-sheet-id="b"] { display: none; }
   body.print-sheet-b-only .sheet[data-sheet-id="a"] { display: none; }
+  /* Screen-only staff reference for where to cut the sheet in half — must
+     never appear on the physical printed page. */
+  .cut-guide { display: none; }
 }
 
 .page {
