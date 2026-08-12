@@ -1217,6 +1217,26 @@ button {
   font-weight: 600;
 }
 .dl-back:hover { color: #fff; }
+
+/* ── Explicit "← Back" button, editOnly landing pages only (Drinks & Dessert) —
+   these skip the numbered 1/2/3 nav the other menus have, so the small 🏠
+   Home icon alone wasn't a clear enough way back. ── */
+.dl-back-btn {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  margin-right: 10px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: background 0.15s, color 0.15s;
+}
+.dl-back-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
 .dl-title {
   font-size: 26px;
   font-weight: 700;

@@ -130,6 +130,7 @@ export default function MenuLanding({
     <div className="dinner-landing">
       <header className="dl-header">
         <div className="dl-header-inner">
+          {editOnly && <Link href="/" className="dl-back-btn">← Back</Link>}
           <Link href="/" className="dl-back">🏠 Home</Link>
           <h1 className="dl-title">{menuName}</h1>
           <p className="dl-subtitle">{editOnly ? 'View or print the current menu, or make a change.' : 'View or print the current menu, fix a mistake, or start a new draft.'}</p>
