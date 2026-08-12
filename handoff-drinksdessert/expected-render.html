@@ -153,12 +153,7 @@ body {
    requests it). Only the header above is shared; everything below swaps. */
 .spritz-body-b { display: none; }
 body.spritz-design-b .spritz-body-a { display: none; }
-/* Aug 2026 (Joe, direct fix — not a designer round-trip): push the entire
-   grouped block down ~1in from where it would otherwise sit right under
-   the shared header, and bump its type size by 1pt (name/desc below,
-   subsection-title override further down) — a spacing/size preference,
-   not a structural change. Design A is untouched. */
-body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; margin-top: 1in; }
+body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 
 /* Item name is Playfair Display italic, matching the cocktail-name
    treatment — NOT Montserrat. Description stays Montserrat. */
@@ -168,8 +163,8 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; mar
 .item-list[data-list-id="spritz-a"] .spritz-name { font-size: 12pt; }
 .item-list[data-list-id="spritz-a"] .spritz-desc { font-size: 9.75pt; margin-top: 0.75px; }
 .item-list[data-list-id^="spritz-b-"] .item { margin-bottom: 6.75px; }
-.item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 13pt; }
-.item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 10.75pt; margin-top: 0.75px; }
+.item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 12pt; }
+.item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 9.75pt; margin-top: 0.75px; }
 
 /* Spritz Design B group headings — Bitter & Bright / Herbal & Aromatic /
    Rich & Earthy — get small flanking rules either side of the label
@@ -177,9 +172,6 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; mar
    labels/order, not editable — see BUILD-SPEC.md §5. */
 .page[data-page-id="spritz"] .subsection-title-row { margin: 4.5px 0 4.5px; }
 .page[data-page-id="spritz"] .subsection-title-row:first-of-type { margin-top: 0; }
-/* +1pt, scoped to Spritz only — .subsection-title is shared with Spirits &
-   Beer and Liquori, which must stay at the base 10.5pt below. */
-.page[data-page-id="spritz"] .subsection-title { font-size: 11.5pt; }
 .subsection-title-rule--sub { height: 1px; width: 9px; background: #3a1a06; opacity: 0.5; }
 
 .subsection-title-row { display: flex; align-items: center; justify-content: center; gap: 4.5px; }
@@ -237,12 +229,10 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; mar
 .page.shrink-1pt .cocktail-note  { font-size: 8.75pt; }
 .page.shrink-1pt .item-name      { font-size: 11.15pt; }
 .page.shrink-1pt .item-price     { font-size: 10.25pt; }
-.page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-name { font-size: 11pt; }
-.page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-desc { font-size: 8.75pt; }
-/* Design B's base sizes are 1pt larger than Design A's (see above) — keep
-   the shrink step at exactly -1pt from ITS OWN base, not Design A's. */
-.page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 12pt; }
-.page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 9.75pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-name,
+.page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 11pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-desc,
+.page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 8.75pt; }
 </style>
 </head>
 <body>
