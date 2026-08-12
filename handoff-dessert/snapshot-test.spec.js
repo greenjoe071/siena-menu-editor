@@ -1,8 +1,7 @@
 /**
- * Snapshot test — guards against formatting drift in the Desserts card,
- * plus proves the open-ended cardinality and the two-copy shared-data
- * contract (both printed halves always come from the same array, never
- * two separately stored lists).
+ * Snapshot test — guards against formatting drift on the Dessert sheet,
+ * plus proves open-ended cardinality on both cards and the Dopa Cena
+ * optional `sub` field contract.
  *
  * Resolves the handoff directory from this spec file's own location, not
  * the CWD — the test may run from the repo root.
@@ -65,38 +64,11 @@ export async function runSnapshotTest() {
 }
 
 /**
- * Both printed copies must always match each other — they are the SAME
- * array rendered twice, never two independently stored lists.
- */
-export async function runTwoCopyParityTest() {
-  const [template, dataRaw, renderer] = await Promise.all([
-    readFile(join(here, 'template.html'), 'utf8'),
-    readFile(join(here, 'menu-data.json'), 'utf8'),
-    loadRenderer(),
-  ]);
-  const base = JSON.parse(dataRaw);
-
-  const dom = new JSDOM(template);
-  renderer.render(dom.window.document, base);
-  const doc = dom.window.document;
-
-  const items1 = Array.from(doc.querySelectorAll('[data-list-id="dessert-1"] .item'));
-  const items2 = Array.from(doc.querySelectorAll('[data-list-id="dessert-2"] .item'));
-  if (items1.length !== base.desserts.length || items2.length !== base.desserts.length) {
-    throw new Error('Both copies must render every dessert item (got ' + items1.length + ' / ' + items2.length + ').');
-  }
-  for (let i = 0; i < base.desserts.length; i++) {
-    const n1 = items1[i].querySelector('.dessert-name').textContent;
-    const n2 = items2[i].querySelector('.dessert-name').textContent;
-    if (n1 !== n2 || n1 !== base.desserts[i].name) {
-      throw new Error('Copy 1 and copy 2 disagree at item ' + i + ' ("' + n1 + '" vs "' + n2 + '").');
-    }
-  }
-}
-
-/**
- * Open-ended cardinality: adding/removing items must not throw and must
- * change the rendered item count 1:1 in BOTH copies.
+ * Open-ended cardinality: adding/removing items from Dolci or any Dopa
+ * Cena subsection must not throw and must change the rendered item
+ * count 1:1. The two cards are independent — this does NOT test a
+ * "both copies match" contract, because there are no copies anymore
+ * (see BUILD-SPEC.md \u00a70).
  */
 export async function runCardinalityTest() {
   const [template, dataRaw, renderer] = await Promise.all([
@@ -107,25 +79,56 @@ export async function runCardinalityTest() {
   const base = JSON.parse(dataRaw);
 
   const trimmed = JSON.parse(JSON.stringify(base));
-  trimmed.desserts = trimmed.desserts.slice(0, 2);
+  trimmed.dolci = trimmed.dolci.slice(0, 2);
   const dom1 = new JSDOM(template);
   renderer.render(dom1.window.document, trimmed);
-  const c1a = dom1.window.document.querySelectorAll('[data-list-id="dessert-1"] .item').length;
-  const c1b = dom1.window.document.querySelectorAll('[data-list-id="dessert-2"] .item').length;
-  if (c1a !== 2 || c1b !== 2) throw new Error('Removing items did not shrink both copies to 2 (got ' + c1a + ' / ' + c1b + ').');
+  const c1 = dom1.window.document.querySelectorAll('[data-list-id="dolci"] .item').length;
+  if (c1 !== 2) throw new Error('Removing Dolci items did not shrink the list to 2 (got ' + c1 + ').');
 
   const grown = JSON.parse(JSON.stringify(base));
-  grown.desserts.push({ id: 'ds-extra', name: 'Test Panna Cotta', desc: 'A test description.', price: '9.00' });
+  grown.dopaCena.grappa.push({ id: 'dc-g-extra', name: 'Test Grappa', price: '20.00' });
   const dom2 = new JSDOM(template);
   renderer.render(dom2.window.document, grown);
-  const c2a = dom2.window.document.querySelectorAll('[data-list-id="dessert-1"] .item').length;
-  const c2b = dom2.window.document.querySelectorAll('[data-list-id="dessert-2"] .item').length;
-  if (c2a !== base.desserts.length + 1 || c2b !== base.desserts.length + 1) {
-    throw new Error('Adding an item did not grow both copies (got ' + c2a + ' / ' + c2b + ').');
+  const c2 = dom2.window.document.querySelectorAll('[data-list-id="dopacena-grappa"] .item').length;
+  if (c2 !== base.dopaCena.grappa.length + 1) {
+    throw new Error('Adding a grappa did not grow the rendered list (got ' + c2 + ').');
   }
 }
 
-/** No `$` glyph anywhere on this card, and trailing .00 is dropped for display. */
+/**
+ * Dopa Cena optional `sub` field: missing/empty -> no .item-sub element;
+ * present on ANY item (not just the seed's Il Poggione) -> renders.
+ */
+export async function runOptionalSubTest() {
+  const [template, dataRaw, renderer] = await Promise.all([
+    readFile(join(here, 'template.html'), 'utf8'),
+    readFile(join(here, 'menu-data.json'), 'utf8'),
+    loadRenderer(),
+  ]);
+  const base = JSON.parse(dataRaw);
+
+  {
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, base);
+    const aperol = dom.window.document.querySelector('[data-item-id="dc-d1"]');
+    if (aperol.querySelector('.item-sub')) {
+      throw new Error('dopaCena.digestivo[0] (Aperol) has no `sub` in seed data but rendered .item-sub.');
+    }
+  }
+  {
+    const withSub = JSON.parse(JSON.stringify(base));
+    withSub.dopaCena.digestivo[0].sub = 'A test note';
+    const dom = new JSDOM(template);
+    renderer.render(dom.window.document, withSub);
+    const aperol = dom.window.document.querySelector('[data-item-id="dc-d1"]');
+    const subEl = aperol.querySelector('.item-sub');
+    if (!subEl || subEl.textContent !== 'A test note') {
+      throw new Error('Adding `sub` to an arbitrary dopaCena item did not render it.');
+    }
+  }
+}
+
+/** No `$` glyph anywhere on this menu, and trailing .00 is dropped for display. */
 export async function runPriceFormatTest() {
   const [template, dataRaw, renderer] = await Promise.all([
     readFile(join(here, 'template.html'), 'utf8'),
@@ -135,27 +138,27 @@ export async function runPriceFormatTest() {
   const base = JSON.parse(dataRaw);
   const dom = new JSDOM(template);
   renderer.render(dom.window.document, base);
-  const prices = Array.from(dom.window.document.querySelectorAll('.dessert-price')).map((el) => el.textContent);
+  const prices = Array.from(dom.window.document.querySelectorAll('.dessert-price, .item-price')).map((el) => el.textContent);
   prices.forEach((p) => {
-    if (p.includes('$')) throw new Error('Dessert price rendered with a $ glyph ("' + p + '") — this card never prints one.');
-    if (p.endsWith('.00')) throw new Error('Dessert price kept a trailing .00 ("' + p + '") — it should be dropped for display.');
+    if (p.includes('$')) throw new Error('A price rendered with a $ glyph ("' + p + '") — this menu never prints one.');
+    if (p.endsWith('.00')) throw new Error('A price kept a trailing .00 ("' + p + '") — it should be dropped for display.');
   });
 }
 
 if (typeof globalThis.describe === 'function') {
   // eslint-disable-next-line no-undef
-  describe('Siena Desserts menu rendering', () => {
+  describe('Siena Dessert menu rendering', () => {
     // eslint-disable-next-line no-undef
     test('render(template, seedData) matches expected-render.html', async () => {
       await runSnapshotTest();
     });
     // eslint-disable-next-line no-undef
-    test('both printed copies always match — one shared data set', async () => {
-      await runTwoCopyParityTest();
+    test('open-ended cardinality on Dolci and Dopa Cena subsections', async () => {
+      await runCardinalityTest();
     });
     // eslint-disable-next-line no-undef
-    test('open-ended list cardinality: add/remove items 1:1 in both copies', async () => {
-      await runCardinalityTest();
+    test('Dopa Cena optional sub-note renders only when filled', async () => {
+      await runOptionalSubTest();
     });
     // eslint-disable-next-line no-undef
     test('no $ glyph; trailing .00 dropped for display', async () => {
@@ -165,7 +168,7 @@ if (typeof globalThis.describe === 'function') {
 }
 
 if (process.argv[1] && process.argv[1].endsWith('snapshot-test.spec.js')) {
-  Promise.all([runSnapshotTest(), runTwoCopyParityTest(), runCardinalityTest(), runPriceFormatTest()])
-    .then(() => { console.log('✓ Desserts menu snapshot + parity + cardinality + price-format tests passed.'); })
+  Promise.all([runSnapshotTest(), runCardinalityTest(), runOptionalSubTest(), runPriceFormatTest()])
+    .then(() => { console.log('✓ Dessert menu snapshot + cardinality + optional-sub + price-format tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

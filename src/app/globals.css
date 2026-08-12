@@ -593,6 +593,12 @@ button {
 .chef-mode .section-block--dessert .section-body { background: #f3e7da; }
 .section-block-header--dessert .section-title-label { color: #fff; }
 
+/* ── Siena Dopa Cena — shares the Dessert sheet with Dolci, own color ── */
+.section-block-header--dopacena { background: #6e2a3a; }
+.section-block-header--dopacena:hover { background: #58212d; }
+.chef-mode .section-block--dopacena .section-body { background: #f5e6ea; }
+.section-block-header--dopacena .section-title-label { color: #fff; }
+
 /* ── Price input with auto-$ prefix ─────────────────────── */
 .price-input-wrap {
   display: flex;

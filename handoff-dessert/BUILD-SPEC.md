@@ -1,79 +1,106 @@
-# Build Spec — Siena Desserts Menu Editor
+# Build Spec — Siena Dessert Menu Editor
 
-Read this whole document before wiring the editor. This package is
-smaller than `../handoff-drinksdessert/` (one card, one field set, no
-dual-design mechanic) but shares its constraint model and conventions —
-read that package's `BUILD-SPEC.md` too if anything here is unclear.
+Read this whole document before wiring the editor. This package shares
+its constraint model and conventions with `../handoff-drinksdessert/` —
+read that package's `BUILD-SPEC.md` too, especially §1a (n/a here) and
+§1b (the holder crop line, which DOES apply here).
 
 ---
 
 ## 0. The physical product (READ THIS FIRST)
 
-One insert card, **4.25in × 11in** — the same size and the same holder as
-the 4 cards in `../handoff-drinksdessert/` (Cocktails, Spritz, Spirits &
-Beer, Dopa Cena). This card used to be the "Dolci" page on the old
-combined Drinks & Dessert card; it's now a standalone insert with its
-own editor surface.
+**This cuts into two separate 4.25in × 11in insert cards, exactly like
+the Drinks Menu — it is NOT one uncut 8.5×11 page.** One physical
+8.5in × 11in sheet prints both cards side by side; staff cut it in half
+down the middle, and each half slides into the same hard menu holder as
+the 4 Drinks Menu cards in `../handoff-drinksdessert/`. If a previous
+version of this doc, or any conversation about it, described a single
+uncut sheet or a "loose page" — that was a misunderstanding; the owner
+has confirmed this in writing. Build the same way as the Drinks Menu's
+two sheets:
 
-It prints **two-up on a single 8.5×11 sheet**: two IDENTICAL copies of
-the same card, side by side, with a dashed cut-guide down the middle for
-staff to cut. This is the same physical mechanic as the Drinks Menu's
-Sheet A / Sheet B — **except both halves here are the SAME card**, not
-two different ones. The point is purely to save paper: printing one
-8.5×11 sheet gets you 2 copies of this card, instead of printing two
-separate 8.5×11 sheets.
+1. **Dolci** (left half) — the dessert list.
+2. **Siena Dopa Cena** (right half) — digestivi, grappa, ports, cognac &
+   calvados, traditional Italian liqueurs. This card used to live on the
+   Drinks Menu; it moved here when Liquori replaced it there.
+
+**This is NOT two identical copies of one card.** An earlier version of
+this package printed the same Dolci card twice, side by side, to save
+paper. That model is gone — the two halves are now different content.
+If you find code, docs, or a `data-copy-id` attribute anywhere assuming
+two identical copies, it's stale — delete it, don't preserve it.
 
 `template.html` models this as one `<div class="sheet">` containing two
-`<div class="page" data-page-id="dessert">` elements
-(`data-copy-id="1"` / `"2"`), with a `.cut-guide` between them. Both
-copies are always hydrated from the exact same `data.desserts` array —
-see §2.
+different `<div class="page">` elements (`data-page-id="dolci"` /
+`"dopacena"`) with a dashed `.cut-guide` between them.
+
+### The cut guide never prints
+
+The dashed line between Dolci and Dopa Cena is a **screen/editor
+placement aid only**. It must never appear in the actual printed or
+exported output — `template.html`'s `@media print` rule enforces this
+(`.cut-guide { display: none !important; }` under print). Staff cut at
+the known 4.25in mark; don't reintroduce a printed guide line, and don't
+"fix" this rule if it looks like a regression — it's intentional.
+
+---
+
+## 1b. The holder crop line
+
+Both cards share the same physical menu holder as the Drinks Menu's 4
+cards, and that holder hides everything below **9.96in from the top of
+any card**. This is a fixed hardware constant — see
+`../handoff-drinksdessert/BUILD-SPEC.md` §1b for the full rationale.
+`validate.js` in this package checks it independently for both Dolci
+and Dopa Cena, exactly like the Drinks Menu package does for its four
+cards. Keep the `CROP_LINE_IN` constant in both `validate.js` files in
+sync if it's ever revised.
 
 ---
 
 ## 1. Constraint model — validate.js + a single 1pt shrink step
 
-Same layout-budget approach as the Drinks Menu (`../handoff-drinksdessert/
-BUILD-SPEC.md` §1): the item list is **open-ended**, no hard cap.
-However many items fit is however many the manager can have — the
-enforcement is `validate.js`, not a count printed anywhere in this doc.
+Both cards have **open-ended item counts** — no hard cap on either.
 
 1. After every edit, render the candidate data into a live preview and
    call `SienaDessertValidate.validate(previewDoc)`.
-2. The validator measures **only the primary copy**
-   (`[data-copy-id="1"]`). Since both copies are always hydrated from the
-   same data at the same size, checking one proves both — measuring both
-   would be redundant work.
-3. **If the primary copy overflows at normal type size**, the validator
-   tries exactly **one** fallback: it adds the `shrink-1pt` class to
-   **both** `[data-page-id="dessert"]` elements together (never just
-   one — the two printed copies must never visually disagree), which
-   drops item name/price/description by exactly 1pt. The page title
-   ("Dolci") is never touched; it's static chrome.
-4. If it fits after that single step, save proceeds — show a subtle
-   "this card is now at reduced type" indicator.
-5. **If it still doesn't fit, block the save.** No second shrink step,
-   no further ladder. Surface `report.pages[0].worstList` (always
-   `"dessert-1"` here — there's only one list per copy) in the message,
-   e.g. *"Dolci doesn't fit — remove an item or shorten a description."*
+2. The validator measures the Dolci and Dopa Cena `.page` elements
+   **independently** — they're two different physical cards; one can
+   overflow (or cross the crop line) while the other has slack.
+3. **If a page fails either check at normal type size**, the validator
+   tries exactly **one** fallback: `shrink-1pt` on *that page only*,
+   dropping every dynamic text run by 1pt via CSS already in
+   `template.html`. Page titles, subsection titles, and the Dolci
+   illustration are never touched.
+4. If the page passes both checks after that, save proceeds — show a
+   subtle "reduced type" indicator for that card.
+5. **If it still fails, block the save.** No second shrink step.
 
 ### Why not an auto-fit ladder?
 
-Same reasoning as the Drinks Menu: this card has no disposable chrome to
-shed (just a title and a centered item list). Block instead of silently
-degrading further than the one approved 1pt step.
+Same reasoning as the Drinks Menu: neither card has disposable chrome
+to shed. Block instead of silently degrading further.
 
 ---
 
-## 2. Two identical copies, one data set — never duplicate storage
+## 2. Dolci — one list, a fixed illustration, and a deliberate non-center
 
-**There is only one `desserts` array, rendered into both printed
-copies.** `render.js` writes the exact same items into
-`[data-list-id="dessert-1"]` and `[data-list-id="dessert-2"]` every time
-it runs. Do not give the editor two separate "left card" / "right card"
-forms, and do not store two arrays — that would let the two printed
-copies drift out of sync, defeating the entire point of "two identical
-copies." One edit, one array, two renders.
+- **The Dolci illustration is a static asset, not a data field.** It's
+  hard-coded into `template.html` (`<img class="dolci-image"
+  src="assets/dolci-affogato-sketch.png">`), pinned to the bottom of the
+  card below the item list. It never changes with `data.dolci` and has
+  no `data-item-id`; don't add an editor control for it — swapping it is
+  a design change, not a content edit.
+- **The item list is not vertically centered.** It sits about a quarter
+  of the way down the space below the title — implemented as two flex
+  spacers around the list in a 1:3 ratio (top:bottom); see
+  `.dolci-spacer-top` / `.dolci-spacer-bottom` in `template.html`. A
+  plain `justify-content: center` would put it at 1:1 and is NOT what's
+  wanted here — this asymmetry is deliberate so the illustration reads
+  as a bottom anchor rather than crowding the list. Don't "fix" it to
+  true centering.
+- Every Dolci item requires `name`, `desc`, and `price` — no optional
+  field on this card.
 
 ---
 
@@ -97,37 +124,38 @@ SienaDessertValidate.validate(document);       // measures & reports; needs a re
 
 ```jsonc
 {
-  "desserts": [ /* open-ended */ {
-    "id": "ds-1",
-    "name": "Sorbetti di Frutta",
-    "desc": "Mango, Raspberry, Lemon",
-    "price": "11.00"
-  } ]
+  "dolci": [ /* open-ended */ {
+    "id": "ds-1", "name": "Sorbetti di Frutta",
+    "desc": "Mango, Raspberry, Lemon", "price": "11.00"
+  } ],
+  "dopaCena": {
+    "digestivo":         [ /* open-ended */ { "id": "dc-d1", "name": "Aperol", "price": "8.00" } ],
+    "grappa":            [ /* open-ended — any item MAY carry `sub` */ ],
+    "ports":             [ /* open-ended */ ],
+    "cognac":            [ /* open-ended */ ],
+    "traditionalItalian":[ /* open-ended */ ]
+  }
 }
 ```
 
-Every field is **required** on every item — `name`, `desc`, `price`. No
-optional fields on this card (simpler than Cocktails' optional `note` or
-Dopa Cena's optional `desc`). No hard per-field character limit —
-loose sanity caps to catch paste errors are fine (e.g. name ≤ 60 chars,
-desc ≤ 200 chars) but are not the real enforcement; `validate.js` is.
-
 ### Price convention
 
-**Prices never include the `$` glyph** — matches every other menu in
-this project except Spritz (`../handoff-drinksdessert/`), which is a
-deliberate, isolated exception. Store full-precision values in the JSON
-(`"11.00"`, `"8.00"`); the renderer drops a trailing `.00` for display
-(`"11.00"` → `"11"`) and keeps any other cents as-is (`"6.50"` stays
-`"6.50"`). Don't pre-strip `.00` or prepend `$` yourself — let
-`render.js`'s `formatPrice()` handle display.
+**No `$` anywhere on this menu.** Store full-precision values
+(`"11.00"`, `"8.25"`); `render.js`'s `formatPrice()` drops a trailing
+`.00` for display (`"11.00"` → `"11"`) and keeps other cents as-is
+(`"6.50"` stays `"6.50"`). Don't pre-strip `.00` or prepend `$` yourself.
+
+### Item shape by list
+
+| List | Fields | Notes |
+|---|---|---|
+| `dolci[i]` | `id`, `name`, `desc` (required), `price` (required) | No optional field. |
+| `dopaCena.<sub>[i]` | `id`, `name`, `price` (required), `sub` (optional) | `sub` is a one-line note under the name/price row — e.g. a grappa's producing region ("Il Poggione \"Paganelli\"" → Brunello Riserva di Montalcino in the seed). Not reserved for any particular item; empty/missing removes the line. |
 
 ### IDs
 
-Opaque, stable, mint-once per new item — same convention as every other
-Siena handoff. Never recycle a deleted item's ID for a new one in that
-slot. One item's ID appears in BOTH printed copies (it's the same item,
-rendered twice).
+Opaque, stable, mint-once per new item. Never recycle a deleted item's
+ID.
 
 ---
 
@@ -135,19 +163,21 @@ rendered twice).
 
 | Field | JSON path | Required? | Notes |
 |---|---|---|---|
-| Item name | `desserts[i].name` | required | Playfair Display italic, 16pt (shrinks to 15pt). |
-| Item description | `desserts[i].desc` | required | Montserrat, 12pt (shrinks to 11pt), wraps freely, centered. |
-| Item price | `desserts[i].price` | required | Playfair Display italic, 14pt (shrinks to 13pt). No `$`; trailing `.00` dropped for display. |
+| Dolci item name | `dolci[i].name` | required | Playfair Display italic, 16.5pt (shrinks to 15.5pt). |
+| Dolci item description | `dolci[i].desc` | required | Montserrat, 12pt (shrinks to 11pt), wraps freely, centered. |
+| Dolci item price | `dolci[i].price` | required | Playfair Display italic, 14.25pt (shrinks to 13.25pt). No `$`; trailing `.00` dropped. |
+| Dopa Cena item name | `dopaCena.<sub>[i].name` | required | Montserrat semibold, 12.5pt (shrinks to 11.5pt). |
+| Dopa Cena item price | `dopaCena.<sub>[i].price` | required | Playfair Display italic. No `$`; trailing `.00` dropped. |
+| Dopa Cena item sub-note | `dopaCena.<sub>[i].sub` | optional | Available on every item, every subsection. Empty/missing removes the line. |
 
 ### Add / remove / reorder
 
-The list supports add, remove, and reorder — no printed maximum (see
-§1). The editor:
+Every list above supports add, remove, and reorder — no printed
+maximum. The editor:
 
 - Generates a fresh opaque `id` on add.
-- Removes the item from the array on delete.
-- Persists array order as the new canonical order (renderer prints in
-  array order, top to bottom, identically in both copies).
+- Removes the item from its array on delete.
+- Persists array order as the new canonical order.
 - Must run `validate.js` after every such change and block save on
   `fits: false`.
 
@@ -157,21 +187,31 @@ The list supports add, remove, and reorder — no printed maximum (see
 
 Baked into `template.html`, no data hooks, not surfaced in the editor:
 
-- The page title, "Dolci", plus its flanking dark rules — printed
-  identically on both copies.
-- The vertical centering: the title stays pinned at the top of the card;
-  the item list centers in the remaining space below it. This is
-  layout behavior, not a data field — nothing to expose in the editor.
-- The `.cut-guide` dashed line between the two copies.
-- The number of printed copies (always 2, side by side on one sheet) —
-  this is not a print option like the Drinks Menu's Sheet A/B toggle;
-  there's only one sheet, and it always prints both copies together.
-- All typography, colors, card background, and page padding.
-- Fonts, page size (4.25×11in per card / 8.5×11in per printed sheet).
+- The "Dolci" title — flanked by dark rules, notably larger than every
+  other page title in this project (28.5pt vs the usual 22pt).
+- The "Siena Dopa Cena" title — plain centered text, **no** flanking
+  rules (unlike Dolci's). This split mirrors the Drinks Menu, where
+  Cocktails/Spirits & Beer titles are also plain while Spritz/Liquori
+  keep rules — it's a deliberate, current design choice, not an
+  inconsistency to fix.
+- The five Dopa Cena subsection titles ("Digestivo", "Grappa · 2.5 oz",
+  "Ports · 2.5 oz", "Cognac & Calvados", "Traditional Italian · 2.5
+  oz") — fixed, in that order, each flanked by small ornamental rules.
+  The editor cannot add, rename, or reorder them; only items within a
+  subsection are editable.
+- The Dolci illustration (`assets/dolci-affogato-sketch.png`) and its
+  bottom-pinned position — see §2.
+- The Dolci list's non-centered placement (the 1:3 spacer ratio) — §2.
+- The `.cut-guide` dashed line, and the fact that it never prints — see
+  §0.
+- The holder crop line constant (§1b) — an engineering constraint,
+  never a manager-facing setting.
+- All typography, colors, card background, and page padding. Fonts,
+  page size (4.25×11in per card / 8.5×11in per printed sheet).
 
-If a manager wants a renamed title, a different card size, or only one
-copy printed, that's an owner-level design change — surface it as a
-request, don't build it into the editor.
+If a manager wants a renamed title, a swapped illustration, or a
+different card layout, that's an owner-level design change — surface it
+as a request, don't build it into the editor.
 
 ---
 
@@ -179,79 +219,80 @@ request, don't build it into the editor.
 
 | Slot family | Selector pattern | Field |
 |---|---|---|
-| Card container (both copies) | `[data-page-id="dessert"]` | validate.js's shrink-1pt target — applied to both together |
-| Card container (primary, measured) | `[data-page-id="dessert"][data-copy-id="1"]` | validate.js measures only this one |
-| Card container (mirror copy) | `[data-page-id="dessert"][data-copy-id="2"]` | hydrated identically, never measured |
+| Card container | `[data-page-id="dolci"\|"dopacena"]` | validate.js measures each independently |
 | Sheet container | `[data-sheet-id="dessert"]` | the one physical 8.5×11 print page |
-| List, copy 1 | `[data-list-id="dessert-1"]` | render.js clears + repopulates; matches `data.desserts` |
-| List, copy 2 | `[data-list-id="dessert-2"]` | same array, rendered a second time |
-| Item | `[data-item-id="…"]` | one per JSON item, opaque stable ID — appears once in EACH copy |
+| Any list | `[data-list-id="…"]` | render.js clears + repopulates; validate.js's `worstList` diagnostic |
+| List IDs | `dolci`, `dopacena-digestivo`, `dopacena-grappa`, `dopacena-ports`, `dopacena-cognac`, `dopacena-traditionalItalian` | maps 1:1 to the JSON paths in §4 |
+| Item | `[data-item-id="…"]` | one per JSON item, opaque stable ID |
 
-The renderer uses `textContent` exclusively — no `innerHTML` anywhere in
-this card.
+The renderer uses `textContent` exclusively — no `innerHTML` anywhere.
 
 ---
 
 ## 8. Editor UI sketch
 
-One panel — a single live preview pane that re-renders and re-validates
-on every edit (debounce ~300–500ms after the last keystroke):
+Two collapsible panels (Dolci, Dopa Cena), each with a live preview pane
+that re-renders and re-validates on every edit (debounce ~300–500ms):
 
-- One open-ended list: name, description, price per row. Drag-to-reorder
-  within the list.
-- Status line: "fits" / "fits (reduced type)" / the blocking message
-  naming what to shorten or remove.
-- "Save" disabled while `report.fits === false`.
-- No design-choice screen, no print-sheet picker — there's exactly one
-  print output (both copies together), so the print action is a single
-  button.
+- Dolci panel: one open-ended list (name, description, price per row),
+  drag-to-reorder. No control for the illustration — it's static (§2).
+- Dopa Cena panel: five fixed subsection groups, each an open-ended
+  list (name, price, optional sub-note), drag-to-reorder within a
+  subsection; dragging across subsections is blocked.
+- Status line: Dolci / Dopa Cena, each "fits" / "fits (reduced type)" /
+  a blocking message naming the worst list.
+- "Save" disabled while `report.fits === false` on either card.
+- One print button — there's no sheet-choice picker like the Drinks
+  Menu's Sheet A/B (only one sheet exists here).
 
 ---
 
 ## 9. Gotchas
 
-- **`validate()` needs a real browser.** It calls
-  `getBoundingClientRect` and reads `scrollHeight`/`clientHeight`. Run it
-  in the editor's preview iframe, not in a Node/JSDOM context.
+- **`validate()` needs a real browser.** Run it in the editor's preview
+  iframe, not Node/JSDOM.
 - **Wait for fonts before validating.** Call
-  `await SienaDessertValidate.waitForLayout(doc)` before `validate(doc)`
-  — Playfair is a variable font and shifts line-heights slightly when it
-  swaps in, which can flip a borderline fit/no-fit call.
-- **Only the primary copy is measured — but the shrink class always goes
-  on both.** Never apply `shrink-1pt` to just one copy; that would print
-  two cards at different type sizes, which defeats "two identical
-  copies."
-- **One data set, not two.** Never store a separate array "for the right
-  copy" — that's exactly the duplication that would let the two printed
-  copies drift apart. `render.js` always writes the same `desserts` array
-  into both list containers.
-- **No `$` in the JSON.** This card is not the Spritz exception (see
-  `../handoff-drinksdessert/BUILD-SPEC.md` §3) — no price on this card
-  ever prints with a `$`.
-- **No optional fields.** Unlike Cocktails (`note`) or Dopa Cena (`desc`
-  on some items), every field on a dessert item is required. Don't add
-  an optional-field code path "for consistency" — this card doesn't need
-  one.
+  `await SienaDessertValidate.waitForLayout(doc)` before `validate(doc)`.
+- **The two cards are measured independently now.** Don't reintroduce
+  the old "measure one, trust both" shortcut — Dolci and Dopa Cena are
+  different content and can pass/fail independently.
+- **A page can fail on the crop line alone**, even with no
+  `overflowPx` — check `cropLineOk` too (§1b). `fits` is already the AND
+  of both checks.
+- **No `$` anywhere on this menu.** Unlike the Drinks Menu's Spritz
+  page, there is no exception here.
+- **The cut guide must never print.** Don't remove its `@media print`
+  rule "to help staff see where to cut" — see §0.
+- **The Dolci illustration is not manager content.** Don't add a
+  data field or image-upload control for it.
+- **Dopa Cena's `sub` field is available on every item, not one slot.**
+  The seed happens to put one on "Il Poggione \"Paganelli\"" — that's
+  just today's content, not a reserved field.
 - **Special characters:** preserve curly quotes, en/em dashes, middle
   dots, and accented letters (e.g. "Crème Brûlée"). Don't ASCII-fold on
   save.
-- **Empty values:** never allow an empty name, description, or price.
+- **Empty values:** never allow an empty name or price anywhere. Dolci
+  description is required; Dopa Cena's `sub` is the only optional text
+  field on this menu.
 
 ---
 
 ## 10. What "done" looks like
 
-- Editor loads the card from the seed data, populated exactly as in
-  `expected-render.html`, identically in both printed copies.
-- Manager adds a 7th dessert → both copies re-render with 7 rows →
-  validator runs → if it still fits, save proceeds; if not, the card
-  shows `shrink-1pt` applied to both copies and still fits, or the save
-  is blocked with a message.
-- Manager edits a description to be much longer → card re-validates;
-  if it now overflows and the 1pt shrink doesn't save it, the manager
-  sees a message telling them to shorten it or remove an item.
-- Manager reorders items by drag → save → reload → new order persists
-  and prints in that order, identically in both copies.
-- Manager prints the card → gets one 8.5×11 sheet with two identical
-  Dolci cards side by side and a cut-guide between them.
-- Snapshot test passes in CI (`snapshot-test.spec.js`).
+- Editor loads both cards from the seed data, populated exactly as in
+  `expected-render.html`.
+- Manager adds a 7th dessert → Dolci re-renders with 7 rows, still
+  anchored a quarter of the way down (not centered) with the
+  illustration pinned below → validator runs → if it still fits, save
+  proceeds; otherwise `shrink-1pt` is applied or the save is blocked.
+- Manager adds a description to a Cognac item that's never had one via
+  the Dopa Cena panel's `sub` field → re-validates; if it now overflows
+  and the 1pt shrink doesn't save it, the manager sees a message.
+- Manager reorders Dolci items by drag → save → reload → new order
+  persists.
+- Manager prints the sheet → gets one 8.5×11 sheet with Dolci on the
+  left, Siena Dopa Cena on the right, and NO visible cut line.
+- A hypothetical edit that makes either card's last line cross the
+  9.96in holder crop line, even with slack before its own 11in bottom,
+  is correctly rejected with `cropLineOk: false`.
+- Snapshot test passes in CI (`snapshot-test.spec.mjs`).

@@ -8,8 +8,9 @@ export const dynamic = 'force-dynamic';
 const HANDOFF = join(process.cwd(), 'handoff-dessert');
 
 // ?src=current (default) | draft | dessert-published-<ts>
-// Always prints the one 8.5x11 sheet with both identical copies — there is
-// no sheet/page picker on this card (see handoff-dessert/BUILD-SPEC.md §6).
+// Always prints the one 8.5x11 sheet — Dolci (left) and Siena Dopa Cena
+// (right), two different cards — there is no sheet/page picker on this
+// menu (see handoff-dessert/BUILD-SPEC.md §8).
 export async function GET(request: Request) {
   const src = new URL(request.url).searchParams.get('src');
   const [data, renderSrc, validateSrc] = await Promise.all([
@@ -33,7 +34,7 @@ ${validateSrc}
   var V = window.SienaDessertValidate;
   document.fonts.ready.then(function () {
     V.waitForLayout(document).then(function () {
-      V.validate(document); // applies shrink-1pt to both copies where needed, matching the preview
+      V.validate(document); // applies shrink-1pt to either card independently where needed, matching the preview
       setTimeout(function () { window.print(); }, 200);
     });
   });

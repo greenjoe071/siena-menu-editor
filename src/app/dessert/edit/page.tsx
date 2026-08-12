@@ -11,20 +11,54 @@ import {
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
-interface DessertItem {
+interface DolciItem {
   id: string;
   name: string;
   desc: string;
   price: string;   // stored WITHOUT the $ glyph, e.g. "11.00"
 }
 
-interface DessertMenuData {
-  desserts: DessertItem[];
+interface DopaCenaItem {
+  id: string;
+  name: string;
+  price: string;
+  sub?: string;     // optional one-line note (e.g. a grappa's producing region)
 }
 
-// validate.js report shape — one entry, always id "dessert"
+type DopaKey = 'digestivo' | 'grappa' | 'ports' | 'cognac' | 'traditionalItalian';
+
+interface DessertMenuData {
+  dolci: DolciItem[];
+  dopaCena: Record<DopaKey, DopaCenaItem[]>;
+}
+
+// validate.js report shape — one entry per page ("dolci" / "dopacena")
 interface PageReport { id: string; fits: boolean; shrunk: boolean; overflowPx: number; worstList: string | null; }
 interface ValidateReport { fits: boolean; pages: PageReport[]; error?: string; }
+
+// ── Static config ─────────────────────────────────────────────────────────
+
+const DOPA_SUBS: { key: DopaKey; listId: string; title: string }[] = [
+  { key: 'digestivo',          listId: 'dopacena-digestivo',          title: 'Digestivo' },
+  { key: 'grappa',              listId: 'dopacena-grappa',             title: 'Grappa · 2.5 oz' },
+  { key: 'ports',                listId: 'dopacena-ports',              title: 'Ports · 2.5 oz' },
+  { key: 'cognac',                listId: 'dopacena-cognac',             title: 'Cognac & Calvados' },
+  { key: 'traditionalItalian',    listId: 'dopacena-traditionalItalian', title: 'Traditional Italian · 2.5 oz' },
+];
+
+// data-list-id → human label (for the overflow message)
+const LIST_LABELS: Record<string, string> = {
+  'dolci': 'Dolci',
+  'dopacena-digestivo': 'Digestivo',
+  'dopacena-grappa': 'Grappa',
+  'dopacena-ports': 'Ports',
+  'dopacena-cognac': 'Cognac & Calvados',
+  'dopacena-traditionalItalian': 'Traditional Italian',
+};
+
+const CARD_LABELS: Record<string, string> = {
+  dolci: 'Dolci', dopacena: 'Siena Dopa Cena',
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -34,8 +68,8 @@ function useDebounce<T>(value: T, ms: number): T {
   return d;
 }
 
-function newId(): string {
-  return 'ds-' + Math.random().toString(36).slice(2, 7);
+function newId(prefix: string): string {
+  return prefix + '-' + Math.random().toString(36).slice(2, 7);
 }
 
 function filterPrice(v: string): string {
@@ -61,17 +95,17 @@ function PriceInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-// ── Editable dessert list — every field required, no optional note/desc ───
+// ── Dolci list — every field required, no optional note/desc ──────────────
 
-function DessertItemRow({
+function DolciItemRow({
   item, index, onChange, onRemove,
 }: {
-  item: DessertItem;
+  item: DolciItem;
   index: number;
-  onChange: (updated: DessertItem) => void;
+  onChange: (updated: DolciItem) => void;
   onRemove: () => void;
 }) {
-  function set<K extends keyof DessertItem>(k: K, v: DessertItem[K]) { onChange({ ...item, [k]: v }); }
+  function set<K extends keyof DolciItem>(k: K, v: DolciItem[K]) { onChange({ ...item, [k]: v }); }
 
   return (
     <Draggable draggableId={item.id} index={index}>
@@ -115,25 +149,25 @@ function DessertItemRow({
   );
 }
 
-function DessertEditableList({
+function DolciEditableList({
   items, onItemsChange,
 }: {
-  items: DessertItem[];
-  onItemsChange: (items: DessertItem[]) => void;
+  items: DolciItem[];
+  onItemsChange: (items: DolciItem[]) => void;
 }) {
-  function updateAt(i: number, updated: DessertItem) {
+  function updateAt(i: number, updated: DolciItem) {
     const next = [...items]; next[i] = updated; onItemsChange(next);
   }
   function removeAt(i: number) { onItemsChange(items.filter((_, idx) => idx !== i)); }
-  function add() { onItemsChange([...items, { id: newId(), name: '', desc: '', price: '' }]); }
+  function add() { onItemsChange([...items, { id: newId('ds'), name: '', desc: '', price: '' }]); }
 
   return (
     <div>
-      <Droppable droppableId="desserts" type="ds-item">
+      <Droppable droppableId="dolci" type="ds-item">
         {(prov) => (
           <div ref={prov.innerRef} {...prov.droppableProps} className="dish-list">
             {items.map((it, i) => (
-              <DessertItemRow key={it.id} item={it} index={i} onChange={u => updateAt(i, u)} onRemove={() => removeAt(i)} />
+              <DolciItemRow key={it.id} item={it} index={i} onChange={u => updateAt(i, u)} onRemove={() => removeAt(i)} />
             ))}
             {prov.placeholder}
           </div>
@@ -144,14 +178,109 @@ function DessertEditableList({
   );
 }
 
+// ── Dopa Cena list — name + price required, optional one-line sub-note ────
+
+function DopaCenaItemRow({
+  item, index, onChange, onRemove,
+}: {
+  item: DopaCenaItem;
+  index: number;
+  onChange: (updated: DopaCenaItem) => void;
+  onRemove: () => void;
+}) {
+  const [showSub, setShowSub] = useState(!!(item.sub && item.sub.length));
+
+  function set<K extends keyof DopaCenaItem>(k: K, v: DopaCenaItem[K]) { onChange({ ...item, [k]: v }); }
+
+  return (
+    <Draggable draggableId={item.id} index={index}>
+      {(prov, snap) => (
+        <div
+          ref={prov.innerRef}
+          {...prov.draggableProps}
+          className="dish-row"
+          style={{
+            ...prov.draggableProps.style,
+            opacity: snap.isDragging ? 0.85 : 1,
+            boxShadow: snap.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : undefined,
+          }}
+        >
+          <div className="dish-row-header">
+            <span className="drag-handle" {...prov.dragHandleProps} title="Drag to reorder">⠿</span>
+            <span className="dish-name-preview">{item.name || '(new item)'}</span>
+            <button className="btn-remove-dish" title="Remove item" onClick={onRemove}>×</button>
+          </div>
+
+          <div className="dish-fields">
+            <div className="dish-field-row" style={{ alignItems: 'flex-end', gap: '10px' }}>
+              <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
+                <label>Name</label>
+                <input value={item.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Amaro Nonino" />
+              </div>
+              <div className="field-group" style={{ flexShrink: 0, marginBottom: 0 }}>
+                <label>Price</label>
+                <PriceInput value={item.price} onChange={v => set('price', v)} />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '8px' }}>
+              {showSub ? (
+                <div className="field-group" style={{ marginBottom: 0 }}>
+                  <div className="field-label-row">
+                    <label>Note (optional — e.g. producing region)</label>
+                    <button className="btn-link-remove" onClick={() => { setShowSub(false); set('sub', ''); }}>remove</button>
+                  </div>
+                  <input value={item.sub ?? ''} onChange={e => set('sub', e.target.value)} placeholder="e.g. Brunello Riserva di Montalcino" />
+                </div>
+              ) : (
+                <button className="btn-add-inline" onClick={() => setShowSub(true)}>+ note</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
+}
+
+function DopaCenaEditableList({
+  listId, items, onItemsChange,
+}: {
+  listId: string;
+  items: DopaCenaItem[];
+  onItemsChange: (items: DopaCenaItem[]) => void;
+}) {
+  function updateAt(i: number, updated: DopaCenaItem) {
+    const next = [...items]; next[i] = updated; onItemsChange(next);
+  }
+  function removeAt(i: number) { onItemsChange(items.filter((_, idx) => idx !== i)); }
+  function add() { onItemsChange([...items, { id: newId('dc'), name: '', price: '' }]); }
+
+  return (
+    <div>
+      <Droppable droppableId={listId} type="dc-item">
+        {(prov) => (
+          <div ref={prov.innerRef} {...prov.droppableProps} className="dish-list">
+            {items.map((it, i) => (
+              <DopaCenaItemRow key={it.id} item={it} index={i} onChange={u => updateAt(i, u)} onRemove={() => removeAt(i)} />
+            ))}
+            {prov.placeholder}
+          </div>
+        )}
+      </Droppable>
+      <button className="btn-add-dish" onClick={add}>+ Add</button>
+    </div>
+  );
+}
+
 // ── Collapsible card panel ────────────────────────────────────────────────
 
 function CardPanel({
-  title, report, children,
+  title, pageId, report, variant, children,
 }: {
-  title: string; report: ValidateReport | null; children: React.ReactNode;
+  title: string; pageId: string; report: ValidateReport | null; variant: string; children: React.ReactNode;
 }) {
-  const pr = report?.pages.find(p => p.id === 'dessert');
+  const pr = report?.pages.find(p => p.id === pageId);
   let status: React.ReactNode = null;
   if (pr) {
     if (!pr.fits) status = <span className="dd-chip dd-chip--bad">⚠ too long</span>;
@@ -159,8 +288,8 @@ function CardPanel({
     else status = <span className="dd-chip dd-chip--ok">✓ fits</span>;
   }
   return (
-    <div className="section-block section-block--dessert">
-      <div className="section-block-header section-block-header--dessert">
+    <div className={`section-block section-block--${variant}`}>
+      <div className={`section-block-header section-block-header--${variant}`}>
         <span className="section-title-label">{title}</span>
         {status}
       </div>
@@ -217,7 +346,7 @@ export default function DessertEditorPage() {
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
   }, [apiPath]);
 
-  // Validation result → status chip + gate the pending save.
+  // Validation result → status chips + gate the pending save.
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_DESSERT_VALIDATE_RESULT') return;
@@ -228,8 +357,13 @@ export default function DessertEditorPage() {
         if (pendingSaveRef.current) { saveToServer(pendingSaveRef.current); pendingSaveRef.current = null; }
       } else {
         pendingSaveRef.current = null;
+        const bad = rep.pages.find(p => !p.fits);
+        const card = bad ? (CARD_LABELS[bad.id] ?? bad.id) : 'A card';
+        const worst = bad?.worstList ? LIST_LABELS[bad.worstList] ?? bad.worstList : null;
         setSaveStatus('error');
-        setSaveMsg('Dolci is too long — remove an item or shorten a description.');
+        setSaveMsg(worst
+          ? `${card} is too long — ${worst} is the largest section. Remove an item there, or shorten/remove a description.`
+          : `${card} is too long — remove an item or shorten a description.`);
       }
     }
     window.addEventListener('message', onMessage);
@@ -251,16 +385,33 @@ export default function DessertEditorPage() {
     window.open('/dessert-print?src=current', '_blank');
   }
 
-  function setDesserts(items: DessertItem[]) { setMenu(m => m && { ...m, desserts: items }); }
+  // ── Mutations ────────────────────────────────────────────────────────────
 
-  // Drag reorder within the single list.
+  function setDolci(items: DolciItem[]) { setMenu(m => m && { ...m, dolci: items }); }
+  function setDopaCena(key: DopaKey, items: DopaCenaItem[]) {
+    setMenu(m => m && { ...m, dopaCena: { ...m.dopaCena, [key]: items } });
+  }
+
+  // Drag reorder within a single list (blocked across lists).
   function handleDragEnd(result: DropResult) {
     if (!result.destination || !menu) return;
     const { source, destination } = result;
-    const next = Array.from(menu.desserts);
-    const [moved] = next.splice(source.index, 1);
-    next.splice(destination.index, 0, moved);
-    setDesserts(next);
+    if (source.droppableId !== destination.droppableId) return;
+    const listId = source.droppableId;
+
+    function reorder<T>(items: T[]): T[] {
+      const next = Array.from(items);
+      const [moved] = next.splice(source.index, 1);
+      next.splice(destination.index, 0, moved);
+      return next;
+    }
+
+    if (listId === 'dolci') {
+      setDolci(reorder(menu.dolci));
+    } else {
+      const sub = DOPA_SUBS.find(s => s.listId === listId);
+      if (sub) setDopaCena(sub.key, reorder(menu.dopaCena[sub.key]));
+    }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -288,17 +439,33 @@ export default function DessertEditorPage() {
           </div>
 
           <div className="draft-banner fix-banner">
-            ✏️ Every change you make here saves right away — the card must still fit before you can print.
+            ✏️ Every change you make here saves right away — every card must still fit before you can print.
           </div>
 
           <div className="editor-scroll chef-mode">
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
-              <p>One card, printed <strong>two-up on one sheet</strong> (two identical copies, cut down the middle). Add or remove items freely — the card will tell you if it runs out of room.</p>
+              <p>One sheet, cut into two different cards — <strong>Dolci</strong> (left) and <strong>Siena Dopa Cena</strong> (right). Add or remove items freely — a card will tell you if it runs out of room.</p>
             </div>
 
             <div className="page-group">
-              <CardPanel title="Dolci" report={report}>
-                <DessertEditableList items={menu.desserts} onItemsChange={setDesserts} />
+              <div className="page-group-label">Left card</div>
+              <CardPanel title="Dolci" pageId="dolci" report={report} variant="dessert">
+                <DolciEditableList items={menu.dolci} onItemsChange={setDolci} />
+              </CardPanel>
+            </div>
+
+            <div className="page-group">
+              <div className="page-group-label">Right card</div>
+              <CardPanel title="Siena Dopa Cena" pageId="dopacena" report={report} variant="dopacena">
+                {DOPA_SUBS.map(sub => (
+                  <div key={sub.key} className="dd-subsection">
+                    <div className="dd-subsection-title">{sub.title}</div>
+                    <DopaCenaEditableList
+                      listId={sub.listId} items={menu.dopaCena[sub.key]}
+                      onItemsChange={items => setDopaCena(sub.key, items)}
+                    />
+                  </div>
+                ))}
               </CardPanel>
             </div>
           </div>{/* end editor-scroll */}
@@ -315,7 +482,7 @@ export default function DessertEditorPage() {
         {/* ── Preview pane ────────────────────────────────────────── */}
         <div className="preview-pane">
           <div className="preview-toolbar">
-            <span>Live preview — 1 card, 2 identical copies</span>
+            <span>Live preview — Dolci &amp; Dopa Cena, one sheet</span>
             <button
               className="btn-ghost"
               style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
@@ -324,7 +491,7 @@ export default function DessertEditorPage() {
               ↺ Reload from server
             </button>
           </div>
-          <iframe ref={iframeRef} src={previewUrl} className="preview-iframe" title="Desserts preview" />
+          <iframe ref={iframeRef} src={previewUrl} className="preview-iframe" title="Dessert preview" />
         </div>
       </div>
     </DragDropContext>
