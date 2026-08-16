@@ -260,8 +260,17 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 9.75pt; }
 /* Static asset — never shrunk, never measured against the holder crop
    line (see validate.js's contentBottomIn, which skips [data-decorative]
-   elements). See BUILD-SPEC.md §1a/§5. */
-.spritz-image { width: 108px; margin: 7.5px auto 0; display: block; flex-shrink: 0; }
+   elements). See BUILD-SPEC.md §1a/§5.
+   Positioned absolutely against .page (already position:relative) so it
+   sits flush against the bottom padding — same position as the Dolci
+   card's affogato illustration — WITHOUT stretching .spritz-body-b's own
+   box to reach it (a flex:1 + margin-top:auto approach was tried first
+   and rejected: it inflated .spritz-body-b's bounding rect down to the
+   image's position, and since only the <img> itself carries
+   data-decorative, contentBottomIn() picked up the container's box
+   instead and broke the crop-line exemption). Taking the image out of
+   normal flow entirely avoids that. Aug 2026, Joe (direct fix). */
+.spritz-image { position: absolute; bottom: 0.35in; left: 50%; transform: translateX(-50%); width: 108px; }
 </style>
 </head>
 <body>
