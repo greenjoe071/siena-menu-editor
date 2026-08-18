@@ -172,9 +172,13 @@ body {
 .page[data-page-id="cocktails"] .page-title { margin-bottom: 36px; }
 .page[data-page-id="spirits"]   .page-title { margin-bottom: 16px; }
 .page[data-page-id="liquori"]   .page-title { margin-bottom: 20px; }
-.page[data-page-id="spritz"]    .page-title { margin-bottom: 4px; }
+.page[data-page-id="spritz"]    .page-title { margin-bottom: 2px; }
 
 /* ── Spritz header chrome — identical across both designs, never toggled ── */
+/* Kicker's 0.5in top clearance is a prior owner decision (BUILD-SPEC.md
+   changelog) — left untouched. Aug 2026, Joe: reverted a temporary trim
+   here after deciding it should stay full-size; see the crop-line fix
+   further down instead. */
 .spritz-kicker { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8.25pt; letter-spacing: 0.18em; color: #6b4c2a; text-transform: uppercase; margin-bottom: 3px; margin-top: 0.5in; }
 .spritz-subhead { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12pt; letter-spacing: 0.12em; text-transform: uppercase; color: #3a1a06; margin: 0 0 10px; }
 .spritz-price { text-align: center; margin: 0 0 10px; }
@@ -196,7 +200,7 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .item-list[data-list-id="spritz-a"] .item { margin-bottom: 5px; }
 .item-list[data-list-id="spritz-a"] .spritz-name { font-size: 12.975pt; }
 .item-list[data-list-id="spritz-a"] .spritz-desc { font-size: 10.725pt; margin-top: 1px; }
-.item-list[data-list-id^="spritz-b-"] .item { margin-bottom: 5px; }
+.item-list[data-list-id^="spritz-b-"] .item { margin-bottom: 3px; }
 .item-list[data-list-id^="spritz-b-"] { margin-bottom: 2px; }
 .item-list[data-list-id="spritz-b-bright"] .spritz-name { font-size: 12.975pt; }
 .item-list[data-list-id="spritz-b-bright"] .spritz-desc { font-size: 10.725pt; margin-top: 1px; }
@@ -214,10 +218,14 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
    Rich & Earthy — get small flanking rules either side of the label
    (added on top of the plain subsection-title treatment below). Fixed
    labels/order, not editable — see BUILD-SPEC.md §5. */
-.page[data-page-id="spritz"] .subsection-title-row { margin: 4px 0 4px; }
-/* "Bitter & Bright" (the first group) gets an extra 0.5in of clearance
-   above it, pushing the whole group down — this closes what used to be
-   an odd-looking gap between it and "Herbal & Aromatic" below. */
+.page[data-page-id="spritz"] .subsection-title-row { margin: 3px 0 3px; }
+/* "Bitter & Bright" (the first group) gets extra clearance above it,
+   pushing the whole group down — this closes what used to be an
+   odd-looking gap between it and "Herbal & Aromatic" below. Aug 2026,
+   Joe: this IS the gap right after the tagline line ("every spritz is
+   topped with prosecco and soda") — an explicitly protected design
+   decision, not a generic spacing value. Left at the designer's
+   original 0.5in; do not trim this one for a crop-line fix again. */
 .page[data-page-id="spritz"] .subsection-title-row:first-of-type { margin-top: 0.5in; }
 .page[data-page-id="spritz"] .subsection-title-row:first-of-type .subsection-title { font-size: 10.725pt; }
 .page[data-page-id="spritz"] .subsection-title-row:not(:first-of-type) .subsection-title { font-size: 11.475pt; }
@@ -309,40 +317,14 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 /* Static asset — never shrunk, never measured against the holder crop
    line (see validate.js's contentBottomIn, which skips [data-decorative]
    elements). See BUILD-SPEC.md §1a/§5. */
-.spritz-image { width: 108px; margin: 8px auto 0; display: block; flex-shrink: 0; }
-/* Growth release valve (Cocktails + Spritz) \u2014 render.js toggles
-   `.hide-image` on the .page once item count crosses its threshold (see
-   BUILD-SPEC.md "Growth headroom"). Hiding is plain display:none inside
-   a flex column, so the space it occupied closes automatically.
-   IMPORTANT \u2014 this only fixes the plain bottom-of-11in-card overflow
-   check. It does NOT move the holder-crop-line check at all: validate.js's
-   contentBottomIn deliberately skips [data-decorative] elements (these
-   images), so hiding one can never change cropLineOk. Cocktails' growth
-   problem IS the physical-card overflow \u2014 hiding fixes it outright.
-   Spritz's growth problem is the STRICTER crop line, which the image was
-   never counted against either way \u2014 spritz needs `.spritz-compact`
-   below to actually recover crop-line room; hiding its image alongside
-   that is a cosmetic pairing, not the fix. */
-.page.hide-image .cocktails-image,
-.page.hide-image .spritz-image { display: none; }
-
-/* Spritz "full" state \u2014 render.js adds this at spritz.items.length >= 10
-   (see BUILD-SPEC.md "Growth headroom"). Tightens header + item spacing
-   and drops the +1pt bump added this revision, recovering the room 2
-   extra items need to clear the 9.96in holder crop line. Static chrome
-   colors/weights are untouched \u2014 only spacing and the two dynamic text
-   sizes change. */
-.page.spritz-compact .spritz-kicker { margin-top: 0.3in; margin-bottom: 2px; }
-.page.spritz-compact .spritz-subhead { margin: 0 0 6px; }
-.page.spritz-compact .spritz-price { margin: 0 0 6px; }
-.page.spritz-compact .spritz-tagline-wrap { gap: 3px; margin: 0 0 8px; }
-.page.spritz-compact .subsection-title-row:first-of-type { margin-top: 0.15in; }
-.page.spritz-compact .subsection-title-row { margin: 3px 0 3px; }
-.page.spritz-compact .subsection-title-row .subsection-title { font-size: 10.5pt; }
-.page.spritz-compact .item-list[data-list-id^="spritz-b-"] .item,
-.page.spritz-compact .item-list[data-list-id="spritz-a"] .item { margin-bottom: 3px; }
-.page.spritz-compact .spritz-name { font-size: 12pt; line-height: 1.1; }
-.page.spritz-compact .spritz-desc { font-size: 9.75pt; line-height: 1.2; margin-top: 0px; }
+.spritz-image { width: 108px; margin: 3px auto 0; display: block; flex-shrink: 0; }
+/* Growth release valve \u2014 Cocktails ONLY (Aug 2026, Joe: removed entirely
+   for Spritz \u2014 no compact mode, no item-count-driven behavior on that
+   card at all; see render.js). render.js toggles `.hide-image` on the
+   Cocktails .page once its item count crosses COCKTAILS_HIDE_IMAGE_AT.
+   Hiding is plain display:none inside a flex column, so the space it
+   occupied closes automatically. */
+.page.hide-image .cocktails-image { display: none; }
 </style>
 </head>
 <body>

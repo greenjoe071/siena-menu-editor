@@ -52,17 +52,14 @@
  *   - spritz.items[i].desc     — tasting note, required (design A shows it
  *     under every name; design B does too, inside its category group).
  *
- * GROWTH HEADROOM — Cocktails and Spritz only (Spirits & Beer and
- * Liquori are hard-capped at their current counts, see BUILD-SPEC.md):
+ * GROWTH HEADROOM — Cocktails only (Aug 2026, Joe: removed for Spritz —
+ * no compact mode, no automatic item-count-driven behavior at all on that
+ * card; it always renders at the designer's original full size). Spirits
+ * & Beer and Liquori remain hard-capped at their current counts, see
+ * BUILD-SPEC.md:
  *   - Cocktails: at COCKTAILS_HIDE_IMAGE_AT (8) or more items, render()
  *     hides the bottom illustration (`.hide-image` on the page) so the
  *     card doesn't overflow its physical 11in bottom edge.
- *   - Spritz: at SPRITZ_COMPACT_AT (9) or more items, render() adds
- *     `.spritz-compact` (tighter spacing, drops the +1pt bump) AND
- *     `.hide-image`, to clear the holder crop line — see the CSS
- *     comment on `.spritz-compact` in template.html for why the image
- *     alone can't fix Spritz's growth problem the way it fixes
- *     Cocktails'.
  *
  * Liquori and Spirits & Beer items have NO description field — name and
  * price only, by design. Don't add a `desc` key to either; render.js has
@@ -116,11 +113,6 @@
   var SPRITZ_CATEGORIES = ['bright', 'herbal', 'earthy'];
   var SPRITZ_CATEGORY_LIST_ID = { bright: 'spritz-b-bright', herbal: 'spritz-b-herbal', earthy: 'spritz-b-earthy' };
   var COCKTAILS_HIDE_IMAGE_AT = 8;
-  // Verified 2026-08-18: at the designer's original 10, today's real 9-item
-  // baseline stays in non-compact spacing and overflows the holder crop
-  // line by ~0.24in. Forcing compact mode at 9 items measured 7.08in
-  // contentBottomIn (vs the 9.96in limit) — ~2.9in of slack, so 9 is safe.
-  var SPRITZ_COMPACT_AT = 9;
 
   function renderCocktails(doc, items) {
     const list = clearList(doc, 'cocktails');
@@ -228,12 +220,9 @@
     renderPlainList(doc, 'liquori-rum', liquori.rum);
 
     renderSpritz(doc, spritz);
-    var spritzPage = doc.querySelector('[data-page-id="spritz"]');
-    if (spritzPage) {
-      var spritzFull = (spritz.items || []).length >= SPRITZ_COMPACT_AT;
-      spritzPage.classList.toggle('spritz-compact', spritzFull);
-      spritzPage.classList.toggle('hide-image', spritzFull);
-    }
+    // No compact mode, no growth headroom on Spritz (Aug 2026, Joe) — the
+    // card always renders at the designer's original full size, full
+    // spacing, graphic always shown, regardless of item count.
     var design = opts.spritzDesign || spritz.design || 'a';
     if (doc.body) doc.body.classList.toggle('spritz-design-b', design === 'b');
   }
