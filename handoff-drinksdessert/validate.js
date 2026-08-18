@@ -102,11 +102,19 @@
 
   // Distance from the page's top edge to the bottom-most VISIBLE pixel of
   // content inside it, ignoring collapsed/display:none elements (e.g. the
-  // inactive Spritz design) AND elements marked [data-decorative] (e.g.
-  // the Spritz card's static bottom illustration) — a decorative image is
-  // exempt from the holder crop line on purpose; it doesn't carry text a
-  // guest needs to read, so it's fine if it sits partly in the hidden
-  // zone. See template.html's ".spritz-image" and BUILD-SPEC.md §1a/§5.
+  // inactive Spritz design), elements marked [data-decorative] (e.g. the
+  // Spritz card's static bottom illustration — no text a guest needs to
+  // read, fine if it sits partly in the hidden zone), AND anything nested
+  // inside a [data-crop-exempt] ancestor (e.g. Bottled Beer's heading +
+  // list — NOT part of the designer's contract, see template.html's
+  // "PHYSICAL PRODUCT" comment and BUILD-SPEC.md §1b/§5: centered text
+  // isn't at physical risk from the holder's corner grips the way a
+  // flush-left/right line is, so the owner asked for this block to be
+  // exempt from the crop line specifically, not from the ordinary
+  // bottom-of-11in-card check below). Uses .closest() rather than a
+  // same-element check (unlike [data-decorative], which only ever marks
+  // a single leaf element) because an exempt block here is a whole
+  // subtree of nested elements, not one image.
   // This is independent of overflow: a page can be well within its 11in
   // height and still cross the crop line.
   function contentBottomIn(page) {
@@ -114,8 +122,10 @@
     let maxBottom = top;
     const all = page.querySelectorAll('*');
     for (let i = 0; i < all.length; i++) {
-      if (all[i].hasAttribute && all[i].hasAttribute('data-decorative')) continue;
-      const r = all[i].getBoundingClientRect();
+      const el = all[i];
+      if (el.hasAttribute && el.hasAttribute('data-decorative')) continue;
+      if (el.closest && el.closest('[data-crop-exempt]')) continue;
+      const r = el.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
       if (r.bottom > maxBottom) maxBottom = r.bottom;
     }

@@ -21,7 +21,26 @@ handoff. Changes:
   are now centered with the price inline after the name, separated by an
   em dash ("Bud Light — 6.50"), instead of the name-left/price-right row
   Bourbon and Scotch use. The heading itself is now bold (weight 700, was
-  600) with extra clearance before the first item. See §5.
+  600) with extra clearance before the first item. The whole block
+  (heading + list) is also shifted down 0.25in via its own top margin.
+  **This 0.25in shift is deliberately exempt from the holder crop line
+  (§1b)** — the owner's call, because this block's text is centered, so
+  even if its bottom edge crept past 9.96in it wouldn't be clipped by the
+  holder's corner grips the way a flush-left/right line would. Don't
+  have `validate.js` flag this block against the crop line. See §5.
+  **Note: this delivery documents the exemption but doesn't implement
+  it** — `validate.js` was unchanged from the prior handoff, no
+  attribute or logic exists to actually exclude this block from
+  `contentBottomIn()`. Implemented directly here (not sent back to the
+  designer — this is a validation-logic addition, not a visual
+  decision): a `[data-crop-exempt]` attribute on the block, and
+  `contentBottomIn()` in `validate.js` now skips any element whose
+  `.closest('[data-crop-exempt]')` matches, the same idea as the
+  existing `[data-decorative]` skip but for a subtree of real content
+  instead of one image. See template.html's file-header comment and
+  validate.js's `contentBottomIn()` for the mechanics. If a future
+  handoff touches this block again, re-add the attribute — it won't be
+  in the designer's copy.
 - On Spritz Menu, the "new" kicker now has 0.5in of clearance above it
   (shifting the whole card's content down within the fixed-height card),
   and the bottom illustration sits slightly lower (margin-top 10px →
@@ -389,8 +408,9 @@ Baked into `template.html`, no data hooks, not surfaced in the editor:
   a few lines up — the plain `.subsection-title-row--accent` selector by
   itself has lower specificity and silently loses, so the intended gap
   never renders even though the rule is right there in the file. Bit us
-  once already (Aug 2026); if this margin is touched again, keep it on
-  the scoped selector, not the bare accent class.
+  twice now (Aug 2026, once when the margin was 14.25px, again when it
+  became 30.75px after the 0.25in shift); if this margin is touched
+  again, keep it on the scoped selector, not the bare accent class.
 - The Liquori subsection titles ("Tequila", "Gin", "Vodka", "Rum") — plain
   text, same treatment as Bourbon/Scotch (no rules, no size boost).
 - The number and order of subsections on Spirits & Beer (always 3) and

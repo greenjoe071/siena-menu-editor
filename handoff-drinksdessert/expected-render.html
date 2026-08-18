@@ -46,6 +46,20 @@
   as permanent. validate.js enforces it on all four cards independently
   from the normal end-of-card overflow check. See BUILD-SPEC.md §1b.
 
+  [data-crop-exempt] (Aug 2026, Joe — NOT part of the designer's
+  contract): an element (and everything nested inside it) is excluded
+  from the crop-line measurement entirely — validate.js's
+  contentBottomIn() walks up with .closest() and skips anything inside
+  one, same idea as [data-decorative] but for a subtree with real text,
+  not a single decorative image. Currently only on Bottled Beer's
+  heading row + item list, because that block's text is centered — the
+  physical corner-clip risk the crop line protects against is specific
+  to text sitting flush against the left/right edge, so centered text
+  can safely sit lower than 9.96in without actually being clipped by the
+  holder's corner grips. Owner's explicit call, not a blanket exemption:
+  don't add this attribute to any other block without checking first —
+  it only holds because the content under it is centered.
+
   SPRITZ MENU — dual design, one shared data set.
   ================================================
   The Spritz card has TWO interchangeable designs the manager can toggle
@@ -215,16 +229,17 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
    treatment: bigger type + flanking rules (unlike Bourbon/Scotch, which
    stay plain). Static chrome, not editable — see BUILD-SPEC.md §5.
 
-   BUG FIX (Aug 2026, Joe): the designer's own `margin: 6.75px 0 14.25px`
-   on the plain `.subsection-title-row--accent` selector never actually
-   took effect — `.page[data-page-id="spirits"] .subsection-title-row`
-   two rules up has higher specificity (3 selectors vs. 1) and silently
-   won, leaving Bottled Beer with the same tight 3px gap as Bourbon/
-   Scotch instead of its intended larger one. Re-scoped here to beat that
-   rule outright (4 selectors) regardless of source order, so the margin
-   the designer's file already specifies actually renders. Not a design
-   override — this restores the designer's own stated intent. */
-.page[data-page-id="spirits"] .subsection-title-row.subsection-title-row--accent { margin: 6.75px 0 14.25px; }
+   BUG FIX (Aug 2026, Joe — recurs on every wholesale template swap,
+   see BUILD-SPEC.md §5): the designer's own margin on the plain
+   `.subsection-title-row--accent` selector never actually takes effect —
+   `.page[data-page-id="spirits"] .subsection-title-row` two rules up has
+   higher specificity (3 selectors vs. 1) and silently wins. Re-scoped
+   here to beat that rule outright (4 selectors) regardless of source
+   order, so the margin the designer's file specifies actually renders.
+   Not a design override — this restores the designer's own stated
+   intent. Re-apply this exact scoping on every future install; don't
+   just copy the designer's plain-class version back in. */
+.page[data-page-id="spirits"] .subsection-title-row.subsection-title-row--accent { margin: 30.75px 0 14.25px; }
 .subsection-title--accent { font-size: 15pt; font-weight: 700; }
 .subsection-title-rule--accent { height: 1px; width: 12px; background: #3a1a06; opacity: 0.6; }
 
@@ -346,8 +361,8 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
     <div class="item-list" data-list-id="spirits-bourbon"><div class="item" data-item-id="sp-b1"><div class="row"><span class="item-name">Bulleit Bourbon</span><span class="item-price">13</span></div></div><div class="item" data-item-id="sp-b2"><div class="row"><span class="item-name">Bulleit 75 Rye</span><span class="item-price">13</span></div></div><div class="item" data-item-id="sp-b3"><div class="row"><span class="item-name">Four Roses Small Batch</span><span class="item-price">18</span></div></div><div class="item" data-item-id="sp-b4"><div class="row"><span class="item-name">Redemption Rye</span><span class="item-price">11</span></div></div><div class="item" data-item-id="sp-b5"><div class="row"><span class="item-name">Weller Special Reserve</span><span class="item-price">15</span></div></div><div class="item" data-item-id="sp-b6"><div class="row"><span class="item-name">Basil Hayden</span><span class="item-price">13</span></div></div><div class="item" data-item-id="sp-b7"><div class="row"><span class="item-name">Maker's Mark</span><span class="item-price">12</span></div></div><div class="item" data-item-id="sp-b8"><div class="row"><span class="item-name">Garrison Brothers Single Barrel</span><span class="item-price">28</span></div></div><div class="item" data-item-id="sp-b9"><div class="row"><span class="item-name">Buffalo Trace</span><span class="item-price">12</span></div></div><div class="item" data-item-id="sp-b10"><div class="row"><span class="item-name">Woodford Reserve</span><span class="item-price">13</span></div></div><div class="item" data-item-id="sp-b11"><div class="row"><span class="item-name">Knob Creek 9 Years</span><span class="item-price">14</span></div></div></div>
     <div class="subsection-title-row"><div class="subsection-title">Single Malt Scotch Whisky</div></div>
     <div class="item-list" data-list-id="spirits-scotch"><div class="item" data-item-id="sp-s1"><div class="row"><span class="item-name">Cragganmore 12 Years</span><span class="item-price">14</span></div></div><div class="item" data-item-id="sp-s2"><div class="row"><span class="item-name">Dalmore 12 Years</span><span class="item-price">13</span></div></div><div class="item" data-item-id="sp-s3"><div class="row"><span class="item-name">Glenfiddich 12 Years</span><span class="item-price">14</span></div></div><div class="item" data-item-id="sp-s4"><div class="row"><span class="item-name">Glenlivet 12 Years</span><span class="item-price">14</span></div></div><div class="item" data-item-id="sp-s5"><div class="row"><span class="item-name">Glenmorangie 10 Years</span><span class="item-price">16</span></div></div><div class="item" data-item-id="sp-s6"><div class="row"><span class="item-name">Lagavulin 16 Years</span><span class="item-price">20</span></div></div><div class="item" data-item-id="sp-s7"><div class="row"><span class="item-name">Laphroaig 10 Years</span><span class="item-price">14</span></div></div><div class="item" data-item-id="sp-s8"><div class="row"><span class="item-name">Macallan 12 Years</span><span class="item-price">16</span></div></div><div class="item" data-item-id="sp-s9"><div class="row"><span class="item-name">Oban 14 Years</span><span class="item-price">18</span></div></div><div class="item" data-item-id="sp-s10"><div class="row"><span class="item-name">Singleton 10 Years</span><span class="item-price">14</span></div></div><div class="item" data-item-id="sp-s11"><div class="row"><span class="item-name">Talisker 10 Years</span><span class="item-price">14</span></div></div></div>
-    <div class="subsection-title-row subsection-title-row--accent"><div class="subsection-title-rule--accent"></div><div class="subsection-title subsection-title--accent">Bottled Beer</div><div class="subsection-title-rule--accent"></div></div>
-    <div class="item-list" data-list-id="spirits-beer"><div class="item" data-item-id="sp-be1"><div class="row"><span class="item-name">Bud Light</span><span class="item-price">6.50</span></div></div><div class="item" data-item-id="sp-be2"><div class="row"><span class="item-name">McConauhaze Hazy IPA</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be3"><div class="row"><span class="item-name">Dos Equis Lager</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be4"><div class="row"><span class="item-name">Fireman's 4</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be5"><div class="row"><span class="item-name">Non-Alcoholic Beer</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be6"><div class="row"><span class="item-name">Menabrea Bionda (Italia)</span><span class="item-price">8</span></div></div><div class="item" data-item-id="sp-be7"><div class="row"><span class="item-name">Menabrea Ambrata (Italia)</span><span class="item-price">8</span></div></div><div class="item" data-item-id="sp-be8"><div class="row"><span class="item-name">Michelob Ultra</span><span class="item-price">6.50</span></div></div><div class="item" data-item-id="sp-be9"><div class="row"><span class="item-name">Miller Lite</span><span class="item-price">6.50</span></div></div><div class="item" data-item-id="sp-be10"><div class="row"><span class="item-name">Peroni (Italia)</span><span class="item-price">7.50</span></div></div><div class="item" data-item-id="sp-be11"><div class="row"><span class="item-name">Shiner Bock</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be12"><div class="row"><span class="item-name">Stella Artois</span><span class="item-price">7.50</span></div></div></div>
+    <div class="subsection-title-row subsection-title-row--accent" data-crop-exempt=""><div class="subsection-title-rule--accent"></div><div class="subsection-title subsection-title--accent">Bottled Beer</div><div class="subsection-title-rule--accent"></div></div>
+    <div class="item-list" data-list-id="spirits-beer" data-crop-exempt=""><div class="item" data-item-id="sp-be1"><div class="row"><span class="item-name">Bud Light</span><span class="item-price">6.50</span></div></div><div class="item" data-item-id="sp-be2"><div class="row"><span class="item-name">McConauhaze Hazy IPA</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be3"><div class="row"><span class="item-name">Dos Equis Lager</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be4"><div class="row"><span class="item-name">Fireman's 4</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be5"><div class="row"><span class="item-name">Non-Alcoholic Beer</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be6"><div class="row"><span class="item-name">Menabrea Bionda (Italia)</span><span class="item-price">8</span></div></div><div class="item" data-item-id="sp-be7"><div class="row"><span class="item-name">Menabrea Ambrata (Italia)</span><span class="item-price">8</span></div></div><div class="item" data-item-id="sp-be8"><div class="row"><span class="item-name">Michelob Ultra</span><span class="item-price">6.50</span></div></div><div class="item" data-item-id="sp-be9"><div class="row"><span class="item-name">Miller Lite</span><span class="item-price">6.50</span></div></div><div class="item" data-item-id="sp-be10"><div class="row"><span class="item-name">Peroni (Italia)</span><span class="item-price">7.50</span></div></div><div class="item" data-item-id="sp-be11"><div class="row"><span class="item-name">Shiner Bock</span><span class="item-price">7</span></div></div><div class="item" data-item-id="sp-be12"><div class="row"><span class="item-name">Stella Artois</span><span class="item-price">7.50</span></div></div></div>
   </div>
 
   <div class="cut-guide"></div>
