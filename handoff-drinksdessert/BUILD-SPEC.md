@@ -4,23 +4,23 @@ Read `README.md` first.
 
 ## Changelog — latest revision
 
-This revision touched **the Spritz Menu card only**. Signature Cocktails,
-Spirits & Beer, Liquori, and the Dessert Menu package are unchanged from
-the prior handoff. Spritz changes:
+This revision touched **Signature Cocktails and Spirits & Beer**. Spritz
+Menu, Liquori, and the Dessert Menu package are unchanged from the prior
+handoff. Changes:
 
-- New item roster in `menu-data.json` (9 items across the same three
-  fixed categories — see §1a/§3).
-- A 0.5in top margin added before the "Bitter & Bright" group (closes an
-  odd gap that used to sit below it, before "Herbal & Aromatic").
-- Every group AFTER "Bitter & Bright" ("Herbal & Aromatic", "Rich &
-  Earthy") runs 1pt larger — group heading, item name, and description —
-  than "Bitter & Bright" itself. Deliberate, not a bug.
-- The "every spritz is topped with prosecco and soda" tagline is now
-  italic; its small rule underneath was removed.
-- A static illustration (`assets/spritz-garnish-sketch.png`) is now
-  pinned to the bottom of the Spritz card, below the last group — same
-  pattern as the Dolci card's affogato sketch in `../handoff-dessert/`.
-  It's exempt from the holder crop-line check (§1b) — see §5.
+- "Aperol Spritz" removed from `menu-data.json`'s `cocktails` list — it's
+  redundant now that Spritz has its own dedicated card. Confirmed against
+  the designer's original print proof, which never included it there.
+- The Signature Cocktails card shifted down 0.5in (`padding-top` 0.3in →
+  0.8in on `.page[data-page-id="cocktails"]`). Net effect of the removal
+  + the shift: ~0.5in of slack now exists above the holder crop line
+  (§1b) — enough for a short one-line addition, but **not** a full new
+  drink with a two-line description without trimming something else
+  first. Flag this to whoever adds the next cocktail.
+- Spirits & Beer's "Bottled Beer" heading (§5's accent treatment) got an
+  extra ~10.5px of clearance before its first item — a bigger gap than
+  its own heading-to-rule spacing, on top of the existing larger-type
+  accent treatment.
 
 This is a **new, structurally different menu** from the others in this
 project (Dinner, Happy Hour, Monday, Tue–Wed, Weekend). Read this whole

@@ -86,7 +86,8 @@ export async function runOptionalFieldsTest() {
   }
   const margarita = dom.window.document.querySelector('[data-item-id="ck-7"]');
   const noteEl = margarita.querySelector('.cocktail-note');
-  if (!noteEl || noteEl.textContent !== base.cocktails[6].note) {
+  const margaritaData = base.cocktails.find((c) => c.id === 'ck-7');
+  if (!noteEl || noteEl.textContent !== margaritaData.note) {
     throw new Error('cocktail ck-7 note did not render correctly.');
   }
 }

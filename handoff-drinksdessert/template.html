@@ -58,15 +58,17 @@
   tagline) is IDENTICAL between designs and lives once in the DOM — only
   the item-list portion below it swaps. See BUILD-SPEC.md §1a.
 
-  LATEST REVISION — Spritz Menu content/styling ONLY.
-  =====================================================
-  This revision touched the Spritz Menu card exclusively: new item roster
-  (see menu-data.json), a 0.5in gap added before the "Bitter & Bright"
-  group, a 1pt type bump on every group after "Bitter & Bright", the
-  tagline set to italic with its rule removed, and a static illustration
-  pinned to the card's bottom. Signature Cocktails, Spirits & Beer,
-  Liquori, and the Dessert Menu package are UNCHANGED from the prior
-  handoff — see BUILD-SPEC.md's top-of-file changelog note.
+  LATEST REVISION — Signature Cocktails + Spirits & Beer.
+  =========================================================
+  "Aperol Spritz" was removed from Signature Cocktails (redundant now
+  that Spritz has its own dedicated card). The whole Cocktails card was
+  then shifted down 0.5in (padding-top 0.3in → 0.8in). Net result: ~0.5in
+  of slack now exists above the holder crop line (§1b) — enough for a
+  short one-line addition but NOT a full new drink with a two-line
+  description without trimming something else first. On Spirits & Beer,
+  the "Bottled Beer" heading got an extra gap before its first item (on
+  top of its existing accent treatment). Spritz Menu and Liquori are
+  UNCHANGED from the prior handoff.
 */
 @page { size: 8.5in 11in; margin: 0; }
 
@@ -110,7 +112,9 @@ body {
   body.print-sheet-a-only .sheet[data-sheet-id="b"] { display: none; }
   body.print-sheet-b-only .sheet[data-sheet-id="a"] { display: none; }
   /* Screen-only staff reference for where to cut the sheet in half — must
-     never appear on the physical printed page. */
+     never appear on the physical printed page. Not part of the designer's
+     handoff; re-applied on every install since a wholesale template swap
+     silently drops it (bit us once already, Aug 2026). */
   .cut-guide { display: none; }
 }
 
@@ -123,7 +127,7 @@ body {
   flex-direction: column;
   position: relative;
 }
-.page[data-page-id="cocktails"] { padding: 0.3in 0.42in 0.4in; }
+.page[data-page-id="cocktails"] { padding: 0.8in 0.42in 0.4in; }
 .page[data-page-id="liquori"] { padding: 0.3in 0.42in 0.4in; }
 .page[data-page-id="spirits"] { padding: 0.25in 0.4in 1.1in; }
 .page[data-page-id="spritz"] { padding: 0.25in 0.4in 0.35in; }
@@ -211,7 +215,7 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 /* Bottled Beer — the one Spirits & Beer subsection with the accent
    treatment: bigger type + flanking rules (unlike Bourbon/Scotch, which
    stay plain). Static chrome, not editable — see BUILD-SPEC.md §5. */
-.subsection-title-row--accent { gap: 6px; margin: 6.75px 0 3.75px; }
+.subsection-title-row--accent { gap: 6px; margin: 6.75px 0 14.25px; }
 .subsection-title--accent { font-size: 15pt; }
 .subsection-title-rule--accent { height: 1px; width: 12px; background: #3a1a06; opacity: 0.6; }
 
@@ -260,17 +264,8 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 9.75pt; }
 /* Static asset — never shrunk, never measured against the holder crop
    line (see validate.js's contentBottomIn, which skips [data-decorative]
-   elements). See BUILD-SPEC.md §1a/§5.
-   Positioned absolutely against .page (already position:relative) so it
-   sits flush against the bottom padding — same position as the Dolci
-   card's affogato illustration — WITHOUT stretching .spritz-body-b's own
-   box to reach it (a flex:1 + margin-top:auto approach was tried first
-   and rejected: it inflated .spritz-body-b's bounding rect down to the
-   image's position, and since only the <img> itself carries
-   data-decorative, contentBottomIn() picked up the container's box
-   instead and broke the crop-line exemption). Taking the image out of
-   normal flow entirely avoids that. Aug 2026, Joe (direct fix). */
-.spritz-image { position: absolute; bottom: 0.35in; left: 50%; transform: translateX(-50%); width: 108px; }
+   elements). See BUILD-SPEC.md §1a/§5. */
+.spritz-image { width: 108px; margin: 7.5px auto 0; display: block; flex-shrink: 0; }
 </style>
 </head>
 <body>

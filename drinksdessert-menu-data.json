@@ -7,12 +7,6 @@
       "price": "14.00"
     },
     {
-      "id": "ck-2",
-      "name": "Aperol Spritz",
-      "desc": "Aperol, Italy's popular aperitif, with sparkling Prosecco, served over ice.",
-      "price": "13.00"
-    },
-    {
       "id": "ck-3",
       "name": "Italian Sangria",
       "desc": "Sangiovese, Malbec, Prosecco, Limoncello, orange, pineapple and cranberry juice.",

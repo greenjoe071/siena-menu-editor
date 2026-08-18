@@ -1,7 +1,6 @@
 {
   "cocktails": [
     { "id": "ck-1", "name": "Godfather", "desc": "Maker's Mark Bourbon and Amaretto Disaronno. Brando's drink on set!", "price": "14.00" },
-    { "id": "ck-2", "name": "Aperol Spritz", "desc": "Aperol, Italy's popular aperitif, with sparkling Prosecco, served over ice.", "price": "13.00" },
     { "id": "ck-3", "name": "Italian Sangria", "desc": "Sangiovese, Malbec, Prosecco, Limoncello, orange, pineapple and cranberry juice.", "price": "13.00" },
     { "id": "ck-4", "name": "Gold Rush Manhattan", "desc": "Redemption Rye Whiskey, Licor 43, and a dash of orange bitters. Shaken, served up with a Luxardo cherry.", "price": "15.00" },
     { "id": "ck-5", "name": "Negroni Sbagliato", "desc": "Campari, Sweet Vermouth and Prosecco, orange garnish.", "price": "14.00" },

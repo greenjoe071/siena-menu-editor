@@ -1,10 +1,11 @@
 # Siena Drinks Menu — Developer Handoff
 
-**Latest revision touched the Spritz Menu card only** — new item roster,
-0.5in gap before "Bitter & Bright", a 1pt type bump on every group after
-it, an italicized tagline (rule removed), and a static bottom
-illustration. See `BUILD-SPEC.md`'s changelog note at the top. Cocktails,
-Spirits & Beer, Liquori, and the Dessert Menu package are unchanged.
+**Latest revision touched Signature Cocktails and Spirits & Beer** —
+"Aperol Spritz" removed from Cocktails (now redundant with the dedicated
+Spritz card), the Cocktails card shifted down 0.5in, and extra clearance
+added under the "Bottled Beer" heading. See `BUILD-SPEC.md`'s changelog
+note at the top. Spritz Menu, Liquori, and the Dessert Menu package are
+unchanged.
 
 Four insert cards (Signature Cocktails, Spritz Menu, Spirits & Beer,
 Liquori) produced from two physical 8.5×11 sheets, each cut in half.
