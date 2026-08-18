@@ -2,11 +2,150 @@
 
 Read `README.md` first.
 
+## ⚠ Exact-value parity — read this before touching a single number
+
+**`template.html`'s CSS values are not approximate — they are transcribed
+1:1, by physical size, from the owner's live design mockup.** The owner
+reviews and signs off on that mockup, then expects the printed/live
+menu to match it exactly. A previous revision of this package drifted
+from the mockup because of two mistakes, both now fixed — know them so
+they don't recur:
+
+1. **A px→pt scaling mistake applied to spacing, not just type.**
+   Font sizes correctly convert 1:1 from the mockup's px value to this
+   stylesheet's pt value (`px * 0.75` — this is an exact physical-size
+   conversion at 96px/in and 72pt/in, not an approximation). A prior
+   pass mistakenly ran that SAME `× 0.75` formula against margins,
+   paddings, gaps, and rule widths too — values that were already in
+   `px` and needed no conversion at all, since 1px in the template
+   physically equals 1px in the mockup. The result: every scaled
+   spacing value printed about 25% smaller than the mockup, which is
+   exactly why the Spritz illustration (and other bottom-of-card
+   content) sat noticeably higher than the mockup shows — the content
+   above it consumed less vertical space than intended, leaving dead
+   space below. **Rule going forward: only font-size gets the `×0.75`
+   px→pt conversion. Every margin/padding/gap/width value that's in
+   `px` or `in` in the mockup gets copied to this stylesheet as the
+   exact same number, same unit. Never run spacing through the pt
+   conversion.**
+2. **A specificity bug silently dropped the Bottled Beer accent
+   margin.** `.subsection-title-row--accent`'s margin lost to the more
+   specific `.page[data-page-id="spirits"] .subsection-title-row` rule
+   defined earlier in the file, so Bottled Beer was actually laid out
+   with the GENERIC subsection gap the whole time, never its intended
+   large gap. Fixed by scoping the accent margin rule to
+   `.page[data-page-id="spirits"] .subsection-title-row--accent`
+   specifically (see the CSS comment at that rule). **When you add a
+   page-specific override for anything, double-check it actually wins
+   the specificity fight against other rules touching the same
+   element — a rule that never applies is a silent bug, not an error.**
+
+If what prints ever looks different from the current `Drinks Menu.dc.html`
+mockup again, check these two failure modes first before assuming the
+content itself changed.
+
 ## Changelog — latest revision
 
-This revision touched **Signature Cocktails and Spirits & Beer**. Spritz
-Menu, Liquori, and the Dessert Menu package are unchanged from the prior
-handoff. Changes:
+This revision fixed the two REAL fit failures a careful re-check (real
+content, real browser, `validate.js`) turned up, and added growth
+headroom on Cocktails and Spritz:
+
+- **Spirits & Beer genuinely overflowed** with real content (11
+bourbon, 11 scotch, 12 beer) — the just-fixed Bottled Beer margin (see
+the parity section above) made the page 29–36px too tall for the
+physical 11in card, even after the 1pt shrink. Fixed by trimming: every
+item row's margin-bottom 4px→2px on Bourbon/Scotch/Beer (Liquori stays
+at 3px — it wasn't overflowing), and the Bottled Beer block's shift-down
+reduced 0.25in→0.15in with its own heading-to-list gap 19px→13px. Real
+content now fits at full type size, no shrink needed (`contentBottomIn`
+~9.4–9.8in, comfortable margin under the 9.96in crop line). A follow-up
+check also found a small (~14px) DC-only overflow from a margin-collapse
+quirk on the Bottled Beer block's wrapper in one rendering environment —
+fixed by making that wrapper `display:flex;flex-direction:column` (flex
+items never collapse margins) and taking the Bourbon/Scotch/Beer margin
+down the extra 1px (3px→2px) for real safety margin, not just a
+by-a-hair pass.
+- **Spritz Menu was right at the edge** with real content (9 items) —
+it only passed by using the one shrink step, with ~0.02in to spare
+before the crop line. Not a bug, but no safety margin either.
+
+### Growth headroom — Cocktails (+1) and Spritz (+2)
+
+Cocktails and Spritz must now tolerate modest growth without a design
+round: Cocktails up to 8 items, Spritz up to 11 (2 more than today,
+added to whichever category group is already tallest — verified worst
+case). Spirits & Beer and Liquori are NOT growing — their current exact
+counts (Bourbon 11, Scotch 11, Beer 12, Tequila 8, Gin 7, Vodka 13, Rum
+5) are a hard ceiling; if those need to change, re-run the fit checks
+by hand, don't assume headroom exists.
+
+**Important correction on how the release valve actually works — read
+this before touching either threshold:**
+
+`render.js` toggles `.hide-image` on a card once its item count crosses
+a threshold (`COCKTAILS_HIDE_IMAGE_AT = 8`, `SPRITZ_COMPACT_AT = 9` — corrected
+from the delivered `10` on 2026-08-18: at `10`, today's real 9-item baseline
+stayed in non-compact spacing and failed the crop line by ~0.24in; verified
+`9` fits with ~2.9in to spare. See BUILD-SPEC §8a-style note — flag to the
+designer so their next handoff doesn't regress it back to 10).
+This was the developer's original ask, but testing with real browser
+layout (not a visual mockup comparison) showed it does NOT work the same
+way on both cards, because `validate.js`'s `contentBottomIn` (the holder
+crop-line check) deliberately SKIPS `[data-decorative]` elements —
+which is exactly what these bottom illustrations are marked as (see §5).
+Hiding a decorative image can never move the crop-line number, because
+it was never counted there in the first place.
+
+- **Cocktails' growth problem is the OTHER check** — plain bottom-of-
+  11in-card overflow (`scrollHeight` vs `clientHeight`), which is NOT
+  decorative-exempt. At 8 items, the card + illustration together
+  physically exceed 11in by ~22px. Hiding the illustration removes that
+  22px outright — this fix genuinely works, confirmed in-browser.
+- **Spritz's growth problem IS the crop line**, so hiding its
+  illustration alone does nothing measurable. The real fix is
+  `.spritz-compact` (added alongside `.hide-image` at the same
+  threshold): tighter header/item spacing and reverting the +1pt bump
+  added earlier this revision, for THIS state only. Confirmed in-browser
+  at 11 items (worst case: 2 new items both landing in the already-
+  tallest "Herbal & Aromatic" group): `fits: true`, `contentBottomIn`
+  ~7.6–8.8in — comfortable margin, no shrink needed.
+- The graphic being hidden alongside the Spritz compaction is a
+  cosmetic pairing (denser list, less need for the decorative flourish
+  at the bottom), not the fix itself — don't treat `.hide-image` as
+  interchangeable with `.spritz-compact` on this card.
+
+All four required acceptance scenarios were verified in a real browser
+against `validate.js` (fonts and images awaited before measuring — a
+race on either gives false readings, see Gotchas §8):
+1. Today's real content, all 4 cards — `fits: true`.
+2. Cocktails at 8 (today's 7 + 1 realistic entry) — `fits: true` via
+   `.hide-image`.
+3. Spritz at 11 (today's 9 + 2 in the tallest group) — `fits: true` via
+   `.spritz-compact` + `.hide-image`.
+4. Both simultaneously — `fits: true`.
+
+Earlier revision (still current) fixed the exact-value parity bugs
+above and touched **Signature Cocktails and Spritz Menu**:
+
+- **Cocktails**: titles and item list shifted down an additional 1/8in
+  (12px) below the page title. A new static illustration,
+  `assets/cocktails-martini-sketch.png` (`.cocktails-image`), was added
+  at the bottom of the card — same static/decorative treatment and
+  position pattern as the Spritz card's illustration (not a data field,
+  not editable, exempt from the holder crop line).
+- **Spritz Menu**: every item name, description, and group heading
+  AFTER the "every spritz is topped with prosecco and soda" tagline
+  went up 1pt (both Design A's flat list and Design B's three grouped
+  sections). To make room without overflowing, spacing inside the list
+  was tightened: item gap 9px→5px, group-heading margin 6px→4px each
+  side, group-to-group gap 4px→2px, and the bottom illustration's own
+  top margin 18px→8px. The seed data's default `spritz.design` also
+  changed `"a"` → `"b"` (grouped) to match the mockup, which has always
+  shown the grouped layout — Design A still exists and still works, the
+  manager can still switch to it.
+
+Earlier revision (still current) touched **Signature Cocktails and
+Spirits & Beer**:
 
 - "Aperol Spritz" removed from `menu-data.json`'s `cocktails` list — it's
   redundant now that Spritz has its own dedicated card. Confirmed against
@@ -28,19 +167,6 @@ handoff. Changes:
   even if its bottom edge crept past 9.96in it wouldn't be clipped by the
   holder's corner grips the way a flush-left/right line would. Don't
   have `validate.js` flag this block against the crop line. See §5.
-  **Note: this delivery documents the exemption but doesn't implement
-  it** — `validate.js` was unchanged from the prior handoff, no
-  attribute or logic exists to actually exclude this block from
-  `contentBottomIn()`. Implemented directly here (not sent back to the
-  designer — this is a validation-logic addition, not a visual
-  decision): a `[data-crop-exempt]` attribute on the block, and
-  `contentBottomIn()` in `validate.js` now skips any element whose
-  `.closest('[data-crop-exempt]')` matches, the same idea as the
-  existing `[data-decorative]` skip but for a subtree of real content
-  instead of one image. See template.html's file-header comment and
-  validate.js's `contentBottomIn()` for the mechanics. If a future
-  handoff touches this block again, re-add the attribute — it won't be
-  in the designer's copy.
 - On Spritz Menu, the "new" kicker now has 0.5in of clearance above it
   (shifting the whole card's content down within the fixed-height card),
   and the bottom illustration sits slightly lower (margin-top 10px →
@@ -402,15 +528,6 @@ Baked into `template.html`, no data hooks, not surfaced in the editor:
   `item-name`/`item-price` DOM (`plain-item-template`, `renderPlainList`)
   — only CSS on `[data-list-id="spirits-beer"]` differs. Don't refactor
   this into a separate template; it's a CSS-only variant.
-  **The extra clearance above the first item needs a scoped selector**
-  (`.page[data-page-id="spirits"] .subsection-title-row.subsection-title-row--accent`)
-  to actually win over the page-wide `.subsection-title-row` margin rule
-  a few lines up — the plain `.subsection-title-row--accent` selector by
-  itself has lower specificity and silently loses, so the intended gap
-  never renders even though the rule is right there in the file. Bit us
-  twice now (Aug 2026, once when the margin was 14.25px, again when it
-  became 30.75px after the 0.25in shift); if this margin is touched
-  again, keep it on the scoped selector, not the bare accent class.
 - The Liquori subsection titles ("Tequila", "Gin", "Vodka", "Rum") — plain
   text, same treatment as Bourbon/Scotch (no rules, no size boost).
 - The number and order of subsections on Spirits & Beer (always 3) and
@@ -480,11 +597,16 @@ button.
   and reads `scrollHeight`/`clientHeight`. Run it in the editor's preview
   iframe, not in a Node/JSDOM context. The snapshot test only proves
   `render.js` is correct, not that any given edit fits the page.
-- **Wait for fonts before validating.** Call
+- **Wait for fonts AND images before validating.** Call
   `await SienaDrinksDessertValidate.waitForLayout(doc)` before
   `validate(doc)` — Playfair is a variable font and shifts line-heights
   slightly when it swaps in, which can flip a borderline fit/no-fit call.
   This matters even more now that Spritz item names are Playfair too.
+  **Also wait for both illustration `<img>`s to finish loading/decoding**
+  — an unloaded image can report zero intrinsic height, silently passing
+  a check that would fail once the image's real height is in. Neither
+  wait is optional; a revision this session initially looked fine on a
+  quick check and only failed once both waits were added properly.
 - **The 1pt shrink is per-page, not global.** Spirits can be at reduced
   type while Cocktails, Spritz, and Liquori stay full size.
 - **A page can fail on the crop line alone.** Don't assume "no
@@ -515,6 +637,45 @@ button.
   truly optional text field on this menu.
 
 ---
+
+- **Cocktails and Spritz have growth headroom; Spirits & Beer and
+  Liquori do not.** Cocktails tolerates up to 8 items, Spritz up to 11,
+  each via an automatic `.hide-image` / `.spritz-compact` toggle in
+  `render.js` (see the changelog above for the exact thresholds and why
+  the mechanism differs between the two cards). Don't assume the same
+  release valve exists on Spirits & Beer or Liquori — it doesn't; their
+  current counts are a hard ceiling.
+
+## 8a. Owner customizations layered on top of this handoff (NOT our contract)
+
+These live in `template.html`/`render.js`/`validate.js` but are not part of
+the design we deliver — they're additions Joe asked for directly, applied on
+top of every install since. **A wholesale file swap silently drops all
+three** (it's happened on every install so far) — re-apply them on every
+future install until/unless they're formally folded into the handoff:
+
+1. **`.cut-guide { display: none; }`** inside `@media print` (near the top
+   of `template.html`'s print block). Without it, the on-screen sheet-cutting
+   guide line prints down the middle of the physical card.
+2. **`[data-crop-exempt]`** — an attribute (see `template.html`'s file
+   header) that excludes an element's whole subtree from the holder
+   crop-line check in `validate.js`'s `contentBottomIn()`. Currently only on
+   Bottled Beer's heading row + item list on Spirits & Beer, because that
+   block's text is centered and isn't at the corner-clip risk the crop line
+   protects against. Don't add it elsewhere without checking with Joe first.
+   (This round's BUILD-SPEC §5 now documents the *rationale* for this in
+   prose — good — but the actual attribute + validate.js logic still aren't
+   in the delivered files. Keep re-applying both halves together until they
+   are.)
+3. **Spritz `showNew` / `tagline`** — `data.spritz.showNew` (boolean, toggles
+   the "new" kicker above the Spritz title) and `data.spritz.tagline` (free
+   text, replaces the static tagline, must render on one line) are
+   owner-editable fields with logic in `render.js` (sets kicker
+   display/tagline text) and `validate.js` (`isTaglineWrapped()` — a wrapped
+   tagline fails validation with `worstList: "spritz-tagline"`, independent
+   of the normal fit/crop checks and never affected by the 1pt shrink step,
+   and unaffected by `.spritz-compact` since compact mode never touches the
+   tagline's own font-size/line-height).
 
 ## 9. What "done" looks like
 

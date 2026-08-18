@@ -132,21 +132,6 @@
     return (maxBottom - top) / PX_PER_IN;
   }
 
-  // Spritz tagline is owner-editable free text but the design requires it
-  // stay on one line — its font is never touched by shrink-1pt (see
-  // template.html), so if it's wrapped at normal size it's wrapped, period.
-  // Not part of this handoff's contract; added per owner request (see
-  // render.js's file header) — compares rendered height against its own
-  // line-height rather than guessing a character count, since letter
-  // widths vary too much for a static cap to be reliable.
-  function isTaglineWrapped(page) {
-    const el = page.querySelector('.spritz-tagline');
-    if (!el) return false;
-    const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 0;
-    if (!lineHeight) return false;
-    return el.getBoundingClientRect().height > lineHeight * 1.4;
-  }
-
   function worstList(page) {
     const lists = page.querySelectorAll('[data-list-id]');
     let worstId = null;
@@ -176,6 +161,21 @@
     }
   }
 
+  // Spritz tagline is owner-editable free text but the design requires it
+  // stay on one line — its font is never touched by shrink-1pt (see
+  // template.html), so if it's wrapped at normal size it's wrapped, period.
+  // Not part of this handoff's contract; added per owner request (see
+  // render.js's file header) — compares rendered height against its own
+  // line-height rather than guessing a character count, since letter
+  // widths vary too much for a static cap to be reliable.
+  function isTaglineWrapped(page) {
+    const el = page.querySelector('.spritz-tagline');
+    if (!el) return false;
+    const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 0;
+    if (!lineHeight) return false;
+    return el.getBoundingClientRect().height > lineHeight * 1.4;
+  }
+
   function checkBoth(page) {
     const m = measure(page);
     const bottomIn = contentBottomIn(page);
@@ -185,6 +185,7 @@
 
   function validatePage(page) {
     const id = page.getAttribute('data-page-id');
+
     // Tagline never shrinks (see isTaglineWrapped comment) — computed once,
     // outside the shrink loop, same as the fixed cropLine check.
     const tagWrapped = id === 'spritz' && isTaglineWrapped(page);

@@ -95,7 +95,7 @@
   },
   "spritz": {
     "price": "12",
-    "design": "a",
+    "design": "b",
     "items": [
       { "id": "sp-1", "name": "Aperol", "desc": "Orange and rhubarb, gently bitter, easy sipping.", "category": "bright" },
       { "id": "sp-2", "name": "Campari", "desc": "Bold and bitter, cherry and herbs, bright red. Hints of quinine.", "category": "bright" },

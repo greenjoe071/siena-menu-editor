@@ -52,6 +52,18 @@
  *   - spritz.items[i].desc     — tasting note, required (design A shows it
  *     under every name; design B does too, inside its category group).
  *
+ * GROWTH HEADROOM — Cocktails and Spritz only (Spirits & Beer and
+ * Liquori are hard-capped at their current counts, see BUILD-SPEC.md):
+ *   - Cocktails: at COCKTAILS_HIDE_IMAGE_AT (8) or more items, render()
+ *     hides the bottom illustration (`.hide-image` on the page) so the
+ *     card doesn't overflow its physical 11in bottom edge.
+ *   - Spritz: at SPRITZ_COMPACT_AT (9) or more items, render() adds
+ *     `.spritz-compact` (tighter spacing, drops the +1pt bump) AND
+ *     `.hide-image`, to clear the holder crop line — see the CSS
+ *     comment on `.spritz-compact` in template.html for why the image
+ *     alone can't fix Spritz's growth problem the way it fixes
+ *     Cocktails'.
+ *
  * Liquori and Spirits & Beer items have NO description field — name and
  * price only, by design. Don't add a `desc` key to either; render.js has
  * no code path for it.
@@ -103,6 +115,12 @@
 
   var SPRITZ_CATEGORIES = ['bright', 'herbal', 'earthy'];
   var SPRITZ_CATEGORY_LIST_ID = { bright: 'spritz-b-bright', herbal: 'spritz-b-herbal', earthy: 'spritz-b-earthy' };
+  var COCKTAILS_HIDE_IMAGE_AT = 8;
+  // Verified 2026-08-18: at the designer's original 10, today's real 9-item
+  // baseline stays in non-compact spacing and overflows the holder crop
+  // line by ~0.24in. Forcing compact mode at 9 items measured 7.08in
+  // contentBottomIn (vs the 9.96in limit) — ~2.9in of slack, so 9 is safe.
+  var SPRITZ_COMPACT_AT = 9;
 
   function renderCocktails(doc, items) {
     const list = clearList(doc, 'cocktails');
@@ -156,19 +174,6 @@
     const blueprint = tpl && tpl.content.firstElementChild;
     if (!blueprint) throw new Error('Missing #spritz-item-template blueprint.');
 
-    // "new" kicker — owner can retire it once the page stops being new. Not
-    // part of this handoff's contract; added per owner request (see file
-    // header). The header is a simple flex-column child, so hiding it
-    // collapses its own space and everything below shifts up with no gap.
-    const kickerEl = doc.querySelector('.spritz-kicker');
-    if (kickerEl) kickerEl.style.display = spritz.showNew === false ? 'none' : '';
-
-    // Tagline — owner-editable, but must always render on a single line
-    // (see validate.js's spritz-tagline wrap check). Not part of this
-    // handoff's contract; added per owner request.
-    const taglineEl = doc.querySelector('.spritz-tagline');
-    if (taglineEl) taglineEl.textContent = spritz.tagline || '';
-
     doc.querySelector('.spritz-price-text').textContent = formatSpritzPrice(spritz.price);
 
     // Design A: flat list, array order, category ignored.
@@ -187,6 +192,19 @@
       const list = groupLists[cat];
       if (list) list.appendChild(renderSpritzItem(blueprint, it));
     });
+
+    // "new" kicker — owner can retire it once the page stops being new. Not
+    // part of this handoff's contract; added per owner request (see file
+    // header). The header is a simple flex-column child, so hiding it
+    // collapses its own space and everything below shifts up with no gap.
+    const kickerEl = doc.querySelector('.spritz-kicker');
+    if (kickerEl) kickerEl.style.display = spritz.showNew === false ? 'none' : '';
+
+    // Tagline — owner-editable, but must always render on a single line
+    // (see validate.js's spritz-tagline wrap check). Not part of this
+    // handoff's contract; added per owner request.
+    const taglineEl = doc.querySelector('.spritz-tagline');
+    if (taglineEl) taglineEl.textContent = spritz.tagline || '';
   }
 
   function render(doc, data, opts) {
@@ -197,6 +215,8 @@
     const spritz = data.spritz || {};
 
     renderCocktails(doc, data.cocktails);
+    var cocktailsPage = doc.querySelector('[data-page-id="cocktails"]');
+    if (cocktailsPage) cocktailsPage.classList.toggle('hide-image', (data.cocktails || []).length >= COCKTAILS_HIDE_IMAGE_AT);
 
     renderPlainList(doc, 'spirits-bourbon', spirits.bourbon);
     renderPlainList(doc, 'spirits-scotch', spirits.scotch);
@@ -208,7 +228,13 @@
     renderPlainList(doc, 'liquori-rum', liquori.rum);
 
     renderSpritz(doc, spritz);
-    const design = opts.spritzDesign || spritz.design || 'a';
+    var spritzPage = doc.querySelector('[data-page-id="spritz"]');
+    if (spritzPage) {
+      var spritzFull = (spritz.items || []).length >= SPRITZ_COMPACT_AT;
+      spritzPage.classList.toggle('spritz-compact', spritzFull);
+      spritzPage.classList.toggle('hide-image', spritzFull);
+    }
+    var design = opts.spritzDesign || spritz.design || 'a';
     if (doc.body) doc.body.classList.toggle('spritz-design-b', design === 'b');
   }
 

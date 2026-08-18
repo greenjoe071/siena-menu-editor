@@ -1,11 +1,18 @@
 # Siena Drinks Menu — Developer Handoff
 
-**Latest revision touched Signature Cocktails and Spirits & Beer, plus a
-small Spritz Menu nudge** — "Aperol Spritz" removed from Cocktails, that
-card shifted down 0.5in, "Bottled Beer" restyled with a bold heading and
-a centered inline-price item layout, and the Spritz card's top kicker/
-bottom illustration nudged. See `BUILD-SPEC.md`'s changelog note at the
-top. Liquori and the Dessert Menu package are unchanged.
+**Two real bugs found and fixed this round, plus growth headroom added.**
+Testing with real browser layout + real content (not a visual mockup
+compare) found Spirits & Beer genuinely overflowing and Spritz sitting
+right at the crop line with zero margin — both fixed (see
+`BUILD-SPEC.md`'s changelog). Cocktails and Spritz now also tolerate
+modest growth (8 and 11 items respectively) via an automatic
+`.hide-image` / `.spritz-compact` toggle in `render.js` — **read the
+changelog's correction on how that toggle actually works before touching
+either threshold**, since it works differently on the two cards.
+Spirits & Beer and Liquori have NO growth headroom — their current exact
+counts are a hard ceiling. Also carries the prior revision's exact-value
+parity fix (`BUILD-SPEC.md`'s parity section). Liquori and the Dessert
+Menu package are unchanged.
 
 Four insert cards (Signature Cocktails, Spritz Menu, Spirits & Beer,
 Liquori) produced from two physical 8.5×11 sheets, each cut in half.
@@ -30,6 +37,7 @@ crop line), and §1c for why Liquori isn't edited like the other cards.
 | `snapshot-test.spec.mjs` | Vitest test: snapshot match, optional-field behavior (cocktail note), open-ended cardinality, the Liquori fixed-category contract, and the Spritz shared-data/dual-design contract. Resolves paths from its own file location, not CWD. |
 | `BUILD-SPEC.md` | Full spec — physical product, constraint model, data shape, editable fields, gotchas. **Read this before writing the editor.** |
 | `assets/spritz-garnish-sketch.png` | Static illustration pinned to the bottom of the Spritz card — not a data field, see BUILD-SPEC §5. |
+| `assets/cocktails-martini-sketch.png` | Static illustration pinned to the bottom of the Cocktails card — same treatment as the Spritz illustration above. |
 | `fonts/` | Self-hosted Playfair Display variable fonts (regular + italic). Montserrat loads from Google Fonts at runtime. |
 
 ## Quickstart

@@ -47,20 +47,6 @@
   as permanent. validate.js enforces it on all four cards independently
   from the normal end-of-card overflow check. See BUILD-SPEC.md §1b.
 
-  [data-crop-exempt] (Aug 2026, Joe — NOT part of the designer's
-  contract): an element (and everything nested inside it) is excluded
-  from the crop-line measurement entirely — validate.js's
-  contentBottomIn() walks up with .closest() and skips anything inside
-  one, same idea as [data-decorative] but for a subtree with real text,
-  not a single decorative image. Currently only on Bottled Beer's
-  heading row + item list, because that block's text is centered — the
-  physical corner-clip risk the crop line protects against is specific
-  to text sitting flush against the left/right edge, so centered text
-  can safely sit lower than 9.96in without actually being clipped by the
-  holder's corner grips. Owner's explicit call, not a blanket exemption:
-  don't add this attribute to any other block without checking first —
-  it only holds because the content under it is centered.
-
   SPRITZ MENU — dual design, one shared data set.
   ================================================
   The Spritz card has TWO interchangeable designs the manager can toggle
@@ -83,6 +69,23 @@
   the "Bottled Beer" heading got an extra gap before its first item (on
   top of its existing accent treatment). Spritz Menu and Liquori are
   UNCHANGED from the prior handoff.
+
+  [data-crop-exempt] (Aug 2026, Joe — NOT part of the designer's
+  contract): an element (and everything nested inside it) is excluded
+  from the crop-line measurement entirely — validate.js's
+  contentBottomIn() walks up with .closest() and skips anything inside
+  one, same idea as [data-decorative] but for a subtree with real text,
+  not a single decorative image. Currently only on Bottled Beer's
+  heading row + item list, because that block's text is centered — the
+  physical corner-clip risk the crop line protects against is specific
+  to text sitting flush against the left/right edge, so centered text
+  can safely sit lower than 9.96in without actually being clipped by the
+  holder's corner grips. Owner's explicit call, not a blanket exemption:
+  don't add this attribute to any other block without checking first —
+  it only holds because the content under it is centered. (The
+  designer's BUILD-SPEC.md §5 now documents this rationale in prose, but
+  the actual attribute/logic still isn't in their delivered files as of
+  this handoff — keep re-applying both halves together.)
 */
 @page { size: 8.5in 11in; margin: 0; }
 
@@ -156,24 +159,27 @@ body {
   font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 700;
-  font-size: 22pt;
+  font-size: 22.5pt;
   color: #3a1a06;
   white-space: nowrap;
 }
 /* Cocktails and Spirits & Beer titles are plain centered text — no
    flanking rules. Spritz and Liquori keep the flanking-rule treatment
-   (via .page-title-row, only used in those two pages' markup). */
-.page[data-page-id="cocktails"] .page-title { margin-bottom: 18px; }
-.page[data-page-id="spirits"]   .page-title { margin-bottom: 12px; }
-.page[data-page-id="liquori"]   .page-title { margin-bottom: 15px; }
-.page[data-page-id="spritz"]    .page-title { margin-bottom: 3px; }
+   (via .page-title-row, only used in those two pages' markup).
+   NOTE: these are physical px values copied 1:1 from the design mockup —
+   do NOT run them through any px→pt conversion; only font-size uses that
+   conversion (see BUILD-SPEC.md "Exact-value parity" section). */
+.page[data-page-id="cocktails"] .page-title { margin-bottom: 36px; }
+.page[data-page-id="spirits"]   .page-title { margin-bottom: 16px; }
+.page[data-page-id="liquori"]   .page-title { margin-bottom: 20px; }
+.page[data-page-id="spritz"]    .page-title { margin-bottom: 4px; }
 
 /* ── Spritz header chrome — identical across both designs, never toggled ── */
-.spritz-kicker { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8pt; letter-spacing: 0.18em; color: #6b4c2a; text-transform: uppercase; margin-bottom: 2px; margin-top: 0.5in; }
-.spritz-subhead { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12pt; letter-spacing: 0.12em; text-transform: uppercase; color: #3a1a06; margin: 0 0 7.5px; }
-.spritz-price { text-align: center; margin: 0 0 7.5px; }
+.spritz-kicker { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8.25pt; letter-spacing: 0.18em; color: #6b4c2a; text-transform: uppercase; margin-bottom: 3px; margin-top: 0.5in; }
+.spritz-subhead { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12pt; letter-spacing: 0.12em; text-transform: uppercase; color: #3a1a06; margin: 0 0 10px; }
+.spritz-price { text-align: center; margin: 0 0 10px; }
 .spritz-price-text { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 24pt; color: #3a1a06; }
-.spritz-tagline-wrap { display: flex; flex-direction: column; align-items: center; gap: 3.75px; margin: 0 0 9px; }
+.spritz-tagline-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0 0 12px; }
 .spritz-tagline { font-family: 'Montserrat', sans-serif; font-weight: 700; font-style: italic; font-size: 9.75pt; color: #4a3a26; line-height: 1.4; text-align: center; padding: 0 6px; }
 
 /* Design toggle — default is design "a"; render.js adds spritz-design-b to
@@ -187,33 +193,37 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
    treatment — NOT Montserrat. Description stays Montserrat. */
 .spritz-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: #3a1a06; line-height: 1.2; }
 .spritz-desc { font-family: 'Montserrat', sans-serif; color: #6b4c2a; line-height: 1.3; }
-.item-list[data-list-id="spritz-a"] .item { margin-bottom: 6.75px; }
-.item-list[data-list-id="spritz-a"] .spritz-name { font-size: 12pt; }
-.item-list[data-list-id="spritz-a"] .spritz-desc { font-size: 9.75pt; margin-top: 0.75px; }
-.item-list[data-list-id^="spritz-b-"] .item { margin-bottom: 6.75px; }
-.item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 12pt; }
-.item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 9.75pt; margin-top: 0.75px; }
+.item-list[data-list-id="spritz-a"] .item { margin-bottom: 5px; }
+.item-list[data-list-id="spritz-a"] .spritz-name { font-size: 12.975pt; }
+.item-list[data-list-id="spritz-a"] .spritz-desc { font-size: 10.725pt; margin-top: 1px; }
+.item-list[data-list-id^="spritz-b-"] .item { margin-bottom: 5px; }
+.item-list[data-list-id^="spritz-b-"] { margin-bottom: 2px; }
+.item-list[data-list-id="spritz-b-bright"] .spritz-name { font-size: 12.975pt; }
+.item-list[data-list-id="spritz-b-bright"] .spritz-desc { font-size: 10.725pt; margin-top: 1px; }
 /* Groups AFTER "Bitter & Bright" (Herbal & Aromatic, Rich & Earthy) run
    1pt larger than Bitter & Bright itself — a deliberate, current design
-   decision, not a bug. Bitter & Bright stays at the base size above. */
+   decision, not a bug. Bitter & Bright stays at the base size above.
+   (All three groups got a further +1pt bump this revision — see
+   BUILD-SPEC.md changelog — these ARE the post-bump sizes.) */
 .item-list[data-list-id="spritz-b-herbal"] .spritz-name,
-.item-list[data-list-id="spritz-b-earthy"] .spritz-name { font-size: 13pt; }
+.item-list[data-list-id="spritz-b-earthy"] .spritz-name { font-size: 13.725pt; }
 .item-list[data-list-id="spritz-b-herbal"] .spritz-desc,
-.item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 10.75pt; margin-top: 0.75px; }
+.item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 11.475pt; margin-top: 1px; }
 
 /* Spritz Design B group headings — Bitter & Bright / Herbal & Aromatic /
    Rich & Earthy — get small flanking rules either side of the label
    (added on top of the plain subsection-title treatment below). Fixed
    labels/order, not editable — see BUILD-SPEC.md §5. */
-.page[data-page-id="spritz"] .subsection-title-row { margin: 4.5px 0 4.5px; }
+.page[data-page-id="spritz"] .subsection-title-row { margin: 4px 0 4px; }
 /* "Bitter & Bright" (the first group) gets an extra 0.5in of clearance
    above it, pushing the whole group down — this closes what used to be
    an odd-looking gap between it and "Herbal & Aromatic" below. */
 .page[data-page-id="spritz"] .subsection-title-row:first-of-type { margin-top: 0.5in; }
-.page[data-page-id="spritz"] .subsection-title-row:not(:first-of-type) .subsection-title { font-size: 11.5pt; }
-.subsection-title-rule--sub { height: 1px; width: 9px; background: #3a1a06; opacity: 0.5; }
+.page[data-page-id="spritz"] .subsection-title-row:first-of-type .subsection-title { font-size: 10.725pt; }
+.page[data-page-id="spritz"] .subsection-title-row:not(:first-of-type) .subsection-title { font-size: 11.475pt; }
+.subsection-title-rule--sub { height: 1px; width: 12px; background: #3a1a06; opacity: 0.5; }
 
-.subsection-title-row { display: flex; align-items: center; justify-content: center; gap: 4.5px; }
+.subsection-title-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .subsection-title {
   font-family: 'Playfair Display', serif;
   font-style: italic;
@@ -221,42 +231,41 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
   font-size: 10.5pt;
   color: #3a1a06;
 }
-.page[data-page-id="spirits"] .subsection-title-row { margin: 6px 0 3px; }
-.page[data-page-id="spirits"] .subsection-title-row:first-of-type { margin-top: 1.5px; }
-.page[data-page-id="liquori"] .subsection-title-row { margin: 6px 0 3px; }
-.page[data-page-id="liquori"] .subsection-title-row:first-of-type { margin-top: 1.5px; }
+.page[data-page-id="spirits"] .subsection-title-row { margin: 8px 0 4px; }
+.page[data-page-id="spirits"] .subsection-title-row:first-of-type { margin-top: 2px; }
+.page[data-page-id="liquori"] .subsection-title-row { margin: 8px 0 4px; }
+.page[data-page-id="liquori"] .subsection-title-row:first-of-type { margin-top: 2px; }
 
 /* Bottled Beer — the one Spirits & Beer subsection with the accent
    treatment: bigger type + flanking rules (unlike Bourbon/Scotch, which
    stay plain). Static chrome, not editable — see BUILD-SPEC.md §5.
-
-   BUG FIX (Aug 2026, Joe — recurs on every wholesale template swap,
-   see BUILD-SPEC.md §5): the designer's own margin on the plain
-   `.subsection-title-row--accent` selector never actually takes effect —
-   `.page[data-page-id="spirits"] .subsection-title-row` two rules up has
-   higher specificity (3 selectors vs. 1) and silently wins. Re-scoped
-   here to beat that rule outright (4 selectors) regardless of source
-   order, so the margin the designer's file specifies actually renders.
-   Not a design override — this restores the designer's own stated
-   intent. Re-apply this exact scoping on every future install; don't
-   just copy the designer's plain-class version back in. */
-.page[data-page-id="spirits"] .subsection-title-row.subsection-title-row--accent { margin: 30.75px 0 14.25px; }
+   Margin is scoped to .page[data-page-id="spirits"] specifically so it
+   beats the generic .page[...] .subsection-title-row rule above on
+   specificity — a plain `.subsection-title-row--accent` selector here
+   LOSES that tie-break and silently gets overridden; this is the exact
+   bug that made Bottled Beer sit in the wrong place. Don't de-scope it. */
+.subsection-title-row--accent { gap: 8px; }
+.page[data-page-id="spirits"] .subsection-title-row--accent { margin: calc(9px + 0.15in) 0 13px; }
 .subsection-title--accent { font-size: 15pt; font-weight: 700; }
-.subsection-title-rule--accent { height: 1px; width: 12px; background: #3a1a06; opacity: 0.6; }
+.subsection-title-rule--accent { height: 1px; width: 16px; background: #3a1a06; opacity: 0.6; }
 
 .item-list { display: flex; flex-direction: column; }
 
 /* ── Cocktails — name/price row + wrapping description + optional note ── */
-.item-list[data-list-id="cocktails"] .item { margin-bottom: 15.75px; }
+.item-list[data-list-id="cocktails"] .item { margin-bottom: 21px; }
 .item-list[data-list-id="cocktails"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .cocktail-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 15.75pt; color: #3a1a06; line-height: 1.15; }
 .cocktail-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 13.5pt; color: #3a1a06; line-height: 1.15; white-space: nowrap; }
-.cocktail-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.38; margin-top: 2.25px; text-wrap: pretty; }
-.cocktail-note { font-family: 'Montserrat', sans-serif; font-size: 9.75pt; color: #6b4c2a; margin-top: 2.25px; }
+.cocktail-desc { font-family: 'Montserrat', sans-serif; font-size: 12pt; color: #4a3a26; line-height: 1.38; margin-top: 3px; text-wrap: pretty; }
+.cocktail-note { font-family: 'Montserrat', sans-serif; font-size: 9.75pt; color: #6b4c2a; margin-top: 3px; }
+/* Static asset, bottom of the Cocktails card — added this revision,
+   same decorative treatment/exemption as .spritz-image below. */
+.cocktails-image { width: 108px; margin: 18px auto 0; display: block; flex-shrink: 0; }
 
 /* ── Spirits & Liquori (name + price only, no description) — same
    visual treatment on both pages ── */
-.item-list[data-list-id^="spirits-"] .item, .item-list[data-list-id^="liquori-"] .item { margin-bottom: 3px; }
+.item-list[data-list-id^="spirits-"] .item { margin-bottom: 2px; }
+.item-list[data-list-id^="liquori-"] .item { margin-bottom: 3px; }
 .item-list[data-list-id^="spirits-"] .row, .item-list[data-list-id^="liquori-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .item-name { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 12.15pt; color: #3a1a06; line-height: 1.15; }
 .item-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 11.25pt; color: #3a1a06; white-space: nowrap; }
@@ -290,17 +299,50 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .page.shrink-1pt .item-name      { font-size: 11.15pt; }
 .page.shrink-1pt .item-price     { font-size: 10.25pt; }
 .page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-name,
-.page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-name { font-size: 11pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-b-bright"] .spritz-name { font-size: 11.975pt; }
 .page.shrink-1pt .item-list[data-list-id="spritz-a"] .spritz-desc,
-.page.shrink-1pt .item-list[data-list-id^="spritz-b-"] .spritz-desc { font-size: 8.75pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-b-bright"] .spritz-desc { font-size: 9.725pt; }
 .page.shrink-1pt .item-list[data-list-id="spritz-b-herbal"] .spritz-name,
-.page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-name { font-size: 12pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-name { font-size: 12.725pt; }
 .page.shrink-1pt .item-list[data-list-id="spritz-b-herbal"] .spritz-desc,
-.page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 9.75pt; }
+.page.shrink-1pt .item-list[data-list-id="spritz-b-earthy"] .spritz-desc { font-size: 10.475pt; }
 /* Static asset — never shrunk, never measured against the holder crop
    line (see validate.js's contentBottomIn, which skips [data-decorative]
    elements). See BUILD-SPEC.md §1a/§5. */
-.spritz-image { width: 108px; margin: 13.5px auto 0; display: block; flex-shrink: 0; }
+.spritz-image { width: 108px; margin: 8px auto 0; display: block; flex-shrink: 0; }
+/* Growth release valve (Cocktails + Spritz) \u2014 render.js toggles
+   `.hide-image` on the .page once item count crosses its threshold (see
+   BUILD-SPEC.md "Growth headroom"). Hiding is plain display:none inside
+   a flex column, so the space it occupied closes automatically.
+   IMPORTANT \u2014 this only fixes the plain bottom-of-11in-card overflow
+   check. It does NOT move the holder-crop-line check at all: validate.js's
+   contentBottomIn deliberately skips [data-decorative] elements (these
+   images), so hiding one can never change cropLineOk. Cocktails' growth
+   problem IS the physical-card overflow \u2014 hiding fixes it outright.
+   Spritz's growth problem is the STRICTER crop line, which the image was
+   never counted against either way \u2014 spritz needs `.spritz-compact`
+   below to actually recover crop-line room; hiding its image alongside
+   that is a cosmetic pairing, not the fix. */
+.page.hide-image .cocktails-image,
+.page.hide-image .spritz-image { display: none; }
+
+/* Spritz "full" state \u2014 render.js adds this at spritz.items.length >= 10
+   (see BUILD-SPEC.md "Growth headroom"). Tightens header + item spacing
+   and drops the +1pt bump added this revision, recovering the room 2
+   extra items need to clear the 9.96in holder crop line. Static chrome
+   colors/weights are untouched \u2014 only spacing and the two dynamic text
+   sizes change. */
+.page.spritz-compact .spritz-kicker { margin-top: 0.3in; margin-bottom: 2px; }
+.page.spritz-compact .spritz-subhead { margin: 0 0 6px; }
+.page.spritz-compact .spritz-price { margin: 0 0 6px; }
+.page.spritz-compact .spritz-tagline-wrap { gap: 3px; margin: 0 0 8px; }
+.page.spritz-compact .subsection-title-row:first-of-type { margin-top: 0.15in; }
+.page.spritz-compact .subsection-title-row { margin: 3px 0 3px; }
+.page.spritz-compact .subsection-title-row .subsection-title { font-size: 10.5pt; }
+.page.spritz-compact .item-list[data-list-id^="spritz-b-"] .item,
+.page.spritz-compact .item-list[data-list-id="spritz-a"] .item { margin-bottom: 3px; }
+.page.spritz-compact .spritz-name { font-size: 12pt; line-height: 1.1; }
+.page.spritz-compact .spritz-desc { font-size: 9.75pt; line-height: 1.2; margin-top: 0px; }
 </style>
 </head>
 <body>
@@ -313,6 +355,7 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
       <div class="page-title-text">Signature Cocktails</div>
     </div>
     <div class="item-list" data-list-id="cocktails"></div>
+    <img class="cocktails-image" src="assets/cocktails-martini-sketch.png" alt="" data-decorative>
   </div>
 
   <div class="cut-guide"></div>
