@@ -17,10 +17,17 @@ handoff. Changes:
   (§1b) — enough for a short one-line addition, but **not** a full new
   drink with a two-line description without trimming something else
   first. Flag this to whoever adds the next cocktail.
-- Spirits & Beer's "Bottled Beer" heading (§5's accent treatment) got an
-  extra ~10.5px of clearance before its first item — a bigger gap than
-  its own heading-to-rule spacing, on top of the existing larger-type
-  accent treatment.
+- Spirits & Beer's "Bottled Beer" section got a full layout change: items
+  are now centered with the price inline after the name, separated by an
+  em dash ("Bud Light — 6.50"), instead of the name-left/price-right row
+  Bourbon and Scotch use. The heading itself is now bold (weight 700, was
+  600) with extra clearance before the first item. See §5.
+- On Spritz Menu, the "new" kicker now has 0.5in of clearance above it
+  (shifting the whole card's content down within the fixed-height card),
+  and the bottom illustration sits slightly lower (margin-top 10px →
+  13.5px) — both from a couple of rounds of "nudge the graphic vs. nudge
+  the content" requests. Treat these two as coupled if either is touched
+  again.
 
 This is a **new, structurally different menu** from the others in this
 project (Dinner, Happy Hour, Monday, Tue–Wed, Weekend). Read this whole
@@ -367,9 +374,15 @@ Baked into `template.html`, no data hooks, not surfaced in the editor:
   restyle them. Only which `category` each item carries is editable.
 - The Spirits & Beer subsection titles: "Rye / Whiskey / Bourbon" and
   "Single Malt Scotch Whisky" are plain text. **"Bottled Beer" is a
-  visually distinct accent treatment** — larger type (~15pt vs ~10.5pt)
-  with small flanking rules, unlike its two siblings. This asymmetry is
-  intentional; don't normalize all three to look the same.
+  visually distinct accent treatment** — larger, bold type (~15pt/700 vs
+  ~10.5pt/600) with small flanking rules, unlike its two siblings. This
+  asymmetry is intentional; don't normalize all three to look the same.
+  **Bottled Beer's item list is also laid out differently**: centered,
+  name and price inline separated by an em dash ("Bud Light — 6.50"),
+  vs. Bourbon/Scotch's name-left/price-right row. Same underlying
+  `item-name`/`item-price` DOM (`plain-item-template`, `renderPlainList`)
+  — only CSS on `[data-list-id="spirits-beer"]` differs. Don't refactor
+  this into a separate template; it's a CSS-only variant.
 - The Liquori subsection titles ("Tequila", "Gin", "Vodka", "Rum") — plain
   text, same treatment as Bourbon/Scotch (no rules, no size boost).
 - The number and order of subsections on Spirits & Beer (always 3) and

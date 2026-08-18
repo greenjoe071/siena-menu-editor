@@ -155,7 +155,7 @@ body {
 .page[data-page-id="spritz"]    .page-title { margin-bottom: 3px; }
 
 /* ── Spritz header chrome — identical across both designs, never toggled ── */
-.spritz-kicker { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8pt; letter-spacing: 0.18em; color: #6b4c2a; text-transform: uppercase; margin-bottom: 2px; }
+.spritz-kicker { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8pt; letter-spacing: 0.18em; color: #6b4c2a; text-transform: uppercase; margin-bottom: 2px; margin-top: 0.5in; }
 .spritz-subhead { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 12pt; letter-spacing: 0.12em; text-transform: uppercase; color: #3a1a06; margin: 0 0 7.5px; }
 .spritz-price { text-align: center; margin: 0 0 7.5px; }
 .spritz-price-text { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 24pt; color: #3a1a06; }
@@ -216,7 +216,7 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
    treatment: bigger type + flanking rules (unlike Bourbon/Scotch, which
    stay plain). Static chrome, not editable — see BUILD-SPEC.md §5. */
 .subsection-title-row--accent { gap: 6px; margin: 6.75px 0 14.25px; }
-.subsection-title--accent { font-size: 15pt; }
+.subsection-title--accent { font-size: 15pt; font-weight: 700; }
 .subsection-title-rule--accent { height: 1px; width: 12px; background: #3a1a06; opacity: 0.6; }
 
 .item-list { display: flex; flex-direction: column; }
@@ -235,6 +235,16 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .item-list[data-list-id^="spirits-"] .row, .item-list[data-list-id^="liquori-"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .item-name { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 12.15pt; color: #3a1a06; line-height: 1.15; }
 .item-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 11.25pt; color: #3a1a06; white-space: nowrap; }
+
+/* Bottled Beer items are centered with an inline em-dash price, unlike
+   Bourbon/Scotch's name-left/price-right row — a deliberate, current
+   design decision. Uses the same .item/.row/.item-name/.item-price DOM
+   from plain-item-template; only the layout is overridden here, AFTER
+   the general spirits-/liquori- rule above so it wins the tie in
+   specificity (both selectors are equally specific). */
+.item-list[data-list-id="spirits-beer"] .item { text-align: center; }
+.item-list[data-list-id="spirits-beer"] .row { display: inline; }
+.item-list[data-list-id="spirits-beer"] .item-price::before { content: " \2014 "; }
 
 /*
   ── THE ONLY SIZE FLEX THIS LAYOUT ALLOWS ──
@@ -265,7 +275,7 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 /* Static asset — never shrunk, never measured against the holder crop
    line (see validate.js's contentBottomIn, which skips [data-decorative]
    elements). See BUILD-SPEC.md §1a/§5. */
-.spritz-image { width: 108px; margin: 7.5px auto 0; display: block; flex-shrink: 0; }
+.spritz-image { width: 108px; margin: 13.5px auto 0; display: block; flex-shrink: 0; }
 </style>
 </head>
 <body>
