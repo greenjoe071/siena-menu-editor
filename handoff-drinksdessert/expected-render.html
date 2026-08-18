@@ -213,8 +213,18 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 
 /* Bottled Beer — the one Spirits & Beer subsection with the accent
    treatment: bigger type + flanking rules (unlike Bourbon/Scotch, which
-   stay plain). Static chrome, not editable — see BUILD-SPEC.md §5. */
-.subsection-title-row--accent { gap: 6px; margin: 6.75px 0 14.25px; }
+   stay plain). Static chrome, not editable — see BUILD-SPEC.md §5.
+
+   BUG FIX (Aug 2026, Joe): the designer's own `margin: 6.75px 0 14.25px`
+   on the plain `.subsection-title-row--accent` selector never actually
+   took effect — `.page[data-page-id="spirits"] .subsection-title-row`
+   two rules up has higher specificity (3 selectors vs. 1) and silently
+   won, leaving Bottled Beer with the same tight 3px gap as Bourbon/
+   Scotch instead of its intended larger one. Re-scoped here to beat that
+   rule outright (4 selectors) regardless of source order, so the margin
+   the designer's file already specifies actually renders. Not a design
+   override — this restores the designer's own stated intent. */
+.page[data-page-id="spirits"] .subsection-title-row.subsection-title-row--accent { margin: 6.75px 0 14.25px; }
 .subsection-title--accent { font-size: 15pt; font-weight: 700; }
 .subsection-title-rule--accent { height: 1px; width: 12px; background: #3a1a06; opacity: 0.6; }
 

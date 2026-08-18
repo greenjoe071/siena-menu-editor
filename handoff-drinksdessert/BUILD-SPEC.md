@@ -383,6 +383,14 @@ Baked into `template.html`, no data hooks, not surfaced in the editor:
   `item-name`/`item-price` DOM (`plain-item-template`, `renderPlainList`)
   — only CSS on `[data-list-id="spirits-beer"]` differs. Don't refactor
   this into a separate template; it's a CSS-only variant.
+  **The extra clearance above the first item needs a scoped selector**
+  (`.page[data-page-id="spirits"] .subsection-title-row.subsection-title-row--accent`)
+  to actually win over the page-wide `.subsection-title-row` margin rule
+  a few lines up — the plain `.subsection-title-row--accent` selector by
+  itself has lower specificity and silently loses, so the intended gap
+  never renders even though the rule is right there in the file. Bit us
+  once already (Aug 2026); if this margin is touched again, keep it on
+  the scoped selector, not the bare accent class.
 - The Liquori subsection titles ("Tequila", "Gin", "Vodka", "Rum") — plain
   text, same treatment as Bourbon/Scotch (no rules, no size boost).
 - The number and order of subsections on Spirits & Beer (always 3) and
