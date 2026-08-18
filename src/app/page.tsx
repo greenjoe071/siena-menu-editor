@@ -62,6 +62,16 @@ const MENUS = [
     action: 'Open →',
     badge: 'inprogress',
   },
+  {
+    id: 'arw',
+    label: 'Austin Restaurant Weeks',
+    description: '$50 three-course prix fixe — Aug 28–Sep 13, 2026',
+    icon: '🎉',
+    ready: true,
+    href: '/arw',
+    action: 'Open →',
+    badge: 'new',
+  },
 ];
 
 export default function HomePage() {
