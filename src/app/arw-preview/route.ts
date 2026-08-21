@@ -57,30 +57,17 @@ document.fonts.ready.then(function () {
   try { _arw_R.render(document, _arw_initialData); } catch (err) { console.warn('ARW initial render error', err); }
   _arw_runValidate();
 });
-</script>
-<style>
-  .preview-print-btn {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    background: #059669;
-    color: #fff;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    padding: 13px 26px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(5,150,105,0.45);
-    transition: background 0.15s, transform 0.1s;
-    z-index: 999;
-  }
-  .preview-print-btn:hover { background: #047857; transform: translateY(-1px); }
-  .preview-print-btn:active { transform: translateY(0); }
-  @media print { .preview-print-btn { display: none; } }
-</style>
-<button class="preview-print-btn" onclick="window.print()">🖨 Print Menu</button>`;
+</script>`;
+// No floating "Print" button here on purpose — unlike other menus, /arw-preview
+// is never opened as its own standalone tab (ARW has no MenuLanding "View"
+// link). It's only ever embedded as an iframe: the style-picker's thumbnails
+// (pointer-events: none, unclickable) and the editor's live preview pane. A
+// button here would only ever be reachable inside that embedded iframe, where
+// window.print() prints unreliably (inconsistent cross-browser handling of
+// printing from within a same-origin iframe) — the editor's own "Print Menu"
+// button (which uses the localStorage bridge into /arw-print) is the only
+// supported way to print this menu. Do not re-add this button without also
+// giving ARW a standalone preview-viewing route to attach it to.
 
   // Function replacer: `$` sequences in the injected JS (dollar prices,
   // regex, etc.) must be inserted literally, not treated as String.replace

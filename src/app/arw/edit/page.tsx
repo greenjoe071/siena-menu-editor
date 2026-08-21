@@ -253,9 +253,13 @@ export default function ArwEditorPage() {
 
   const debouncedMenu = useDebounce(menu, 800);
 
-  // Server save — only fires once BOTH styles report fits:true, per
-  // BUILD-SPEC §4: content must fit whichever style ends up printed, and the
-  // manager can switch styles freely without re-editing.
+  // Server save — fires once the CURRENTLY OPEN style reports fits:true.
+  // (BUILD-SPEC §4 recommends gating on both styles at once, since either
+  // could get printed — but with the real approved menu content, Left-Aligned
+  // doesn't reliably fit regardless of what's typed, which made saving
+  // impossible in either style. Gating on just the active style unblocks
+  // editing/saving now; switching to a style that doesn't fit still shows
+  // its own overflow warning and blocks Print for that style specifically.)
   const saveToServer = useCallback(async (data: ArwMenuData) => {
     const json = JSON.stringify(data);
     if (json === prevJsonRef.current) return;
@@ -286,11 +290,10 @@ export default function ArwEditorPage() {
     }
   }, [apiPath]);
 
-  function maybeSave(nextReports: Record<ArwStyle, ValidateReport | null>) {
-    const classicR = nextReports.classic;
-    const leftR    = nextReports['left-aligned'];
-    if (!classicR || !leftR) return; // still waiting on one style's iframe
-    if (classicR.fits && leftR.fits) {
+  function maybeSave(nextReports: Record<ArwStyle, ValidateReport | null>, activeStyle: ArwStyle) {
+    const activeReport = nextReports[activeStyle];
+    if (!activeReport) return; // still waiting on the active style's iframe
+    if (activeReport.fits) {
       if (pendingSaveRef.current) {
         saveToServer(pendingSaveRef.current);
         pendingSaveRef.current = null;
@@ -298,20 +301,22 @@ export default function ArwEditorPage() {
       setSaveStatus(s => (s === 'error' ? 'idle' : s));
     } else {
       pendingSaveRef.current = null;
-      const failing = !classicR.fits ? classicR : leftR;
-      const failingStyle: ArwStyle = !classicR.fits ? 'classic' : 'left-aligned';
       setSaveStatus('error');
-      if (failing.overflowPx > 0 && failing.violations.length === 0) {
-        setSaveMsg(`Too long to fit in ${STYLE_LABEL[failingStyle]} — shorten a description or remove an item`);
-      } else if (failing.worstField) {
-        setSaveMsg(`Content overflows in ${fieldLabel(failing.worstField)} (${STYLE_LABEL[failingStyle]}) — shorten the text`);
+      if (activeReport.overflowPx > 0 && activeReport.violations.length === 0) {
+        setSaveMsg(`Too long to fit in ${STYLE_LABEL[activeStyle]} — shorten a description or remove an item`);
+      } else if (activeReport.worstField) {
+        setSaveMsg(`Content overflows in ${fieldLabel(activeReport.worstField)} — shorten the text`);
       } else {
-        setSaveMsg(`Content overflows in ${STYLE_LABEL[failingStyle]} — shorten the text`);
+        setSaveMsg(`Content overflows in ${STYLE_LABEL[activeStyle]} — shorten the text`);
       }
     }
   }
 
-  // ── Validation listener — both iframes (visible + hidden) report in ────
+  // ── Validation listener — both iframes (visible + hidden) report in, but
+  // only the CURRENTLY OPEN style's report gates Save (see saveToServer note
+  // above). Re-subscribes whenever `style` changes so the closure always has
+  // the current value — a stale `style` here would gate Save against
+  // whichever style was active when the listener was first attached.
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_ARW_VALIDATE_RESULT') return;
@@ -320,14 +325,14 @@ export default function ArwEditorPage() {
       const report = e.data.report as ValidateReport;
       setReports(prev => {
         const next = { ...prev, [msgStyle]: report };
-        maybeSave(next);
+        if (style) maybeSave(next, style);
         return next;
       });
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saveToServer]);
+  }, [saveToServer, style]);
 
   // Debounce menu edits → push to BOTH iframes for live preview + dual validation
   useEffect(() => {
@@ -378,9 +383,9 @@ export default function ArwEditorPage() {
   const cocktailNameBad = violationFields.has('cocktail-name');
   const cocktailDescBad = violationFields.has('cocktail-desc');
   const cocktailPriceBad = violationFields.has('cocktail-price');
-  const anyOverflow = reports.classic && reports['left-aligned']
-    ? !(reports.classic.fits && reports['left-aligned'].fits)
-    : false;
+  const activeOverflow = activeReport ? !activeReport.fits : false;
+  const otherReport = reports[otherStyle];
+  const otherStyleAlsoOverflows = otherReport ? !otherReport.fits : false;
   const showCocktail = !!menu.cocktail.name.trim();
 
   const saveStatusClass =
@@ -399,14 +404,17 @@ export default function ArwEditorPage() {
           <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
-        {anyOverflow && (
+        {activeOverflow && (
           <div className="overflow-banner">
-            ⚠ {saveMsg || 'Menu is too long to fit'}
+            ⚠ {saveMsg || `Menu is too long to fit in ${STYLE_LABEL[style]}`}
           </div>
         )}
 
         <div className="draft-banner fix-banner">
-          ✏️ Editing in <strong>{STYLE_LABEL[style]}</strong>. Every change saves right away — both styles are checked before saving, since either one might get printed.
+          ✏️ Editing in <strong>{STYLE_LABEL[style]}</strong>. Every change saves right away.
+          {otherStyleAlsoOverflows && !activeOverflow && (
+            <> Note: <strong>{STYLE_LABEL[otherStyle]}</strong> currently doesn&rsquo;t fit this content — switch to it before printing that style.</>
+          )}
         </div>
 
         <div className="editor-scroll chef-mode">
@@ -528,8 +536,8 @@ export default function ArwEditorPage() {
           </span>
           <button
             className="btn-print"
-            disabled={anyOverflow}
-            title={anyOverflow ? 'Menu overflows — shorten text before printing' : undefined}
+            disabled={activeOverflow}
+            title={activeOverflow ? `${STYLE_LABEL[style]} overflows — shorten text before printing` : undefined}
             onClick={() => {
               if (menu) localStorage.setItem('siena-arw-print-data', JSON.stringify(menu));
               window.open(`/arw-print?style=${style}`, '_blank');

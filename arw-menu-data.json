@@ -25,8 +25,8 @@
     },
     "dolci": {
       "items": [
-        { "id": "dolci-1", "name": "Cr\u00e8me Brule", "desc": "Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream", "upcharge": "" },
-        { "id": "dolci-2", "name": "Torta di Cioccolato", "desc": "Chocolate & Pistachio Torte, Orange Marmalade, Whipped Cream", "upcharge": "" },
+        { "id": "dolci-1", "name": "Crème Brule", "desc": "Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream", "upcharge": "" },
+        { "id": "dolci-2", "name": "Torta di Cioccolato", "desc": "Chocolate & Pistachio Torte, Orange Marmalade, Cream", "upcharge": "" },
         { "id": "dolci-3", "name": "Gelato di Giorno", "desc": "Ask Your Server for Daily Flavors", "upcharge": "" }
       ]
     }

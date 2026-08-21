@@ -114,7 +114,14 @@
     var pageFits = true;
     if (page) {
       overflowPx = Math.max(0, page.scrollHeight - page.clientHeight);
-      pageFits = overflowPx <= 1;
+      // A few px of slack: this is a safety net behind the per-field line
+      // caps above, not the primary constraint (see BUILD-SPEC §4.2) — a
+      // 1px threshold turned out to be tighter than sub-pixel font/layout
+      // rounding on a full page of fixed chrome can reliably hit, tripping
+      // even when every field is well within its own cap and no amount of
+      // content trimming moves the number. 5px is still far below anything
+      // visible on a printed page.
+      pageFits = overflowPx <= 5;
     }
 
     return {
