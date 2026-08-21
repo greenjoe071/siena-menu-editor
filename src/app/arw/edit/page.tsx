@@ -37,7 +37,11 @@ type ArwStyle = 'classic' | 'left-aligned';
 type CourseKey = 'antipasti' | 'entree' | 'dolci';
 
 interface Violation { field: string; rule: string; lines: number | null }
-interface ValidateReport { fits: boolean; overflowPx: number; violations: Violation[]; worstField: string | null }
+// `fits` is driven only by per-field line-count violations — page-level
+// overflowPx/pageFits are informational only (see validate.js for why: the
+// on-screen scrollHeight check has repeatedly diverged from real printed
+// output on this handoff and no longer gates Save/Print).
+interface ValidateReport { fits: boolean; overflowPx: number; pageFits: boolean; violations: Violation[]; worstField: string | null }
 
 const STYLE_LABEL: Record<ArwStyle, string> = { classic: 'Two-Column Classic', 'left-aligned': 'Left-Aligned' };
 const OTHER_STYLE: Record<ArwStyle, ArwStyle> = { classic: 'left-aligned', 'left-aligned': 'classic' };
@@ -300,15 +304,11 @@ export default function ArwEditorPage() {
       }
       setSaveStatus(s => (s === 'error' ? 'idle' : s));
     } else {
+      // fits is false only when there's an actual per-field violation now —
+      // worstField is always set in that case (see ValidateReport note above).
       pendingSaveRef.current = null;
       setSaveStatus('error');
-      if (activeReport.overflowPx > 0 && activeReport.violations.length === 0) {
-        setSaveMsg(`Too long to fit in ${STYLE_LABEL[activeStyle]} — shorten a description or remove an item`);
-      } else if (activeReport.worstField) {
-        setSaveMsg(`Content overflows in ${fieldLabel(activeReport.worstField)} — shorten the text`);
-      } else {
-        setSaveMsg(`Content overflows in ${STYLE_LABEL[activeStyle]} — shorten the text`);
-      }
+      setSaveMsg(`Content overflows in ${fieldLabel(activeReport.worstField!)} — shorten the text`);
     }
   }
 

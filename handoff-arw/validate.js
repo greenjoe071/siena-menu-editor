@@ -109,24 +109,29 @@
 
     checkBannedWords(doc, violations);
 
+    // Page-fit is measured (scrollHeight vs clientHeight of the on-screen
+    // .page element) but is ADVISORY ONLY — it does not gate `fits`. This
+    // check has repeatedly diverged from real printed output on this
+    // handoff: it reported real, reproducible overflow (tens of px) in
+    // cases the restaurant confirmed printed correctly, twice, through the
+    // actual app. On-screen scrollHeight is a screen-layout measurement,
+    // not a paginated-print measurement, and the two don't reliably agree
+    // here. The per-field line checks above (each independently confirmed
+    // against real content) are the authoritative, hard-blocking check;
+    // `pageOverflowPx`/`pageFits` are reported for an informational note
+    // only — never use them to disable Save or Print.
     var page = doc.querySelector('.page');
-    var overflowPx = 0;
+    var pageOverflowPx = 0;
     var pageFits = true;
     if (page) {
-      overflowPx = Math.max(0, page.scrollHeight - page.clientHeight);
-      // A few px of slack: this is a safety net behind the per-field line
-      // caps above, not the primary constraint (see BUILD-SPEC §4.2) — a
-      // 1px threshold turned out to be tighter than sub-pixel font/layout
-      // rounding on a full page of fixed chrome can reliably hit, tripping
-      // even when every field is well within its own cap and no amount of
-      // content trimming moves the number. 5px is still far below anything
-      // visible on a printed page.
-      pageFits = overflowPx <= 5;
+      pageOverflowPx = Math.max(0, page.scrollHeight - page.clientHeight);
+      pageFits = pageOverflowPx <= 5;
     }
 
     return {
-      fits: pageFits && violations.length === 0,
-      overflowPx: overflowPx,
+      fits: violations.length === 0,
+      overflowPx: pageOverflowPx,
+      pageFits: pageFits,
       violations: violations,
       worstField: violations.length ? violations[0].field : null
     };
