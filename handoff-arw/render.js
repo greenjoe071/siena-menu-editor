@@ -74,10 +74,26 @@
     if (groups.length < 2) return; // single line (or unmeasurable) — nothing to fix
     var lastCount = groups[groups.length - 1].count;
     if (lastCount >= minWords) return;
-    var glueStart = words.length - minWords;
-    var head = words.slice(0, glueStart).join(' ');
-    var tail = words.slice(glueStart).join('\u00A0');
-    el.textContent = (head ? head + ' ' : '') + tail;
+
+    // Try the SMALLEST glue size first (2 words, then 3, up to minWords)
+    // rather than always gluing exactly minWords \u2014 gluing more words than
+    // necessary widens the unbreakable unit and can drag an extra word down
+    // from the line above it, overshooting past minWords for no reason.
+    for (var glueSize = 2; glueSize <= minWords; glueSize++) {
+      var glueStart = words.length - glueSize;
+      if (glueStart < 0) break;
+      var head = words.slice(0, glueStart).join(' ');
+      var tail = words.slice(glueStart).join('\u00A0');
+      el.textContent = (head ? head + ' ' : '') + tail;
+      var newGroups = wordLineGroups(el);
+      if (newGroups.length < 2) return; // now fits on one line entirely
+      if (newGroups[newGroups.length - 1].count >= minWords) return; // smallest sufficient glue found
+    }
+    // Nothing smaller worked \u2014 fall back to the full minWords glue.
+    var fallbackStart = words.length - minWords;
+    var fallbackHead = words.slice(0, fallbackStart).join(' ');
+    var fallbackTail = words.slice(fallbackStart).join('\u00A0');
+    el.textContent = (fallbackHead ? fallbackHead + ' ' : '') + fallbackTail;
   }
 
   function fillItems(doc, courseData, ids) {

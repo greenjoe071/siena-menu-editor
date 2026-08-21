@@ -172,22 +172,32 @@ function CourseSection({
   violations: Set<string>;
   onItemChange: (courseKey: CourseKey, itemId: string, updated: ArwItem) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const filledCount = course.items.filter(it => it.name.trim()).length;
+  const hasViolation = course.items.some(it => violations.has(`${it.id}-name`) || violations.has(`${it.id}-desc`));
+
   return (
-    <div className="page-group">
-      <div className="page-group-label">
-        {numeral} — {title} <span style={{ opacity: 0.6, fontWeight: 400 }}>({filledCount}/{course.items.length} filled)</span>
+    <div className="section-block">
+      <div className="section-block-header" onClick={() => setOpen(o => !o)}>
+        <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
+        <span className="section-title-label">{numeral} — {title}</span>
+        {hasViolation && <span className="dd-chip dd-chip--bad">⚠ needs a fix</span>}
+        <span className="section-count">{filledCount}/{course.items.length} filled</span>
       </div>
-      <div className="dish-list">
-        {course.items.map((item, i) => (
-          <ItemSlotCard
-            key={item.id}
-            item={item}
-            index={i}
-            violations={violations}
-            onChange={updated => onItemChange(courseKey, item.id, updated)}
-          />
-        ))}
+      <div className={`collapsible-content ${open ? 'open' : ''}`}>
+        <div className="section-body">
+          <div className="dish-list">
+            {course.items.map((item, i) => (
+              <ItemSlotCard
+                key={item.id}
+                item={item}
+                index={i}
+                violations={violations}
+                onChange={updated => onItemChange(courseKey, item.id, updated)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

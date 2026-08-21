@@ -21,12 +21,22 @@ export async function GET(request: Request) {
 
   let html = await renderArwMenu(data, style);
 
+  // The initial HTML above is server-rendered via jsdom, which can't measure
+  // real layout — render.js's browser-only orphan-line word-gluing fix
+  // (fixOrphans, needs getClientRects) silently no-ops there. Re-running
+  // render() once client-side with the exact same data, right after fonts
+  // load, ensures this preview (and its use as the style-picker's thumbnail)
+  // always matches what actually prints — which already gets a real-browser
+  // re-render via the localStorage bridge in arw-print/route.ts.
+  const safeData = JSON.stringify(data).replace(/<\/script/gi, '<\\/script');
+
   const liveScript = `<script>
 ${renderSrc}
 ${validateSrc}
 var _arw_R = window.SienaARWRender;
 var _arw_V = window.SienaARWValidate;
 var _arw_style = ${JSON.stringify(style)};
+var _arw_initialData = ${safeData};
 var _arw_timer = null;
 function _arw_runValidate() {
   _arw_V.waitForLayout(document).then(function () {
@@ -43,7 +53,10 @@ window.addEventListener('message', function (e) {
     } catch (err) { console.warn('ARW render error', err); }
   }
 });
-document.fonts.ready.then(function () { _arw_runValidate(); });
+document.fonts.ready.then(function () {
+  try { _arw_R.render(document, _arw_initialData); } catch (err) { console.warn('ARW initial render error', err); }
+  _arw_runValidate();
+});
 </script>
 <style>
   .preview-print-btn {
