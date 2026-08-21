@@ -70,7 +70,7 @@ const MENUS = [
     ready: true,
     href: '/arw',
     action: 'Open →',
-    badge: 'new',
+    badge: 'inprogress',
   },
 ];
 
