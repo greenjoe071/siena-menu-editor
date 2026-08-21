@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -17,8 +17,15 @@ interface ArwCourse {
   items: ArwItem[];
 }
 
+interface ArwCocktail {
+  name: string;
+  desc: string;
+  price: string;
+}
+
 interface ArwMenuData {
   subtitle: string;
+  cocktail: ArwCocktail;
   courses: {
     antipasti: ArwCourse;
     entree: ArwCourse;
@@ -26,18 +33,25 @@ interface ArwMenuData {
   };
 }
 
+type ArwStyle = 'classic' | 'left-aligned';
 type CourseKey = 'antipasti' | 'entree' | 'dolci';
 
-interface Violation { field: string; rule: string; lines: number }
+interface Violation { field: string; rule: string; lines: number | null }
 interface ValidateReport { fits: boolean; overflowPx: number; violations: Violation[]; worstField: string | null }
+
+const STYLE_LABEL: Record<ArwStyle, string> = { classic: 'Two-Column Classic', 'left-aligned': 'Left-Aligned' };
+const OTHER_STYLE: Record<ArwStyle, ArwStyle> = { classic: 'left-aligned', 'left-aligned': 'classic' };
 
 // ── Char limits (must match BUILD-SPEC.md and arw-schema.ts — paste-safety
 //    caps only, validate.js's live line-count check is authoritative) ──────
 const L = {
-  subtitle: 45,
-  name:     40,
-  desc:     140,
-  upcharge: 3,
+  subtitle:      45,
+  name:          40,
+  desc:          140,
+  upcharge:      3,
+  cocktailName:  40,
+  cocktailDesc:  140,
+  cocktailPrice: 3,
 } as const;
 
 const COURSES: { key: CourseKey; numeral: string; title: string }[] = [
@@ -65,6 +79,14 @@ function CharCount({ value, max }: { value: string; max: number }) {
   const len = value.length;
   const cls = len > max ? 'char-count over' : len > max * 0.85 ? 'char-count warn' : 'char-count';
   return <span className={cls}>{len}/{max}</span>;
+}
+
+function fieldLabel(field: string): string {
+  if (field === 'subtitle') return 'the subtitle';
+  if (field === 'cocktail-name') return 'the cocktail name';
+  if (field === 'cocktail-desc') return 'the cocktail description';
+  if (field === 'cocktail-price') return 'the cocktail price';
+  return `"${field}"`;
 }
 
 // ── Item slot ─────────────────────────────────────────────────────────────
@@ -174,21 +196,40 @@ function CourseSection({
 // ── Main editor ───────────────────────────────────────────────────────────
 
 export default function ArwEditorPage() {
-  // "Fix a Mistake" (/arw/fix) reuses this exact editor — same fields, same
-  // validation, same live preview — but reads/writes the LIVE menu directly
-  // instead of a draft, and hides the publish/discard footer.
-  const pathname = usePathname();
-  const isFix = pathname?.endsWith('/fix') ?? false;
-  const apiPath = isFix ? '/api/arw/fix' : '/api/arw/draft';
+  const router = useRouter();
 
-  const [menu, setMenu]                     = useState<ArwMenuData | null>(null);
-  const [saveStatus, setSaveStatus]         = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [saveMsg, setSaveMsg]               = useState('');
-  const [previewUrl, setPreviewUrl]         = useState(`/arw-preview?src=${isFix ? 'current' : 'draft'}`);
-  const [report, setReport]                 = useState<ValidateReport | null>(null);
-  const iframeRef       = useRef<HTMLIFrameElement>(null);
-  const prevJsonRef     = useRef<string>('');
-  const pendingSaveRef  = useRef<ArwMenuData | null>(null);
+  // Read ?style= from the plain browser URL on mount (not next/navigation's
+  // useSearchParams, which needs a Suspense boundary in the App Router and
+  // has no precedent elsewhere in this codebase — usePathname is used
+  // instead on every other editor page). After mount, `style` is plain
+  // client state — router.replace() below keeps the URL bar in sync for
+  // shareability/refresh, but a soft navigation on the same route doesn't
+  // remount this component, so re-reading the URL wouldn't pick it up.
+  const [style, setStyle] = useState<ArwStyle | null>(null);
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('style');
+    if (fromUrl !== 'classic' && fromUrl !== 'left-aligned') {
+      router.replace('/arw');
+      return;
+    }
+    setStyle(fromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const apiPath = '/api/arw/fix';
+
+  const [menu, setMenu]             = useState<ArwMenuData | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveMsg, setSaveMsg]       = useState('');
+  const [reports, setReports]       = useState<Record<ArwStyle, ValidateReport | null>>({ classic: null, 'left-aligned': null });
+  const [cacheBust]                 = useState(() => Date.now());
+
+  const iframeRefs: Record<ArwStyle, React.RefObject<HTMLIFrameElement>> = {
+    classic: useRef<HTMLIFrameElement>(null),
+    'left-aligned': useRef<HTMLIFrameElement>(null),
+  };
+  const prevJsonRef    = useRef<string>('');
+  const pendingSaveRef = useRef<ArwMenuData | null>(null);
 
   useEffect(() => {
     fetch(apiPath)
@@ -202,7 +243,9 @@ export default function ArwEditorPage() {
 
   const debouncedMenu = useDebounce(menu, 800);
 
-  // Server save — only called after validation confirms the page fits
+  // Server save — only fires once BOTH styles report fits:true, per
+  // BUILD-SPEC §4: content must fit whichever style ends up printed, and the
+  // manager can switch styles freely without re-editing.
   const saveToServer = useCallback(async (data: ArwMenuData) => {
     const json = JSON.stringify(data);
     if (json === prevJsonRef.current) return;
@@ -233,43 +276,61 @@ export default function ArwEditorPage() {
     }
   }, [apiPath]);
 
-  // ── Validation listener ─────────────────────────────────────────────────
+  function maybeSave(nextReports: Record<ArwStyle, ValidateReport | null>) {
+    const classicR = nextReports.classic;
+    const leftR    = nextReports['left-aligned'];
+    if (!classicR || !leftR) return; // still waiting on one style's iframe
+    if (classicR.fits && leftR.fits) {
+      if (pendingSaveRef.current) {
+        saveToServer(pendingSaveRef.current);
+        pendingSaveRef.current = null;
+      }
+      setSaveStatus(s => (s === 'error' ? 'idle' : s));
+    } else {
+      pendingSaveRef.current = null;
+      const failing = !classicR.fits ? classicR : leftR;
+      const failingStyle: ArwStyle = !classicR.fits ? 'classic' : 'left-aligned';
+      setSaveStatus('error');
+      if (failing.overflowPx > 0 && failing.violations.length === 0) {
+        setSaveMsg(`Too long to fit in ${STYLE_LABEL[failingStyle]} — shorten a description or remove an item`);
+      } else if (failing.worstField) {
+        setSaveMsg(`Content overflows in ${fieldLabel(failing.worstField)} (${STYLE_LABEL[failingStyle]}) — shorten the text`);
+      } else {
+        setSaveMsg(`Content overflows in ${STYLE_LABEL[failingStyle]} — shorten the text`);
+      }
+    }
+  }
+
+  // ── Validation listener — both iframes (visible + hidden) report in ────
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_ARW_VALIDATE_RESULT') return;
-      if (e.source !== iframeRef.current?.contentWindow) return;
-      const rep = e.data.report as ValidateReport;
-      setReport(rep);
-      if (rep.fits) {
-        if (pendingSaveRef.current) {
-          saveToServer(pendingSaveRef.current);
-          pendingSaveRef.current = null;
-        }
-      } else {
-        pendingSaveRef.current = null;
-        setSaveStatus('error');
-        if (rep.overflowPx > 0 && rep.violations.length === 0) {
-          setSaveMsg('Page is too long to fit — shorten a description or remove an item');
-        } else if (rep.worstField) {
-          const label = rep.worstField === 'subtitle' ? 'the subtitle' : `"${rep.worstField}"`;
-          setSaveMsg(`Content overflows in ${label} — shorten the text`);
-        } else {
-          setSaveMsg('Content overflows — shorten the text');
-        }
-      }
+      const msgStyle = e.data.style as ArwStyle;
+      if (e.source !== iframeRefs[msgStyle]?.current?.contentWindow) return;
+      const report = e.data.report as ValidateReport;
+      setReports(prev => {
+        const next = { ...prev, [msgStyle]: report };
+        maybeSave(next);
+        return next;
+      });
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveToServer]);
 
-  // Debounce menu edits → send to iframe for live preview + validation
+  // Debounce menu edits → push to BOTH iframes for live preview + dual validation
   useEffect(() => {
     if (!debouncedMenu || prevJsonRef.current === '') return;
     pendingSaveRef.current = debouncedMenu;
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: 'SIENA_ARW_UPDATE', payload: debouncedMenu },
-      '*'
-    );
+    setReports({ classic: null, 'left-aligned': null });
+    (['classic', 'left-aligned'] as ArwStyle[]).forEach(s => {
+      iframeRefs[s].current?.contentWindow?.postMessage(
+        { type: 'SIENA_ARW_UPDATE', payload: debouncedMenu },
+        '*'
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedMenu]);
 
   // ── Mutations ───────────────────────────────────────────────────────────
@@ -282,29 +343,17 @@ export default function ArwEditorPage() {
     });
   }
 
-  // ── Publish / discard ──────────────────────────────────────────────────
-  const [publishing, setPublishing] = useState(false);
-
-  async function handlePublish() {
-    if (!menu) return;
-    if (!confirm('Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.')) return;
-    setPublishing(true);
-    setSaveMsg('Publishing…');
-    try {
-      await fetch('/api/arw/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
-      const res = await fetch('/api/arw/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
-      window.location.href = '/arw';
-    } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
+  function handleCocktailChange(updated: ArwCocktail) {
+    setMenu(m => m && { ...m, cocktail: updated });
   }
 
-  async function handleDiscard() {
-    if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
-    try { await fetch('/api/arw/draft', { method: 'DELETE' }); }
-    finally { window.location.href = '/arw'; }
+  function switchStyle(next: ArwStyle) {
+    if (!style || next === style) return;
+    setStyle(next);
+    router.replace(`/arw/edit?style=${next}`, { scroll: false });
   }
 
-  if (!menu) {
+  if (!style || !menu) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
         Loading menu…
@@ -312,9 +361,17 @@ export default function ArwEditorPage() {
     );
   }
 
-  const violationFields = new Set((report?.violations ?? []).map(v => v.field));
+  const activeReport = reports[style];
+  const otherStyle = OTHER_STYLE[style];
+  const violationFields = new Set((activeReport?.violations ?? []).map(v => v.field));
   const subtitleBad = violationFields.has('subtitle');
-  const anyOverflow = report ? !report.fits : false;
+  const cocktailNameBad = violationFields.has('cocktail-name');
+  const cocktailDescBad = violationFields.has('cocktail-desc');
+  const cocktailPriceBad = violationFields.has('cocktail-price');
+  const anyOverflow = reports.classic && reports['left-aligned']
+    ? !(reports.classic.fits && reports['left-aligned'].fits)
+    : false;
+  const showCocktail = !!menu.cocktail.name.trim();
 
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
@@ -334,24 +391,18 @@ export default function ArwEditorPage() {
 
         {anyOverflow && (
           <div className="overflow-banner">
-            ⚠ {saveMsg || 'Menu is too long to fit on one page'}
+            ⚠ {saveMsg || 'Menu is too long to fit'}
           </div>
         )}
 
-        {isFix ? (
-          <div className="draft-banner fix-banner">
-            ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
-          </div>
-        ) : (
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
-          </div>
-        )}
+        <div className="draft-banner fix-banner">
+          ✏️ Editing in <strong>{STYLE_LABEL[style]}</strong>. Every change saves right away — both styles are checked before saving, since either one might get printed.
+        </div>
 
         <div className="editor-scroll chef-mode">
 
           <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
-            <p>Three fixed courses — 5 Antipasti, 8 Entr&eacute;e, 3 Dolci. You can edit any dish or clear a slot to remove it, but slots can&rsquo;t be added. The $50 price, dates, and all other page chrome are locked.</p>
+            <p>Three fixed courses — 5 Antipasti, 8 Entr&eacute;e, 3 Dolci — plus one featured cocktail. You can edit any dish or clear a slot to remove it, but slots can&rsquo;t be added. The $50 price, dates, and all other page chrome are locked.</p>
           </div>
 
           {/* Subtitle */}
@@ -374,6 +425,76 @@ export default function ArwEditorPage() {
             </div>
           </div>
 
+          {/* Featured cocktail */}
+          <div className="page-group">
+            <div className="page-group-label">Featured Cocktail (optional)</div>
+            <div className="dish-row">
+              <div className="dish-fields">
+                <div style={{ marginBottom: showCocktail ? '12px' : 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#d4b57a', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <input
+                      type="checkbox"
+                      checked={showCocktail}
+                      onChange={e => handleCocktailChange(e.target.checked ? menu.cocktail : { name: '', desc: '', price: '' })}
+                      style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#b8821e' }}
+                    />
+                    Include a featured cocktail
+                  </label>
+                  {!showCocktail && (
+                    <div style={{ fontSize: '12px', color: 'rgba(212,181,122,0.5)', marginTop: '4px', paddingLeft: '24px' }}>
+                      Clearing the name hides the whole cocktail block
+                    </div>
+                  )}
+                </div>
+
+                {showCocktail && (
+                  <>
+                    <div className="dish-field-row" style={{ alignItems: 'flex-end', gap: '10px', marginBottom: '10px' }}>
+                      <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
+                        <div className="field-label-row">
+                          <label>Cocktail name{cocktailNameBad && <span className="dd-chip dd-chip--bad" style={{ marginLeft: '6px' }}>wraps to 2 lines</span>}</label>
+                          <CharCount value={menu.cocktail.name} max={L.cocktailName} />
+                        </div>
+                        <input
+                          value={menu.cocktail.name}
+                          onChange={e => handleCocktailChange({ ...menu.cocktail, name: e.target.value })}
+                          placeholder="e.g. The Siena Sunbeam"
+                        />
+                      </div>
+                      <div className="field-group" style={{ width: '90px', flexShrink: 0, marginBottom: 0 }}>
+                        <div className="field-label-row">
+                          <label>Price{cocktailPriceBad && <span className="dd-chip dd-chip--bad" style={{ marginLeft: '6px' }}>digits only</span>}</label>
+                          <CharCount value={menu.cocktail.price} max={L.cocktailPrice} />
+                        </div>
+                        <input
+                          value={menu.cocktail.price}
+                          onChange={e => handleCocktailChange({ ...menu.cocktail, price: filterDigits(e.target.value) })}
+                          placeholder="14"
+                          inputMode="numeric"
+                        />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: 'rgba(212,181,122,0.55)', marginTop: '-6px', marginBottom: '8px' }}>
+                      Price prints as digits only — no $ shown on the menu.
+                    </div>
+                    <div className="field-group" style={{ marginBottom: 0 }}>
+                      <div className="field-label-row">
+                        <label>Description{cocktailDescBad && <span className="dd-chip dd-chip--bad" style={{ marginLeft: '6px' }}>too long (max 2 lines)</span>}</label>
+                        <CharCount value={menu.cocktail.desc} max={L.cocktailDesc} />
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={menu.cocktail.desc}
+                        onChange={e => handleCocktailChange({ ...menu.cocktail, desc: e.target.value })}
+                        placeholder="Ingredients"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {COURSES.map(c => (
             <CourseSection
               key={c.key}
@@ -388,13 +509,6 @@ export default function ArwEditorPage() {
 
         </div>{/* end editor-scroll */}
 
-        {!isFix && (
-          <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
-            <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
-          </div>
-        )}
         <div className="editor-footer">
           <span className={saveStatusClass} style={{ flex: 1 }}>
             {saveStatus === 'saved'  ? '✓ Saved' :
@@ -408,7 +522,7 @@ export default function ArwEditorPage() {
             title={anyOverflow ? 'Menu overflows — shorten text before printing' : undefined}
             onClick={() => {
               if (menu) localStorage.setItem('siena-arw-print-data', JSON.stringify(menu));
-              window.open(`/arw-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
+              window.open(`/arw-print?style=${style}`, '_blank');
             }}
           >
             Print Menu
@@ -419,20 +533,28 @@ export default function ArwEditorPage() {
       {/* ── Preview pane ─────────────────────────────────────────── */}
       <div className="preview-pane">
         <div className="preview-toolbar">
-          <span>Live preview</span>
+          <span>Live preview — {STYLE_LABEL[style]}</span>
           <button
             className="btn-ghost"
             style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-            onClick={() => setPreviewUrl(`/arw-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
+            onClick={() => switchStyle(otherStyle)}
           >
-            ↺ Reload from server
+            ⇄ Switch to {STYLE_LABEL[otherStyle]}
           </button>
         </div>
         <iframe
-          ref={iframeRef}
-          src={previewUrl}
+          ref={iframeRefs.classic}
+          src={`/arw-preview?style=classic&v=${cacheBust}`}
           className="preview-iframe"
-          title="ARW menu preview"
+          title="ARW menu preview — Two-Column Classic"
+          style={style !== 'classic' ? { position: 'fixed', top: '-9999px', left: '-9999px', width: '816px', height: '1056px' } : undefined}
+        />
+        <iframe
+          ref={iframeRefs['left-aligned']}
+          src={`/arw-preview?style=left-aligned&v=${cacheBust}`}
+          className="preview-iframe"
+          title="ARW menu preview — Left-Aligned"
+          style={style !== 'left-aligned' ? { position: 'fixed', top: '-9999px', left: '-9999px', width: '816px', height: '1056px' } : undefined}
         />
       </div>
 

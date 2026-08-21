@@ -1,28 +1,29 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readMenuBySrc } from '@/lib/arw-menu-store';
-import { renderArwMenu } from '@/lib/render-arw-server';
+import { readArwMenu } from '@/lib/arw-menu-store';
+import { renderArwMenu, isArwStyle } from '@/lib/render-arw-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-arw');
 
-// ?src=current (default) | draft | arw-published-<ts>
+// ?style=classic (default) | left-aligned
 export async function GET(request: Request) {
-  const src = new URL(request.url).searchParams.get('src');
+  const styleParam = new URL(request.url).searchParams.get('style');
+  const style = isArwStyle(styleParam) ? styleParam : 'classic';
+
   const [data, renderSrc, validateSrc, templateSrc] = await Promise.all([
-    readMenuBySrc(src),
+    readArwMenu(),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'validate.js'), 'utf8'),
-    readFile(join(HANDOFF, 'template.html'), 'utf8'),
+    readFile(join(HANDOFF, style === 'classic' ? 'template.html' : 'template-left-aligned.html'), 'utf8'),
   ]);
 
-  let html = await renderArwMenu(data);
+  let html = await renderArwMenu(data, style);
 
   // Parse a fresh DOM from the raw template before applying the localStorage
   // payload, then swap it in — the same defensively-correct pattern used by
-  // every print route on this project (harmless even though render.js here
-  // fully self-heals via style.display toggles with no destructive .remove()).
+  // every print route on this project.
   const safeTemplate = JSON.stringify(templateSrc).replace(/<\/script/gi, '<\\/script');
 
   const printScript = `<script>

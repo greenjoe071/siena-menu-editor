@@ -1,10 +1,11 @@
 {
   "subtitle": "Three-Course Prix Fixe Dinner",
+  "cocktail": { "name": "The Siena Sunbeam", "desc": "prosecco, aperol, blood orange, rosemary honey syrup, orange twist", "price": "14" },
   "courses": {
     "antipasti": {
       "items": [
         { "id": "antipasti-1", "name": "Pancetta", "desc": "Crumbled Gorgonzola, Calabrian Chili and Orange Infused Truffle Honey", "upcharge": "" },
-        { "id": "antipasti-2", "name": "Provoleta", "desc": "Wood Oven Roasted Provolone Cheese, Warm Spicy Honey, Charred Peppers, Grilled Bread", "upcharge": "" },
+        { "id": "antipasti-2", "name": "Provoleta", "desc": "Wood Oven Roasted Provolone, Warm Spicy Honey, Charred Peppers, Grilled Bread", "upcharge": "" },
         { "id": "antipasti-3", "name": "Meatballs", "desc": "Beef Meatballs, Whipped Ricotta, Italian Salsa Verde, Parmesan Cheese", "upcharge": "" },
         { "id": "antipasti-4", "name": "Calamari", "desc": "Lightly Fried Squid, Capers, Lemon and Smoked Paprika Aioli", "upcharge": "" },
         { "id": "antipasti-5", "name": "Bruschetta", "desc": "Avocado, Heirloom Tomatoes, Arugula, Lemon Oil, Jumbo Lump Crabmeat", "upcharge": "10" }
@@ -19,13 +20,13 @@
         { "id": "entree-5", "name": "Casarecce della Nonna", "desc": "Twisted Pasta, Chicken, Gorgonzola, Caramelized Onions, Rosemary and Cream", "upcharge": "" },
         { "id": "entree-6", "name": "Bistecca di Manzo", "desc": "8oz New York Strip, Grilled Asparagus, Mashed Potato, Calabrian Chili Butter", "upcharge": "" },
         { "id": "entree-7", "name": "Frutti di Mare", "desc": "Lobster Tail, Shrimp, Mussels, Scallops, Saffron Risotto", "upcharge": "15" },
-        { "id": "entree-8", "name": "Confit di Anatra", "desc": "Crispy Duct Leg Confit, Tricolor Cauliflower Risotto", "upcharge": "" }
+        { "id": "entree-8", "name": "Confit di Anatra", "desc": "Crispy Duck Leg Confit, Tricolor Cauliflower Risotto", "upcharge": "" }
       ]
     },
     "dolci": {
       "items": [
         { "id": "dolci-1", "name": "Cr\u00e8me Brule", "desc": "Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream", "upcharge": "" },
-        { "id": "dolci-2", "name": "Torta di Cioccolato", "desc": "Chocolate & Pistachio Torte, Orange Marmalade, Cream", "upcharge": "" },
+        { "id": "dolci-2", "name": "Torta di Cioccolato", "desc": "Chocolate & Pistachio Torte, Orange Marmalade, Whipped Cream", "upcharge": "" },
         { "id": "dolci-3", "name": "Gelato di Giorno", "desc": "Ask Your Server for Daily Flavors", "upcharge": "" }
       ]
     }

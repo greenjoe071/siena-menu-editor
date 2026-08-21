@@ -1,6 +1,9 @@
 /**
  * SienaARWRender — UMD renderer for the Austin Restaurant Weeks $50 Dinner Menu.
  * SienaARWRender.render(document, data) — mutates the document in place.
+ * Works identically against template.html (Two-Column Classic) and
+ * template-left-aligned.html (Left-Aligned) — both share the same data-* hooks,
+ * so one dataset renders into whichever style the manager picked.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
@@ -15,6 +18,68 @@
     if (el) el.textContent = value || '';
   }
 
+  // Groups an element's rendered words into visual lines via per-word Range
+  // measurement (same technique as validate.js's countLines, one level more
+  // granular). Requires real layout — under JSDOM getClientRects() returns
+  // nothing useful, so this safely no-ops there (see BUILD-SPEC §9).
+  function wordLineGroups(el) {
+    var textNode = el.firstChild;
+    if (!textNode || textNode.nodeType !== 3) return [];
+    var doc = el.ownerDocument;
+    var text = textNode.textContent;
+    var re = /\S+/g;
+    var groups = [];
+    var m;
+    try {
+      while ((m = re.exec(text))) {
+        var range = doc.createRange();
+        range.setStart(textNode, m.index);
+        range.setEnd(textNode, m.index + m[0].length);
+        var rects = range.getClientRects();
+        if (!rects.length) continue;
+        var top = rects[0].top;
+        if (top === 0 && rects[0].width === 0) continue;
+        var last = groups[groups.length - 1];
+        if (last && Math.abs(last.top - top) < 1) {
+          last.count++;
+        } else {
+          groups.push({ top: top, count: 1 });
+        }
+      }
+    } catch (e) {
+      // No real layout engine available (e.g. JSDOM's Range.getClientRects is
+      // not implemented and throws) — skip the orphan-line fix rather than
+      // crashing render(). It's a browser-layout-dependent nice-to-have, not
+      // core DOM mutation, so a silent no-op here is the correct fallback.
+      return [];
+    }
+    return groups;
+  }
+
+  // Prevents an orphaned 1-2 word wrapped line: if the field wraps and the
+  // last visual line has fewer than minWords, glues that many trailing words
+  // together with U+00A0 so they move as one unit. Guarantees >= minWords on
+  // a wrapped line; in narrow columns a whole extra word from above may also
+  // ride down with the glued group (more than minWords is possible, fewer never is).
+  // Idempotent: always starts from the field's plain-space text.
+  function fixOrphans(doc, id, minWords) {
+    minWords = minWords || 3;
+    var el = doc.querySelector('[data-text-id="' + id + '"]');
+    if (!el) return;
+    var text = el.textContent;
+    if (!text) return;
+    var words = text.trim().split(/ +/);
+    if (words.length <= minWords) return;
+    var groups = wordLineGroups(el);
+    if (groups.length < 2) return; // single line (or unmeasurable) — nothing to fix
+    var lastCount = groups[groups.length - 1].count;
+    if (lastCount >= minWords) return;
+    var glueStart = words.length - minWords;
+    var head = words.slice(0, glueStart).join(' ');
+    var tail = words.slice(glueStart).join('\u00A0');
+    el.textContent = (head ? head + ' ' : '') + tail;
+  }
+
   function fillItems(doc, courseData, ids) {
     var items = (courseData && courseData.items) || [];
     var byId = {};
@@ -22,17 +87,9 @@
     ids.forEach(function (id) {
       var d = byId[id] || {};
       setText(doc, id + '-name', d.name);
-
-      // The upcharge pill lives INSIDE the desc element (see template.html),
-      // so grab a reference to it before clearing textContent (which would
-      // otherwise destroy it) and re-attach it afterward.
-      var descEl = doc.querySelector('[data-text-id="' + id + '-desc"]');
+      setText(doc, id + '-desc', d.desc);
+      fixOrphans(doc, id + '-desc', 3);
       var upWrap = doc.querySelector('[data-upcharge-wrap="' + id + '"]');
-      if (descEl) {
-        descEl.textContent = d.desc || '';
-        if (upWrap) descEl.appendChild(upWrap);
-      }
-
       var upVal = (d.upcharge || '').toString().trim();
       if (upWrap) {
         if (upVal) {
@@ -45,11 +102,34 @@
     });
   }
 
+  function fillCocktail(doc, cocktail) {
+    cocktail = cocktail || {};
+    var block = doc.querySelector('[data-cocktail-block]');
+    var name = (cocktail.name || '').toString().trim();
+    if (block) block.style.display = name ? '' : 'none';
+    if (!name) return;
+    setText(doc, 'cocktail-name', cocktail.name);
+    setText(doc, 'cocktail-desc', cocktail.desc);
+    fixOrphans(doc, 'cocktail-desc', 3);
+    var priceWrap = doc.querySelector('[data-cocktail-price-wrap]');
+    var priceVal = (cocktail.price || '').toString().trim();
+    if (priceWrap) {
+      if (priceVal) {
+        priceWrap.style.display = '';
+        setText(doc, 'cocktail-price', priceVal);
+      } else {
+        priceWrap.style.display = 'none';
+      }
+    }
+  }
+
   // cols = max columns the grid uses when the course is at full cardinality.
   // Shrinks to the visible count when fewer items remain; when the visible
   // count exceeds cols with a remainder, the last visible item spans the
   // full row instead of leaving a gap (mirrors the Antipasti "5th item"
-  // treatment in the approved design).
+  // treatment in the approved design). Templates with no [data-grid] element
+  // (e.g. the Left-Aligned single-column style) simply skip the column math —
+  // hide/show is all that style needs.
   function layoutCourse(doc, courseKey, cols, ids) {
     var courseEl = doc.querySelector('[data-course-id="' + courseKey + '"]');
     var grid = doc.querySelector('[data-grid="' + courseKey + '"]');
@@ -60,15 +140,16 @@
       var nameEl = item.querySelector('[data-text-id="' + id + '-name"]');
       var hasName = nameEl && nameEl.textContent.trim().length > 0;
       item.style.display = hasName ? '' : 'none';
-      item.style.gridColumn = '';
+      if (grid) item.style.gridColumn = '';
       if (hasName) visible.push(item);
     });
     var n = visible.length;
     if (n === 0) {
-      courseEl.style.display = 'none';
+      if (courseEl) courseEl.style.display = 'none';
       return;
     }
-    courseEl.style.display = '';
+    if (courseEl) courseEl.style.display = '';
+    if (!grid) return;
     var usedCols = Math.min(cols, n);
     grid.style.gridTemplateColumns = 'repeat(' + usedCols + ', 1fr)';
     if (n > cols && n % cols !== 0) {
@@ -83,6 +164,7 @@
   function render(document, data) {
     data = data || {};
     setText(document, 'subtitle', data.subtitle);
+    fillCocktail(document, data.cocktail);
 
     var courses = data.courses || {};
     fillItems(document, courses.antipasti, ANTIPASTI_IDS);

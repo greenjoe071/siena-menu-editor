@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Siena Ristorante — Austin Restaurant Weeks $50 Dinner Menu</title>
+<title>Siena Ristorante — Austin Restaurant Weeks $50 Dinner Menu (Two-Column Classic)</title>
 <style>
 @font-face{font-family:'Playfair Display';src:url('fonts/PlayfairDisplay-VariableFont_wght.ttf') format('truetype');font-weight:100 900;font-style:normal;font-display:swap;}
 @font-face{font-family:'Playfair Display';src:url('fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf') format('truetype');font-weight:100 900;font-style:italic;font-display:swap;}
@@ -22,7 +22,7 @@ body {
 .page {
   width: 8.5in;
   height: 11in;
-  padding: 36pt 45pt 30pt;
+  padding: 24pt 45pt 18pt;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -41,42 +41,54 @@ body {
 }
 
 /* ── Hero ── */
-.hero { text-align: center; padding-bottom: 7.5pt; }
-.hero-logo-row { display: flex; align-items: center; justify-content: center; margin-bottom: 7.5pt; }
-.hero-logo-row img { height: 31.5pt; width: auto; display: block; }
+.hero-top { display: flex; align-items: center; justify-content: center; gap: 25.5pt; padding-bottom: 10.5pt; margin-top: 18pt; }
+.hero-left { text-align: center; }
+.hero-left img { height: 46.5pt; width: auto; display: block; margin: 0 auto 7.5pt; }
 .hero-dates {
-  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8pt;
-  letter-spacing: 0.2em; text-transform: uppercase; color: #b8821e; margin-bottom: 4.5pt;
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 9.75pt;
+  letter-spacing: 0.2em; text-transform: uppercase; color: #3a1a06;
 }
+.hero-divider { width: 1pt; align-self: stretch; background: #b8821e; opacity: .45; }
+.hero-right { text-align: center; }
 .hero-price {
   font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
-  font-size: 50pt; color: #b8821e; line-height: .95; letter-spacing: -0.01em;
+  font-size: 54pt; color: #b8821e; line-height: .95; letter-spacing: -0.01em;
 }
-.hero-price .dollar { font-size: 26pt; font-weight: 600; position: relative; top: -7.5pt; }
+.hero-price .dollar { font-size: 27.75pt; font-weight: 600; position: relative; top: -9.75pt; }
 .hero-subtitle {
   font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600;
-  font-size: 12pt; color: #111; margin-top: 15pt;
+  font-size: 15.75pt; color: #111; margin-top: 6pt;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* ── Menu body: centers the cocktail + three courses in the space between hero and footer ── */
+.menu-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+/* ── Featured cocktail ── */
+.cocktail { text-align: center; margin: 6pt 0 1.5pt; padding: 3pt 0; border-top: 1px solid rgba(184,130,30,.35); border-bottom: 1px solid rgba(184,130,30,.35); }
+.cocktail-label { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 7.125pt; letter-spacing: 0.15em; text-transform: uppercase; color: #b8821e; margin-right: 6pt; }
+.cocktail-name {
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 11.25pt; color: #3a1a06;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cocktail-sep, .cocktail-desc { font-family: 'Montserrat', sans-serif; font-style: italic; font-weight: 400; font-size: 9.375pt; color: #333; }
+.cocktail-price { color: #b8821e; font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 9.375pt; }
+
 /* ── Course header row: rule — numeral — title — choice of one — rule ── */
-.course-head { display: flex; align-items: center; gap: 7.5pt; }
+.course-head { display: flex; align-items: center; gap: 7.5pt; margin: 4.5pt 0 6pt; }
 .course-head .rule { flex: 1; height: 1pt; background: #b8821e; opacity: .45; }
 .course-numeral {
   font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;
-  font-size: 14pt; color: #b8821e; white-space: nowrap;
+  font-size: 14.25pt; color: #b8821e; white-space: nowrap;
 }
 .course-title {
-  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8pt;
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8.25pt;
   letter-spacing: 0.2em; text-transform: uppercase; color: #5a2e0e; white-space: nowrap;
 }
 .course-choice {
-  font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 7pt;
+  font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 6.75pt;
   letter-spacing: 0.05em; text-transform: uppercase; color: #6b4c2a; white-space: nowrap;
 }
-.course[data-course-id="antipasti"] .course-head { margin: 6pt 0 7.5pt; }
-.course[data-course-id="entree"] .course-head,
-.course[data-course-id="dolci"] .course-head { margin: 9pt 0 7.5pt; }
 
 /* ── Dish grid ── */
 .dish-grid { display: grid; gap: 0 21pt; text-align: center; }
@@ -91,7 +103,7 @@ body {
   color: #111; line-height: 1.15; display: block; margin-bottom: 1pt;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.course[data-course-id="antipasti"] .dish-name { font-size: 13pt; }
+.course[data-course-id="antipasti"] .dish-name { font-size: 12.75pt; }
 .course[data-course-id="entree"] .dish-name,
 .course[data-course-id="dolci"] .dish-name { font-size: 12pt; }
 
@@ -99,34 +111,49 @@ body {
   font-family: 'Montserrat', sans-serif; font-weight: 400; color: #333;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.course[data-course-id="antipasti"] .dish-desc { font-size: 10pt; line-height: 1.3; }
-.course[data-course-id="entree"] .dish-desc { font-size: 10pt; line-height: 1.25; }
-.course[data-course-id="dolci"] .dish-desc { font-size: 9.5pt; line-height: 1.25; }
+.course[data-course-id="antipasti"] .dish-desc { font-size: 10.125pt; line-height: 1.3; }
+.course[data-course-id="entree"] .dish-desc { font-size: 9.75pt; line-height: 1.25; }
+.course[data-course-id="dolci"] .dish-desc { font-size: 9.375pt; line-height: 1.25; }
 
 .dish-upcharge { color: #b8821e; font-weight: 700; }
 
 /* ── Footer ── */
-.ctfb-row { display: flex; align-items: center; justify-content: center; gap: 10.5pt; margin-top: auto; padding-top: 9pt; }
-.ctfb-row img { height: 33pt; width: 33pt; display: block; }
-.ctfb-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 9pt; color: #5a2e0e; }
+.ctfb-row { display: flex; align-items: center; justify-content: center; gap: 10.5pt; padding-top: 9pt; }
+.ctfb-row img { height: 42pt; width: 42pt; display: block; }
+.ctfb-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 11.25pt; color: #5a2e0e; }
 
 .weekly { margin-top: 7.5pt; text-align: center; }
 .weekly-title { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 9pt; color: #b8821e; margin-bottom: 2pt; }
 .weekly-body { font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 7.5pt; color: #4a3a26; letter-spacing: 0.02em; }
 .weekly-body strong { color: #111; font-weight: 700; }
 
-.footnote { text-align: center; margin-top: 15pt; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 8pt; letter-spacing: 0.05em; color: #555; }
+.footnote { text-align: center; margin-top: 15pt; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 9.375pt; letter-spacing: 0.05em; color: #555; }
 </style>
 </head>
 <body>
 
 <div class="page">
 
-  <div class="hero">
-    <div class="hero-logo-row"><img src="images/arw-wordmark.png" alt="Austin Restaurant Weeks"></div>
-    <div class="hero-dates">August 28 &ndash; September 13, 2026</div>
-    <div class="hero-price"><span class="dollar">$</span>50</div>
-    <div class="hero-subtitle" data-text-id="subtitle">Three-Course Prix Fixe Dinner</div>
+  <div class="hero-top">
+    <div class="hero-left">
+      <img src="images/arw-wordmark.png" alt="Austin Restaurant Weeks">
+      <div class="hero-dates">August 28 &ndash; September 13, 2026</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-right">
+      <div class="hero-price"><span class="dollar">$</span>50</div>
+      <div class="hero-subtitle" data-text-id="subtitle">Three-Course Prix Fixe Dinner</div>
+    </div>
+  </div>
+
+  <div class="menu-body">
+
+  <div class="cocktail" data-cocktail-block>
+    <span class="cocktail-label">Featured Cocktail</span>
+    <span class="cocktail-name" data-text-id="cocktail-name">The Siena Sunbeam</span>
+    <span class="cocktail-sep">&nbsp;&mdash;&nbsp;</span>
+    <span class="cocktail-desc" data-text-id="cocktail-desc">prosecco, aperol, blood orange, rosemary honey syrup, orange twist</span>
+    <span data-cocktail-price-wrap>&nbsp;&nbsp;<span class="cocktail-price" data-text-id="cocktail-price">14</span></span>
   </div>
 
   <div class="course" data-course-id="antipasti">
@@ -140,23 +167,23 @@ body {
     <div class="dish-grid" data-grid="antipasti" style="grid-template-columns: repeat(2, 1fr);">
       <div class="dish" data-item-id="antipasti-1">
         <span class="dish-name" data-text-id="antipasti-1-name">Pancetta</span>
-        <span class="dish-desc" data-text-id="antipasti-1-desc">Crumbled Gorgonzola, Calabrian Chili and Orange Infused Truffle Honey</span>
+        <span class="dish-desc" data-text-id="antipasti-1-desc">Crumbled Gorgonzola, Calabrian Chili and Orange Infused Truffle Honey</span><span data-upcharge-wrap="antipasti-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-1-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="antipasti-2">
         <span class="dish-name" data-text-id="antipasti-2-name">Provoleta</span>
-        <span class="dish-desc" data-text-id="antipasti-2-desc">Wood Oven Roasted Provolone Cheese, Warm Spicy Honey, Charred Peppers, Grilled Bread</span>
+        <span class="dish-desc" data-text-id="antipasti-2-desc">Wood Oven Roasted Provolone, Warm Spicy Honey, Charred Peppers, Grilled Bread</span><span data-upcharge-wrap="antipasti-2" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-2-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="antipasti-3">
         <span class="dish-name" data-text-id="antipasti-3-name">Meatballs</span>
-        <span class="dish-desc" data-text-id="antipasti-3-desc">Beef Meatballs, Whipped Ricotta, Italian Salsa Verde, Parmesan Cheese</span>
+        <span class="dish-desc" data-text-id="antipasti-3-desc">Beef Meatballs, Whipped Ricotta, Italian Salsa Verde, Parmesan Cheese</span><span data-upcharge-wrap="antipasti-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-3-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="antipasti-4">
         <span class="dish-name" data-text-id="antipasti-4-name">Calamari</span>
-        <span class="dish-desc" data-text-id="antipasti-4-desc">Lightly Fried Squid, Capers, Lemon and Smoked Paprika Aioli</span>
+        <span class="dish-desc" data-text-id="antipasti-4-desc">Lightly Fried Squid, Capers, Lemon and Smoked Paprika Aioli</span><span data-upcharge-wrap="antipasti-4" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-4-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="antipasti-5" style="grid-column: 1 / -1;">
         <span class="dish-name" data-text-id="antipasti-5-name">Bruschetta</span>
-        <span class="dish-desc" data-text-id="antipasti-5-desc">Avocado, Heirloom Tomatoes, Arugula, Lemon Oil, Jumbo Lump Crabmeat<span data-upcharge-wrap="antipasti-5">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-5-upcharge">10</span></span></span></span>
+        <span class="dish-desc" data-text-id="antipasti-5-desc">Avocado, Heirloom Tomatoes, Arugula, Lemon Oil, Jumbo Lump Crabmeat</span><span data-upcharge-wrap="antipasti-5">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-5-upcharge">10</span></span></span>
       </div>
     </div>
   </div>
@@ -172,35 +199,35 @@ body {
     <div class="dish-grid" data-grid="entree" style="grid-template-columns: repeat(2, 1fr);">
       <div class="dish" data-item-id="entree-1">
         <span class="dish-name" data-text-id="entree-1-name">Costine di Manzo</span>
-        <span class="dish-desc" data-text-id="entree-1-desc">Red Wine Braised Boneless Short Rib, Mash Potatoes, Au Jus</span>
+        <span class="dish-desc" data-text-id="entree-1-desc">Red Wine Braised Boneless Short Rib, Mash Potatoes, Au Jus</span><span data-upcharge-wrap="entree-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-1-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="entree-2">
         <span class="dish-name" data-text-id="entree-2-name">Terra e Mare</span>
-        <span class="dish-desc" data-text-id="entree-2-desc">Roasted Lobster Tail, Grilled New York Strip, Roasted Potatoes<span data-upcharge-wrap="entree-2">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-2-upcharge">20</span></span></span></span>
+        <span class="dish-desc" data-text-id="entree-2-desc">Roasted Lobster Tail, Grilled New York Strip, Roasted Potatoes</span><span data-upcharge-wrap="entree-2">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-2-upcharge">20</span></span></span>
       </div>
       <div class="dish" data-item-id="entree-3">
         <span class="dish-name" data-text-id="entree-3-name">Salmone</span>
-        <span class="dish-desc" data-text-id="entree-3-desc">Cedar Roasted Salmon, Creole Honey Mustard Glaze, Sauteed Green Beans, Mash Potatoes</span>
+        <span class="dish-desc" data-text-id="entree-3-desc">Cedar Roasted Salmon, Creole Honey Mustard Glaze, Sauteed Green Beans, Mash Potatoes</span><span data-upcharge-wrap="entree-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-3-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="entree-4">
         <span class="dish-name" data-text-id="entree-4-name">Cotoletta alla Milanese</span>
-        <span class="dish-desc" data-text-id="entree-4-desc">Veal Cutlet Milanese, Clarified Butter, Arugula Salad, Lemon Oil<span data-upcharge-wrap="entree-4">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-4-upcharge">25</span></span></span></span>
+        <span class="dish-desc" data-text-id="entree-4-desc">Veal Cutlet Milanese, Clarified Butter, Arugula Salad, Lemon Oil</span><span data-upcharge-wrap="entree-4">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-4-upcharge">25</span></span></span>
       </div>
       <div class="dish" data-item-id="entree-5">
         <span class="dish-name" data-text-id="entree-5-name">Casarecce della Nonna</span>
-        <span class="dish-desc" data-text-id="entree-5-desc">Twisted Pasta, Chicken, Gorgonzola, Caramelized Onions, Rosemary and Cream</span>
+        <span class="dish-desc" data-text-id="entree-5-desc">Twisted Pasta, Chicken, Gorgonzola, Caramelized Onions, Rosemary and Cream</span><span data-upcharge-wrap="entree-5" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-5-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="entree-6">
         <span class="dish-name" data-text-id="entree-6-name">Bistecca di Manzo</span>
-        <span class="dish-desc" data-text-id="entree-6-desc">8oz New York Strip, Grilled Asparagus, Mashed Potato, Calabrian Chili Butter</span>
+        <span class="dish-desc" data-text-id="entree-6-desc">8oz New York Strip, Grilled Asparagus, Mashed Potato, Calabrian Chili Butter</span><span data-upcharge-wrap="entree-6" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-6-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="entree-7">
         <span class="dish-name" data-text-id="entree-7-name">Frutti di Mare</span>
-        <span class="dish-desc" data-text-id="entree-7-desc">Lobster Tail, Shrimp, Mussels, Scallops, Saffron Risotto<span data-upcharge-wrap="entree-7">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-7-upcharge">15</span></span></span></span>
+        <span class="dish-desc" data-text-id="entree-7-desc">Lobster Tail, Shrimp, Mussels, Scallops, Saffron Risotto</span><span data-upcharge-wrap="entree-7">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-7-upcharge">15</span></span></span>
       </div>
       <div class="dish" data-item-id="entree-8">
         <span class="dish-name" data-text-id="entree-8-name">Confit di Anatra</span>
-        <span class="dish-desc" data-text-id="entree-8-desc">Crispy Duct Leg Confit, Tricolor Cauliflower Risotto</span>
+        <span class="dish-desc" data-text-id="entree-8-desc">Crispy Duck Leg Confit, Tricolor Cauliflower Risotto</span><span data-upcharge-wrap="entree-8" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-8-upcharge"></span></span></span>
       </div>
     </div>
   </div>
@@ -216,17 +243,19 @@ body {
     <div class="dish-grid" data-grid="dolci" style="grid-template-columns: repeat(3, 1fr);">
       <div class="dish" data-item-id="dolci-1">
         <span class="dish-name" data-text-id="dolci-1-name">Cr&egrave;me Brule</span>
-        <span class="dish-desc" data-text-id="dolci-1-desc">Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream</span>
+        <span class="dish-desc" data-text-id="dolci-1-desc">Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream</span><span data-upcharge-wrap="dolci-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-1-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="dolci-2">
         <span class="dish-name" data-text-id="dolci-2-name">Torta di Cioccolato</span>
-        <span class="dish-desc" data-text-id="dolci-2-desc">Chocolate &amp; Pistachio Torte, Orange Marmalade, Whipped Cream</span>
+        <span class="dish-desc" data-text-id="dolci-2-desc">Chocolate &amp; Pistachio Torte, Orange Marmalade, Whipped Cream</span><span data-upcharge-wrap="dolci-2" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-2-upcharge"></span></span></span>
       </div>
       <div class="dish" data-item-id="dolci-3">
         <span class="dish-name" data-text-id="dolci-3-name">Gelato di Giorno</span>
-        <span class="dish-desc" data-text-id="dolci-3-desc">Ask Your Server for Daily Flavors</span>
+        <span class="dish-desc" data-text-id="dolci-3-desc">Ask Your Server for Daily Flavors</span><span data-upcharge-wrap="dolci-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-3-upcharge"></span></span></span>
       </div>
     </div>
+  </div>
+
   </div>
 
   <div class="ctfb-row">

@@ -1,33 +1,37 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readMenuBySrc } from '@/lib/arw-menu-store';
-import { renderArwMenu } from '@/lib/render-arw-server';
+import { readArwMenu } from '@/lib/arw-menu-store';
+import { renderArwMenu, isArwStyle } from '@/lib/render-arw-server';
 
 export const dynamic = 'force-dynamic';
 
 const HANDOFF = join(process.cwd(), 'handoff-arw');
 
-// ?src=current (default) | draft | arw-published-<ts>
+// ?style=classic (default) | left-aligned — always renders the current live
+// menu; this menu has no draft/publish flow, every save is immediate.
 export async function GET(request: Request) {
-  const src = new URL(request.url).searchParams.get('src');
+  const styleParam = new URL(request.url).searchParams.get('style');
+  const style = isArwStyle(styleParam) ? styleParam : 'classic';
+
   const [data, renderSrc, validateSrc] = await Promise.all([
-    readMenuBySrc(src),
+    readArwMenu(),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'validate.js'), 'utf8'),
   ]);
 
-  let html = await renderArwMenu(data);
+  let html = await renderArwMenu(data, style);
 
   const liveScript = `<script>
 ${renderSrc}
 ${validateSrc}
 var _arw_R = window.SienaARWRender;
 var _arw_V = window.SienaARWValidate;
+var _arw_style = ${JSON.stringify(style)};
 var _arw_timer = null;
 function _arw_runValidate() {
   _arw_V.waitForLayout(document).then(function () {
     var report = _arw_V.validate(document);
-    window.parent.postMessage({ type: 'SIENA_ARW_VALIDATE_RESULT', report: report }, '*');
+    window.parent.postMessage({ type: 'SIENA_ARW_VALIDATE_RESULT', style: _arw_style, report: report }, '*');
   });
 }
 window.addEventListener('message', function (e) {
