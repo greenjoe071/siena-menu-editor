@@ -60,10 +60,13 @@ body {
 }
 
 /* ── Menu body: centers the cocktail + three courses in the space between hero and footer ── */
-.menu-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.menu-body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
 
 /* ── Featured cocktail ── */
 .cocktail { text-align: center; margin: 6pt 0 1.5pt; padding: 3pt 0; border-top: 1px solid rgba(184,130,30,.35); border-bottom: 1px solid rgba(184,130,30,.35); }
+.cocktail-inner { display: flex; align-items: baseline; justify-content: center; }
+.cocktail-lead { flex: 0 0 auto; white-space: nowrap; }
+.cocktail-body { flex: 0 1 auto; min-width: 0; text-align: left; }
 .cocktail-label { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 7.125pt; letter-spacing: 0.15em; text-transform: uppercase; color: #b8821e; margin-right: 6pt; }
 .cocktail-name {
   font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 11.25pt; color: #3a1a06;
@@ -73,8 +76,7 @@ body {
 .cocktail-price { color: #b8821e; font-weight: 700; font-family: 'Montserrat', sans-serif; font-size: 9.375pt; }
 
 /* ── Course header row: rule — numeral — title — choice of one — rule ── */
-.course-head { display: flex; align-items: center; gap: 7.5pt; margin: 4.5pt 0 6pt; }
-.course-head .rule { flex: 1; height: 1pt; background: #b8821e; opacity: .45; }
+.course-head { display: flex; align-items: center; justify-content: center; gap: 7.5pt; margin: 4.5pt 0 6pt; }
 .course-numeral {
   font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;
   font-size: 14.25pt; color: #b8821e; white-space: nowrap;
@@ -96,9 +98,10 @@ body {
 .course[data-course-id="entree"] .dish { margin-bottom: 5pt; }
 .course[data-course-id="dolci"] .dish { margin-bottom: 0; }
 
+.dish-title { display: flex; align-items: baseline; justify-content: center; margin-bottom: 1pt; }
 .dish-name {
   font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
-  color: #111; line-height: 1.15; display: block; margin-bottom: 1pt;
+  color: #111; line-height: 1.15; min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .course[data-course-id="antipasti"] .dish-name { font-size: 12.75pt; }
@@ -147,109 +150,102 @@ body {
   <div class="menu-body">
 
   <div class="cocktail" data-cocktail-block="">
-    <span class="cocktail-label">Featured Cocktail</span>
-    <span class="cocktail-name" data-text-id="cocktail-name">The Siena Sunbeam</span>
-    <span class="cocktail-sep">&nbsp;—&nbsp;</span>
-    <span class="cocktail-desc" data-text-id="cocktail-desc">prosecco, aperol, blood orange, rosemary honey syrup, orange twist</span>
-    <span data-cocktail-price-wrap="">&nbsp;&nbsp;<span class="cocktail-price" data-text-id="cocktail-price">14</span></span>
+    <div class="cocktail-inner">
+      <span class="cocktail-lead"><span class="cocktail-label">Featured Cocktail</span><span class="cocktail-name" data-text-id="cocktail-name">The Siena Sunbeam</span><span class="cocktail-sep">&nbsp;—&nbsp;</span></span>
+      <span class="cocktail-body"><span class="cocktail-desc" data-text-id="cocktail-desc">prosecco, aperol, blood orange, rosemary honey syrup, orange twist</span><span data-cocktail-price-wrap="">&nbsp;&nbsp;<span class="cocktail-price" data-text-id="cocktail-price">14</span></span></span>
+    </div>
   </div>
 
   <div class="course" data-course-id="antipasti">
     <div class="course-head">
-      <div class="rule"></div>
       <span class="course-numeral">I</span>
       <span class="course-title">Antipasti</span>
       <span class="course-choice">choice of one</span>
-      <div class="rule"></div>
     </div>
     <div class="dish-grid" data-grid="antipasti" style="grid-template-columns: repeat(2, 1fr);">
       <div class="dish" data-item-id="antipasti-1">
-        <span class="dish-name" data-text-id="antipasti-1-name">Pancetta</span>
-        <span class="dish-desc" data-text-id="antipasti-1-desc">Crumbled Gorgonzola, Calabrian Chili and Orange Infused Truffle Honey</span><span data-upcharge-wrap="antipasti-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-1-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="antipasti-1-name">Pancetta</span><span data-upcharge-wrap="antipasti-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-1-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="antipasti-1-desc">Crumbled Gorgonzola, Calabrian Chili and Orange Infused Truffle Honey</span>
       </div>
       <div class="dish" data-item-id="antipasti-2">
-        <span class="dish-name" data-text-id="antipasti-2-name">Provoleta</span>
-        <span class="dish-desc" data-text-id="antipasti-2-desc">Wood Oven Roasted Provolone, Warm Spicy Honey, Charred Peppers, Grilled Bread</span><span data-upcharge-wrap="antipasti-2" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-2-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="antipasti-2-name">Provoleta</span><span data-upcharge-wrap="antipasti-2" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-2-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="antipasti-2-desc">Wood Oven Roasted Provolone, Warm Spicy Honey, Charred Peppers, Grilled Bread</span>
       </div>
       <div class="dish" data-item-id="antipasti-3">
-        <span class="dish-name" data-text-id="antipasti-3-name">Meatballs</span>
-        <span class="dish-desc" data-text-id="antipasti-3-desc">Beef Meatballs, Whipped Ricotta, Italian Salsa Verde, Parmesan Cheese</span><span data-upcharge-wrap="antipasti-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-3-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="antipasti-3-name">Meatballs</span><span data-upcharge-wrap="antipasti-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-3-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="antipasti-3-desc">Beef Meatballs, Whipped Ricotta, Italian Salsa Verde, Parmesan Cheese</span>
       </div>
       <div class="dish" data-item-id="antipasti-4">
-        <span class="dish-name" data-text-id="antipasti-4-name">Calamari</span>
-        <span class="dish-desc" data-text-id="antipasti-4-desc">Lightly Fried Squid, Capers, Lemon and Smoked Paprika Aioli</span><span data-upcharge-wrap="antipasti-4" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-4-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="antipasti-4-name">Calamari</span><span data-upcharge-wrap="antipasti-4" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-4-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="antipasti-4-desc">Lightly Fried Squid, Capers, Lemon and Smoked Paprika Aioli</span>
       </div>
       <div class="dish" data-item-id="antipasti-5" style="grid-column: 1 / -1;">
-        <span class="dish-name" data-text-id="antipasti-5-name">Bruschetta</span>
-        <span class="dish-desc" data-text-id="antipasti-5-desc">Avocado, Heirloom Tomatoes, Arugula, Lemon Oil, Jumbo Lump Crabmeat</span><span data-upcharge-wrap="antipasti-5">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-5-upcharge">10</span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="antipasti-5-name">Bruschetta</span><span data-upcharge-wrap="antipasti-5">&nbsp;<span class="dish-upcharge">+<span data-text-id="antipasti-5-upcharge">10</span></span></span></div>
+        <span class="dish-desc" data-text-id="antipasti-5-desc">Avocado, Heirloom Tomatoes, Arugula, Lemon Oil, Jumbo Lump Crabmeat</span>
       </div>
     </div>
   </div>
 
   <div class="course" data-course-id="entree">
     <div class="course-head">
-      <div class="rule"></div>
       <span class="course-numeral">II</span>
       <span class="course-title">Entrée</span>
       <span class="course-choice">choice of one</span>
-      <div class="rule"></div>
     </div>
     <div class="dish-grid" data-grid="entree" style="grid-template-columns: repeat(2, 1fr);">
       <div class="dish" data-item-id="entree-1">
-        <span class="dish-name" data-text-id="entree-1-name">Costine di Manzo</span>
-        <span class="dish-desc" data-text-id="entree-1-desc">Red Wine Braised Boneless Short Rib, Mash Potatoes, Au Jus</span><span data-upcharge-wrap="entree-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-1-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-1-name">Costine di Manzo</span><span data-upcharge-wrap="entree-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-1-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-1-desc">Red Wine Braised Boneless Short Rib, Mash Potatoes, Au Jus</span>
       </div>
       <div class="dish" data-item-id="entree-2">
-        <span class="dish-name" data-text-id="entree-2-name">Terra e Mare</span>
-        <span class="dish-desc" data-text-id="entree-2-desc">Roasted Lobster Tail, Grilled New York Strip, Roasted Potatoes</span><span data-upcharge-wrap="entree-2">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-2-upcharge">20</span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-2-name">Terra e Mare</span><span data-upcharge-wrap="entree-2">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-2-upcharge">20</span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-2-desc">Roasted Lobster Tail, Grilled New York Strip, Roasted Potatoes</span>
       </div>
       <div class="dish" data-item-id="entree-3">
-        <span class="dish-name" data-text-id="entree-3-name">Salmone</span>
-        <span class="dish-desc" data-text-id="entree-3-desc">Cedar Roasted Salmon, Creole Honey Mustard Glaze, Sauteed Green Beans, Mash Potatoes</span><span data-upcharge-wrap="entree-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-3-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-3-name">Salmone</span><span data-upcharge-wrap="entree-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-3-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-3-desc">Cedar Roasted Salmon, Creole Honey Mustard Glaze, Sauteed Green Beans, Mash Potatoes</span>
       </div>
       <div class="dish" data-item-id="entree-4">
-        <span class="dish-name" data-text-id="entree-4-name">Cotoletta alla Milanese</span>
-        <span class="dish-desc" data-text-id="entree-4-desc">Veal Cutlet Milanese, Clarified Butter, Arugula Salad, Lemon Oil</span><span data-upcharge-wrap="entree-4">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-4-upcharge">25</span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-4-name">Cotoletta alla Milanese</span><span data-upcharge-wrap="entree-4">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-4-upcharge">25</span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-4-desc">Veal Cutlet Milanese, Clarified Butter, Arugula Salad, Lemon Oil</span>
       </div>
       <div class="dish" data-item-id="entree-5">
-        <span class="dish-name" data-text-id="entree-5-name">Casarecce della Nonna</span>
-        <span class="dish-desc" data-text-id="entree-5-desc">Twisted Pasta, Chicken, Gorgonzola, Caramelized Onions, Rosemary and Cream</span><span data-upcharge-wrap="entree-5" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-5-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-5-name">Casarecce della Nonna</span><span data-upcharge-wrap="entree-5" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-5-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-5-desc">Twisted Pasta, Chicken, Gorgonzola, Caramelized Onions, Rosemary and Cream</span>
       </div>
       <div class="dish" data-item-id="entree-6">
-        <span class="dish-name" data-text-id="entree-6-name">Bistecca di Manzo</span>
-        <span class="dish-desc" data-text-id="entree-6-desc">8oz New York Strip, Grilled Asparagus, Mashed Potato, Calabrian Chili Butter</span><span data-upcharge-wrap="entree-6" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-6-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-6-name">Bistecca di Manzo</span><span data-upcharge-wrap="entree-6" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-6-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-6-desc">8oz New York Strip, Grilled Asparagus, Mashed Potato, Calabrian Chili Butter</span>
       </div>
       <div class="dish" data-item-id="entree-7">
-        <span class="dish-name" data-text-id="entree-7-name">Frutti di Mare</span>
-        <span class="dish-desc" data-text-id="entree-7-desc">Lobster Tail, Shrimp, Mussels, Scallops, Saffron Risotto</span><span data-upcharge-wrap="entree-7">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-7-upcharge">15</span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-7-name">Frutti di Mare</span><span data-upcharge-wrap="entree-7">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-7-upcharge">15</span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-7-desc">Lobster Tail, Shrimp, Mussels, Scallops, Saffron Risotto</span>
       </div>
       <div class="dish" data-item-id="entree-8">
-        <span class="dish-name" data-text-id="entree-8-name">Confit di Anatra</span>
-        <span class="dish-desc" data-text-id="entree-8-desc">Crispy Duck Leg Confit, Tricolor Cauliflower Risotto</span><span data-upcharge-wrap="entree-8" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-8-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="entree-8-name">Confit di Anatra</span><span data-upcharge-wrap="entree-8" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="entree-8-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="entree-8-desc">Crispy Duck Leg Confit, Tricolor Cauliflower Risotto</span>
       </div>
     </div>
   </div>
 
   <div class="course" data-course-id="dolci">
     <div class="course-head">
-      <div class="rule"></div>
       <span class="course-numeral">III</span>
       <span class="course-title">Dolci</span>
       <span class="course-choice">choice of one</span>
-      <div class="rule"></div>
     </div>
     <div class="dish-grid" data-grid="dolci" style="grid-template-columns: repeat(3, 1fr);">
       <div class="dish" data-item-id="dolci-1">
-        <span class="dish-name" data-text-id="dolci-1-name">Crème Brule</span>
-        <span class="dish-desc" data-text-id="dolci-1-desc">Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream</span><span data-upcharge-wrap="dolci-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-1-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="dolci-1-name">Crème Brule</span><span data-upcharge-wrap="dolci-1" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-1-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="dolci-1-desc">Vanilla Custard, Caramelized Sugar, Berries, Whipped Cream</span>
       </div>
       <div class="dish" data-item-id="dolci-2">
-        <span class="dish-name" data-text-id="dolci-2-name">Torta di Cioccolato</span>
-        <span class="dish-desc" data-text-id="dolci-2-desc">Chocolate &amp; Pistachio Torte, Orange Marmalade, Cream</span><span data-upcharge-wrap="dolci-2" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-2-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="dolci-2-name">Torta di Cioccolato</span><span data-upcharge-wrap="dolci-2" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-2-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="dolci-2-desc">Chocolate &amp; Pistachio Torte, Orange Marmalade, Whipped Cream</span>
       </div>
       <div class="dish" data-item-id="dolci-3">
-        <span class="dish-name" data-text-id="dolci-3-name">Gelato di Giorno</span>
-        <span class="dish-desc" data-text-id="dolci-3-desc">Ask Your Server for Daily Flavors</span><span data-upcharge-wrap="dolci-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-3-upcharge"></span></span></span>
+        <div class="dish-title"><span class="dish-name" data-text-id="dolci-3-name">Gelato di Giorno</span><span data-upcharge-wrap="dolci-3" style="display:none">&nbsp;<span class="dish-upcharge">+<span data-text-id="dolci-3-upcharge"></span></span></span></div>
+        <span class="dish-desc" data-text-id="dolci-3-desc">Ask Your Server for Daily Flavors</span>
       </div>
     </div>
   </div>
@@ -263,7 +259,7 @@ body {
 
   <div class="weekly">
     <div class="weekly-title">Also at Siena</div>
-    <div class="weekly-body"><strong>Mondays</strong> 2 Course Meal $26 &nbsp;·&nbsp; <strong>Wednesdays</strong> 25% of All Wine Bottles &nbsp;·&nbsp; <strong>Thursdays</strong> $10 Signature Cocktails</div>
+    <div class="weekly-body"><strong>Tues</strong> Wines: $5 glass / $20 bottles. Bar only. &nbsp;·&nbsp; <strong>Wed</strong> 25% of All Wine Bottles &nbsp;·&nbsp; <strong>Thurs</strong> $10 Signature Cocktails</div>
   </div>
 
   <div class="footnote">No split checks. &nbsp;·&nbsp; Gratuity of 22% for parties of 6 or more.</div>

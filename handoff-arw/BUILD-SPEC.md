@@ -53,7 +53,7 @@ SienaARWValidate.waitForLayout(document);    // -> Promise, resolves once fonts 
 Each dish slot has:
 - `name` (required to show the slot at all) — dish name. **Must never wrap to 2 lines.**
 - `desc` — ingredient line. **May wrap to 2 lines, never 3.**
-- `upcharge` — digits only, optional. The `+` prefix is rendered statically; empty removes the whole "+N" pill (and the space before it).
+- `upcharge` — digits only, optional. The `+` prefix is rendered statically; empty removes the whole "+N" pill (and the space before it). The pill sits on the **dish-name line** (Two-Column Classic: in the `.dish-title` flex row beside the name; Left-Aligned: immediately after the name, before the em-dash), not at the end of the description.
 
 **Cardinality is fixed and slot-matched by `id`, never by array position.** The editor must not let the user add a slot beyond the fixed 5/8/3, and must not let them rename/reorder ids. The only "remove" action available on a dish is clearing its `name` (and `desc`/`upcharge` along with it) — see §5.
 
@@ -131,7 +131,7 @@ The validator is the source of truth. These are just paste-safety caps to stop s
 | Field state | Renderer behaviour |
 |---|---|
 | dish `name` empty | Slot hidden (`display:none`), excluded from grid/list flow and column math. `desc`/`upcharge` are ignored when `name` is empty. |
-| dish `upcharge` empty (name set) | The `[data-upcharge-wrap]` span (the leading space + "+N" pill) is removed; the description reads as a clean line with no trailing price. |
+| dish `upcharge` empty (name set) | The `[data-upcharge-wrap]` span (the leading space + "+N" pill) is removed; the dish-name line reads as a clean name with no price. |
 | all slots in a course empty | Whole `[data-course-id]` block hidden. |
 | `cocktail.name` empty | Whole `[data-cocktail-block]` hidden — the "Featured Cocktail" label, name, dash, description, and price all disappear together. |
 | `cocktail.price` empty (name set) | Just the `[data-cocktail-price-wrap]` span is removed; name/description still show. |
@@ -194,7 +194,7 @@ Any `field` string in `report.violations` is one of: `"subtitle"`, `"cocktail-na
 ## 9. Gotchas
 
 - **Line-count validation needs a real layout engine.** `Range.getClientRects()` returns nothing meaningful in JSDOM — validate in the live preview iframe or a headless browser, never in the same process as the snapshot test. The same is true of the orphan-line fix in §4a. Both `render.js` and `validate.js` wrap their `getClientRects()` calls in `try/catch` specifically because JSDOM's `Range.prototype.getClientRects` throws rather than returning an empty list — without the guard, `render()` crashes outright under JSDOM/server-side rendering. Don't remove those guards.
-- **The upcharge pill markup must be a sibling of its dish's `-desc` element, never nested inside it**, in both templates. `render()` sets `-desc`'s `textContent` directly; if the pill's `data-upcharge-wrap` span is a descendant of that element, the assignment deletes it from the DOM before the upcharge logic ever runs, and the pill can never display. All 16 dish slots in both templates carry the wrap markup now (hidden via inline `display:none` for the 12 that start with no upcharge), so any slot can take an upcharge later without a template change.
+- **The upcharge pill markup must be a sibling of its dish's `-name` and `-desc` elements, never nested inside either**, in both templates. `render()` sets `-desc`'s `textContent` directly; if the pill's `data-upcharge-wrap` span is a descendant of that element, the assignment deletes it from the DOM before the upcharge logic ever runs, and the pill can never display. All 16 dish slots in both templates carry the wrap markup now (hidden via inline `display:none` for the 12 that start with no upcharge), so any slot can take an upcharge later without a template change.
 - **Wait for `document.fonts.ready`** before validating — Playfair Display is a variable font; measuring before it swaps in can miscount lines by one.
 - **Don't special-case any single course or style in `layoutCourse()`.** The column-rebalance + span-last-if-remainder logic only runs when a `[data-grid]` element exists, which is what makes it generic across Two-Column Classic's Antipasti/Entr&eacute;e (2-col base) and Dolci (3-col base) *and* silently correct on Left-Aligned (no grid at all).
 - **The orphan-line fix is a heuristic, not a hard guarantee of exactly 3 words** — it guarantees *at least* 3 on a wrapped line, but a very narrow column can still pull a 4th or 5th word down with the glued group. That's expected; don't "fix" it further without checking with design first.

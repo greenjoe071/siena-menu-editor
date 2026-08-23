@@ -119,7 +119,8 @@
     // here. The per-field line checks above (each independently confirmed
     // against real content) are the authoritative, hard-blocking check;
     // `pageOverflowPx`/`pageFits` are reported for an informational note
-    // only — never use them to disable Save or Print.
+    // only — never use them to disable Save or Print (fixed 2026-08-21,
+    // do not revert to a hard block on this).
     var page = doc.querySelector('.page');
     var pageOverflowPx = 0;
     var pageFits = true;

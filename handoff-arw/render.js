@@ -76,9 +76,11 @@
     if (lastCount >= minWords) return;
 
     // Try the SMALLEST glue size first (2 words, then 3, up to minWords)
-    // rather than always gluing exactly minWords \u2014 gluing more words than
+    // rather than always gluing exactly minWords -- gluing more words than
     // necessary widens the unbreakable unit and can drag an extra word down
     // from the line above it, overshooting past minWords for no reason.
+    // This is what happened on Casarecce della Nonna's description
+    // (reported by Joe, fixed 2026-08-21) -- do not revert to a single glue.
     for (var glueSize = 2; glueSize <= minWords; glueSize++) {
       var glueStart = words.length - glueSize;
       if (glueStart < 0) break;
@@ -89,7 +91,7 @@
       if (newGroups.length < 2) return; // now fits on one line entirely
       if (newGroups[newGroups.length - 1].count >= minWords) return; // smallest sufficient glue found
     }
-    // Nothing smaller worked \u2014 fall back to the full minWords glue.
+    // Nothing smaller worked -- fall back to the full minWords glue.
     var fallbackStart = words.length - minWords;
     var fallbackHead = words.slice(0, fallbackStart).join(' ');
     var fallbackTail = words.slice(fallbackStart).join('\u00A0');
