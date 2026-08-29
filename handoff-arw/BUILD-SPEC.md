@@ -96,6 +96,28 @@ When a `*-desc` or `cocktail-desc` field wraps to a second line, `render()` prev
 
 This requires real layout (`getClientRects()`), same as the validator — it silently does nothing under JSDOM, which is why the snapshot test's baseline has no glued (`\u00A0`) text: it's exercising the DOM-mutation path only, not the layout-dependent fix. Test the actual gluing behavior in a real browser or Playwright, not in the JSDOM suite.
 
+### 4b. Left-Aligned style: course spacing adapts to a 2-line cocktail description
+
+The Left-Aligned template's page has exactly enough room for a one-line featured-cocktail
+description. When an editor writes one long enough to wrap to two lines, the extra line
+(~19px) exceeds the `.menu-body` flex slack, so `render()`'s `fitCourseSpacing()` step
+tightens the layout and restores fit:
+
+| Cocktail description | `.cocktail` margin-top | `.course-head` margin-top |
+|---|---|---|
+| 1 line (default) | `27.75pt` (from CSS) | `21pt` (from CSS) |
+| 2 lines | `24.75pt` (inline) | `16pt` (inline) |
+
+Both cases render `.page.scrollHeight === clientHeight === 1056`. The inline styles are set
+and cleared on every render, so it tracks live typing in both directions. It no-ops on the
+Classic template (no `.menu-body`) and under JSDOM. Two lines is the maximum — the per-field
+cap in §4 still applies.
+
+Also in this template: each course header carries a thin gold rule tight beneath it
+(`border-bottom: 1px solid rgba(184,130,30,.35)`, `padding-bottom: 2.25pt`), and the featured
+cocktail block sits centered in the whitespace between the hero and the Antipasti header
+(37px above and below in the one-line case). The Classic template keeps no course rules.
+
 ### Editor integration
 
 ```js

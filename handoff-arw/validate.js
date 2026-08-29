@@ -118,20 +118,20 @@
     // not a paginated-print measurement, and the two don't reliably agree
     // here. The per-field line checks above (each independently confirmed
     // against real content) are the authoritative, hard-blocking check;
-    // `pageOverflowPx`/`pageFits` are reported for an informational note
+    // `overflowPx`/`pageFits` are reported for an informational note
     // only — never use them to disable Save or Print (fixed 2026-08-21,
     // do not revert to a hard block on this).
     var page = doc.querySelector('.page');
-    var pageOverflowPx = 0;
+    var overflowPx = 0;
     var pageFits = true;
     if (page) {
-      pageOverflowPx = Math.max(0, page.scrollHeight - page.clientHeight);
-      pageFits = pageOverflowPx <= 5;
+      overflowPx = Math.max(0, page.scrollHeight - page.clientHeight);
+      pageFits = overflowPx <= 5;
     }
 
     return {
       fits: violations.length === 0,
-      overflowPx: pageOverflowPx,
+      overflowPx: overflowPx,
       pageFits: pageFits,
       violations: violations,
       worstField: violations.length ? violations[0].field : null

@@ -179,6 +179,31 @@
   var ENTREE_IDS = ['entree-1', 'entree-2', 'entree-3', 'entree-4', 'entree-5', 'entree-6', 'entree-7', 'entree-8'];
   var DOLCI_IDS = ['dolci-1', 'dolci-2', 'dolci-3'];
 
+  // Left-Aligned style only: the page has exactly enough room for a one-line
+  // featured-cocktail description. When an editor writes a description long enough
+  // to wrap to two lines, the extra ~19px exceeds the .menu-body flex slack, so the
+  // course headers tighten (21pt -> 16pt top margin) to give it back. Both cases
+  // fit 8.5x11 exactly. No-ops on styles without .menu-body (the Classic template)
+  // and under JSDOM, where getClientRects() is meaningless.
+  function fitCourseSpacing(doc) {
+    if (!doc.querySelector('.menu-body')) return;
+    var desc = doc.querySelector('[data-text-id="cocktail-desc"]');
+    var cocktail = doc.querySelector('[data-cocktail-block]');
+    if (!desc || !cocktail) return;
+    var lines = 1;
+    try {
+      var tops = {}, rects = desc.getClientRects();
+      for (var i = 0; i < rects.length; i++) tops[Math.round(rects[i].top)] = 1;
+      lines = Math.max(1, Object.keys(tops).length);
+    } catch (e) {
+      return;
+    }
+    var wrapped = lines > 1 && cocktail.style.display !== 'none';
+    cocktail.style.marginTop = wrapped ? '24.75pt' : '';
+    var heads = doc.querySelectorAll('.course-head');
+    for (var j = 0; j < heads.length; j++) heads[j].style.marginTop = wrapped ? '16pt' : '';
+  }
+
   function render(document, data) {
     data = data || {};
     setText(document, 'subtitle', data.subtitle);
@@ -192,6 +217,8 @@
     layoutCourse(document, 'antipasti', 2, ANTIPASTI_IDS);
     layoutCourse(document, 'entree', 2, ENTREE_IDS);
     layoutCourse(document, 'dolci', 3, DOLCI_IDS);
+
+    fitCourseSpacing(document);
   }
 
   return {
