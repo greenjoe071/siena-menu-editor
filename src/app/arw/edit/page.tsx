@@ -237,6 +237,11 @@ export default function ArwEditorPage() {
   const [saveMsg, setSaveMsg]       = useState('');
   const [reports, setReports]       = useState<Record<ArwStyle, ValidateReport | null>>({ classic: null, 'left-aligned': null });
   const [cacheBust]                 = useState(() => Date.now());
+  // Whether the cocktail block is shown. Kept as its own state instead of
+  // deriving from `!!cocktail.name.trim()` — deriving it meant checking the
+  // box while the name was empty was a no-op (the derived value never
+  // changed), so the box could never be turned on from a cleared state.
+  const [cocktailOn, setCocktailOn] = useState(false);
 
   const iframeRefs: Record<ArwStyle, React.RefObject<HTMLIFrameElement>> = {
     classic: useRef<HTMLIFrameElement>(null),
@@ -244,6 +249,9 @@ export default function ArwEditorPage() {
   };
   const prevJsonRef    = useRef<string>('');
   const pendingSaveRef = useRef<ArwMenuData | null>(null);
+  // Last non-empty cocktail values, restored when the box is re-checked
+  // after being turned off, so unchecking doesn't destroy typed content.
+  const lastCocktailRef = useRef<ArwCocktail>({ name: '', desc: '', price: '' });
 
   useEffect(() => {
     fetch(apiPath)
@@ -251,6 +259,8 @@ export default function ArwEditorPage() {
       .then(data => {
         setMenu(data);
         prevJsonRef.current = JSON.stringify(data);
+        setCocktailOn(!!data.cocktail?.name?.trim());
+        if (data.cocktail?.name?.trim()) lastCocktailRef.current = data.cocktail;
       })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
@@ -359,7 +369,21 @@ export default function ArwEditorPage() {
   }
 
   function handleCocktailChange(updated: ArwCocktail) {
+    lastCocktailRef.current = updated;
     setMenu(m => m && { ...m, cocktail: updated });
+  }
+
+  function handleCocktailToggle(checked: boolean) {
+    setCocktailOn(checked);
+    if (checked) {
+      handleCocktailChange(lastCocktailRef.current);
+    } else {
+      setMenu(m => {
+        if (!m) return m;
+        lastCocktailRef.current = m.cocktail;
+        return { ...m, cocktail: { name: '', desc: '', price: '' } };
+      });
+    }
   }
 
   function switchStyle(next: ArwStyle) {
@@ -386,8 +410,6 @@ export default function ArwEditorPage() {
   const activeOverflow = activeReport ? !activeReport.fits : false;
   const otherReport = reports[otherStyle];
   const otherStyleAlsoOverflows = otherReport ? !otherReport.fits : false;
-  const showCocktail = !!menu.cocktail.name.trim();
-
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
     saveStatus === 'saving' ? 'save-status saving' :
@@ -448,24 +470,24 @@ export default function ArwEditorPage() {
             <div className="page-group-label">Featured Cocktail (optional)</div>
             <div className="dish-row">
               <div className="dish-fields">
-                <div style={{ marginBottom: showCocktail ? '12px' : 0 }}>
+                <div style={{ marginBottom: cocktailOn ? '12px' : 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#d4b57a', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     <input
                       type="checkbox"
-                      checked={showCocktail}
-                      onChange={e => handleCocktailChange(e.target.checked ? menu.cocktail : { name: '', desc: '', price: '' })}
+                      checked={cocktailOn}
+                      onChange={e => handleCocktailToggle(e.target.checked)}
                       style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#b8821e' }}
                     />
                     Include a featured cocktail
                   </label>
-                  {!showCocktail && (
+                  {!cocktailOn && (
                     <div style={{ fontSize: '12px', color: 'rgba(212,181,122,0.5)', marginTop: '4px', paddingLeft: '24px' }}>
                       Clearing the name hides the whole cocktail block
                     </div>
                   )}
                 </div>
 
-                {showCocktail && (
+                {cocktailOn && (
                   <>
                     <div className="dish-field-row" style={{ alignItems: 'flex-end', gap: '10px', marginBottom: '10px' }}>
                       <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
