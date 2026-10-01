@@ -22,6 +22,7 @@ export default async function HappyhourLandingPage() {
       currentDate={formatMenuDate(meta.publishedAt)}
       draftExists={draftExists}
       published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
+      plainNav
     />
   );
 }
