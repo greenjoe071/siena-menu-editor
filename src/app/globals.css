@@ -1280,6 +1280,21 @@ button {
   cursor: pointer;
   transition: background 0.15s;
 }
+/* Big Home button at the top of the left column (plainNav landings) */
+.dl-nav-home {
+  display: block;
+  background: var(--navy);
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  transition: background 0.15s;
+}
+.dl-nav-home:hover { background: #142c46; }
+
 .dl-nav-item:hover { background: rgba(184, 150, 42, 0.08); }
 .dl-nav-item.active { background: rgba(184, 150, 42, 0.14); }
 

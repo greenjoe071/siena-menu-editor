@@ -47,8 +47,9 @@ export interface MenuLandingProps {
   // Plain nav (Tue–Wed, Sep 2026): no step numbers (they read as a sequence
   // to follow) and nothing selected on open — the right column stays empty
   // until an option is picked. Also relabels the first item "Most Recent
-  // Menu: View, Print, or Make a Change" and uses the same wording on the
-  // draft buttons.
+  // Menu: View, Print, or Make a Change", uses the same wording on the
+  // draft buttons, and moves Home out of the header to a big button at the
+  // top of the left column.
   plainNav?: boolean;
 }
 
@@ -137,7 +138,7 @@ export default function MenuLanding({
       <header className="dl-header">
         <div className="dl-header-inner">
           {editOnly && <Link href="/" className="dl-back-btn">← Back</Link>}
-          <Link href="/" className="dl-back">🏠 Home</Link>
+          {!plainNav && <Link href="/" className="dl-back">🏠 Home</Link>}
           <h1 className="dl-title">{menuName}</h1>
           <p className="dl-subtitle">{editOnly ? 'View or print the current menu, or make a change.' : 'View or print the current menu, fix a mistake, or start a new draft.'}</p>
         </div>
@@ -147,6 +148,7 @@ export default function MenuLanding({
         {!editOnly && (
           <>
             <nav className="dl-nav">
+              {plainNav && <Link href="/" className="dl-nav-home">🏠 Home</Link>}
               {navItems.map((item, i) => (
                 <button
                   key={item.key}
