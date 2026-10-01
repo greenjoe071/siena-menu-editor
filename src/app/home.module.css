@@ -1,0 +1,138 @@
+/* Home screen — photo-led "Sera" design (Oct 2026). The five everyday menus
+   (`.cardCore`) sit on dark espresso cards; occasional menus stay white. */
+
+.page {
+  min-height: 100vh;
+  background: #f6f2ec;
+  padding-bottom: 56px;
+}
+
+/* ── Hero: the building at night ────────────────────────────────────── */
+.hero {
+  position: relative;
+  height: 360px;
+  background: #0b1030 url('/images/home/exterior-night.webp') center 24% / cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+}
+.heroShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 12, 30, 0.15) 0%, rgba(10, 8, 6, 0.75) 100%);
+}
+.heroText {
+  position: relative;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 32px 36px;
+  color: #fff;
+}
+.kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #e3c27f;
+}
+.title {
+  margin-top: 8px;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 54px;
+  line-height: 1;
+}
+.sub {
+  margin-top: 10px;
+  font-size: 15px;
+  opacity: 0.8;
+}
+
+/* ── Card grid ──────────────────────────────────────────────────────── */
+.grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px 32px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 28px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  color: #2b1a0c;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.06), 0 6px 18px rgba(43, 26, 12, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 2px 4px rgba(43, 26, 12, 0.08), 0 16px 34px rgba(43, 26, 12, 0.14);
+}
+
+/* Everyday menus — dark espresso card, cream type, gold rule */
+.cardCore {
+  background: #2a1a0e;
+  color: #f5ead7;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.12), 0 8px 22px rgba(43, 26, 12, 0.18);
+}
+.cardCore .body { border-top: 2px solid #b8821e; }
+.cardCore .desc { color: #cdb89a; }
+
+.photo {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #e9e1d4;
+}
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.card:hover .photo img { transform: scale(1.04); }
+
+/* Logos & sketches: whole image on white, never cropped */
+.photoContain { background: #fff; }
+.photoContain img { object-fit: contain; padding: 14px; }
+
+.badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 6px 10px 5px;
+  border-radius: 999px;
+}
+.badgeNew { background: #c0392b; color: #fff; box-shadow: 0 2px 8px rgba(192, 57, 43, 0.35); }
+.badgeProgress { background: rgba(43, 26, 12, 0.85); color: #f1dcb0; }
+
+.body { padding: 18px 20px 22px; }
+.name {
+  font-style: italic;
+  font-weight: 600;
+  font-size: 23px;
+  line-height: 1.2;
+}
+.desc {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #6f6255;
+}
+
+/* ── Phone width ────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .hero { height: 280px; }
+  .heroText { padding: 0 16px 26px; }
+  .title { font-size: 40px; }
+  .grid { padding: 24px 16px 0; gap: 18px; grid-template-columns: 1fr; }
+}

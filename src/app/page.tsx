@@ -1,124 +1,40 @@
 import Link from 'next/link';
+import { Playfair_Display, Montserrat } from 'next/font/google';
+import { HOME_MENUS, BADGE_TEXT } from '@/lib/home-menus';
+import s from './home.module.css';
 
-const MENUS = [
-  {
-    id: 'dinner',
-    label: 'Dinner Menu',
-    description: 'View or print the current menu, or start a new draft',
-    icon: '🍽️',
-    ready: true,
-    href: '/dinner',
-    action: 'Open →',
-  },
-  {
-    id: 'happyhour',
-    label: 'Happy Hour',
-    description: 'Edit bites, cocktails, wine, beer, and the bar promo',
-    icon: '🍹',
-    ready: true,
-    href: '/happyhour',
-  },
-  {
-    id: 'monday',
-    label: 'Monday $26 Specials',
-    description: 'Weekly Monday night specials',
-    icon: '🍝',
-    ready: true,
-    href: '/monday',
-  },
-  {
-    id: 'tuewed',
-    label: 'Tue – Wed $45 Specials',
-    description: '3-course prix-fixe dinner, Tuesday and Wednesday nights',
-    icon: '✨',
-    ready: true,
-    href: '/tueswed',
-  },
-  {
-    id: 'weekend',
-    label: 'Weekend Specials',
-    description: "Thu–Sat chef's specials — changes every week",
-    icon: '🌅',
-    ready: true,
-    href: '/weekend',
-  },
-  {
-    id: 'drinksdessert',
-    label: 'Drinks & Dessert',
-    description: 'Drinks Menu (Cocktails, Spritz, Spirits & Beer, Dopa Cena) and the Desserts insert',
-    icon: '🍸',
-    ready: true,
-    href: '/drinksdessert',
-    action: 'Open →',
-    badge: 'new',
-  },
-  {
-    id: 'privatedining',
-    label: 'Private Dining',
-    description: 'San Gimignano, Firenze, and Siena menus, plus saved alternates for events',
-    icon: '🥂',
-    ready: true,
-    href: '/privatedining',
-    action: 'Open →',
-    badge: 'inprogress',
-  },
-  {
-    id: 'arw',
-    label: 'Austin Restaurant Weeks',
-    description: '$50 three-course prix fixe — Aug 28–Sep 13, 2026',
-    icon: '🎉',
-    ready: true,
-    href: '/arw',
-    action: 'Open →',
-    badge: 'new',
-  },
-  {
-    id: 'coursemenu',
-    label: 'Generic Menu',
-    description: 'Flexible 2, 3, or 4-course menu for one-off specials and events',
-    icon: '📜',
-    ready: true,
-    href: '/coursemenu',
-    action: 'Open →',
-    badge: 'new',
-  },
-];
+const playfair = Playfair_Display({ subsets: ['latin'], style: ['italic'], weight: ['600'] });
+const montserrat = Montserrat({ subsets: ['latin'], weight: ['400', '600', '700'] });
 
 export default function HomePage() {
   return (
-    <div className="home-page">
-      <header className="home-header">
-        <div className="home-header-inner">
-          <h1 className="home-title">Siena Menu Editor</h1>
-          <p className="home-subtitle">Siena Ristorante Toscana</p>
+    <div className={`${montserrat.className} ${s.page}`}>
+      <header className={s.hero}>
+        <div className={s.heroShade} />
+        <div className={s.heroText}>
+          <p className={s.kicker}>Siena Ristorante Toscana</p>
+          <h1 className={`${playfair.className} ${s.title}`}>Menu Editor</h1>
+          <p className={s.sub}>Choose a menu to update and print</p>
         </div>
-        <p className="home-tagline">Choose a menu below to make changes and print</p>
       </header>
 
-      <main className="home-grid">
-        {MENUS.map((menu) =>
-          menu.ready ? (
-            <Link key={menu.id} href={menu.href!} className="menu-card menu-card--active">
-              {menu.badge === 'new' && <span className="menu-card-new">NEW</span>}
-              {menu.badge === 'inprogress' && <span className="menu-card-inprogress">IN PROGRESS</span>}
-              <div className="menu-card-icon">{menu.icon}</div>
-              <div className="menu-card-body">
-                <h2 className="menu-card-title">{menu.label}</h2>
-                <p className="menu-card-desc">{menu.description}</p>
-              </div>
-              <div className="menu-card-action">{menu.action ?? 'Open →'}</div>
-            </Link>
-          ) : (
-            <div key={menu.id} className="menu-card menu-card--soon">
-              <div className="menu-card-icon">{menu.icon}</div>
-              <div className="menu-card-body">
-                <h2 className="menu-card-title">{menu.label}</h2>
-                <p className="menu-card-desc">{menu.description}</p>
-              </div>
-              <div className="menu-card-badge">Coming Soon</div>
+      <main className={s.grid}>
+        {HOME_MENUS.map((m) => (
+          <Link key={m.id} href={m.href} className={`${s.card} ${m.core ? s.cardCore : ''}`}>
+            <div className={`${s.photo} ${m.fit === 'contain' ? s.photoContain : ''}`}>
+              <img src={m.image} alt="" />
+              {m.badge && (
+                <span className={`${s.badge} ${m.badge === 'new' ? s.badgeNew : s.badgeProgress}`}>
+                  {BADGE_TEXT[m.badge]}
+                </span>
+              )}
             </div>
-          )
-        )}
+            <div className={s.body}>
+              <h2 className={`${playfair.className} ${s.name}`}>{m.label}</h2>
+              <p className={s.desc}>{m.description}</p>
+            </div>
+          </Link>
+        ))}
       </main>
     </div>
   );
