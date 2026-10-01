@@ -44,7 +44,38 @@ If what prints ever looks different from the current `Drinks Menu.dc.html`
 mockup again, check these two failure modes first before assuming the
 content itself changed.
 
-## Changelog — latest revision
+## Changelog — latest revision (Thursday $10 callout + Cocktails hard caps)
+
+- **Signature Cocktails got a Thursday callout** directly under the
+  title: a double-rule box reading "THURSDAYS / Every signature cocktail
+  / $10", with the martini sketch moved from the bottom of the card to
+  the left of the box (84px wide, was 108px at the bottom). Static
+  template chrome (`.cocktails-promo`) — not a data field, no editor
+  control. "$10" prints WITH a `$`: this is the second deliberate
+  exception to the no-`$` rule, alongside the Spritz price.
+- Spacing to make room: title gap 36px → 18px, item gap 21px → 15px.
+- **Cocktails growth headroom is REMOVED** and replaced with two hard
+  caps — see the new §1d. `COCKTAILS_HIDE_IMAGE_AT` and the cocktails
+  `.hide-image` toggle are gone from render.js/template.html.
+- Bug fix: Spritz Design B's "Herbal & Aromatic" heading could wrap to
+  two lines in Chromium. Spritz headings are now `white-space: nowrap`.
+  Note: even with this fix, Spritz Design B with the seed data measured
+  `contentBottomIn` 9.99in (shrunk) in our Chromium check — 0.03in
+  over the crop line. Design A fits (7.57in). Spritz was not otherwise
+  changed this revision; re-check it in your own browser before launch.
+
+Verified in a real browser with self-hosted Playfair + Google Fonts
+Montserrat loaded (Cocktails card):
+| Scenario | lines | contentBottomIn | fits |
+|---|---|---|---|
+| Seed data (baseline) | 25 | 9.66 | true |
+| +1 description line | 26 | 9.89 | true |
+| +1 line from a wrapping name (worst case) | 26 | 9.91 | true |
+| +1 new note line | 26 | 9.84 | true |
+| +2 lines | 27 | 10.12 | **false** (blocked) |
+| 8 items | 28 | 10.56 | **false** (blocked) |
+
+## Changelog — previous revision
 
 This revision fixed the two REAL fit failures a careful re-check (real
 content, real browser, `validate.js`) turned up, and added growth
@@ -69,7 +100,7 @@ by-a-hair pass.
 it only passed by using the one shrink step, with ~0.02in to spare
 before the crop line. Not a bug, but no safety margin either.
 
-### Growth headroom — Cocktails (+1) and Spritz (+2)
+### Growth headroom — Spritz (+2) [Cocktails part SUPERSEDED — see §1d]
 
 Cocktails and Spritz must now tolerate modest growth without a design
 round: Cocktails up to 8 items, Spritz up to 11 (2 more than today,
@@ -83,11 +114,7 @@ by hand, don't assume headroom exists.
 this before touching either threshold:**
 
 `render.js` toggles `.hide-image` on a card once its item count crosses
-a threshold (`COCKTAILS_HIDE_IMAGE_AT = 8`, `SPRITZ_COMPACT_AT = 9` — corrected
-from the delivered `10` on 2026-08-18: at `10`, today's real 9-item baseline
-stayed in non-compact spacing and failed the crop line by ~0.24in; verified
-`9` fits with ~2.9in to spare. See BUILD-SPEC §8a-style note — flag to the
-designer so their next handoff doesn't regress it back to 10).
+a threshold (`COCKTAILS_HIDE_IMAGE_AT = 8`, `SPRITZ_COMPACT_AT = 10`).
 This was the developer's original ask, but testing with real browser
 layout (not a visual mockup comparison) showed it does NOT work the same
 way on both cards, because `validate.js`'s `contentBottomIn` (the holder
@@ -253,6 +280,37 @@ one drift from the other.
 
 ---
 
+## 1d. Signature Cocktails — hard caps (7 drinks, +1 line)
+
+The Cocktails card has **no growth headroom**. Two rules, both enforced
+by `validate.js` (`validateCocktails`), both block save:
+
+1. **Max 7 drinks** (`COCKTAILS_MAX_ITEMS`). The editor must hide or
+   disable "Add cocktail" once the list has 7. A manager can only
+   *replace* a drink — edit its name/description/price/note in place,
+   or delete one and add one.
+2. **At most ONE extra line on the whole card** (`COCKTAILS_LINE_BUDGET`
+   = `COCKTAILS_BASELINE_LINES` 25 + 1). Lines are every rendered
+   line of every cocktail name, description, and note, counted after
+   wrapping (`countCocktailLines()`). The spare line can land anywhere
+   — a longer description, a name that wraps, a new note — but only
+   one in total, however the edits are spread across drinks. Shorter
+   copy elsewhere frees lines back up (it's a total, not per-drink).
+
+Lines are counted at normal type only — **the 1pt shrink step never
+applies to Cocktails.** Over budget = blocked, with a message like
+*"Cocktails is 1 line over. Shorten a description."* (use
+`lines - lineBudget` from the report). The crop line and 11in checks
+still run as a backstop.
+
+Line counts depend on the real fonts, so always `await
+waitForLayout()` first. If the design or approved seed copy ever
+changes, re-measure `COCKTAILS_BASELINE_LINES` in a real browser and
+re-confirm that baseline + 1 still clears the 9.96in crop line using a
+wrapping-name line (the tallest kind).
+
+---
+
 ## 1c. Liquori — curated, not open-ended
 
 Liquori is the one card on this menu that does **not** follow the
@@ -330,9 +388,9 @@ Don't "fix" it to match the rest of the menu.
 
 ## 1. Constraint model — validate.js + a single 1pt shrink step
 
-**Cocktails, Spirits & Beer, and Spritz have open-ended item counts.**
-Managers can add or remove bourbons, scotches, beers, cocktails, or
-spritzes at will — there is no hard max (spritz targets 9–12 items, but
+**Spirits & Beer and Spritz have open-ended item counts** (Cocktails
+is hard-capped — see §1d). Managers can add or remove bourbons,
+scotches, beers, or spritzes at will — there is no hard max (spritz targets 9–12 items, but
 that's a layout target, not an enforced ceiling). Liquori does not
 follow this model — see §1c. Instead, for the open-ended cards:
 
@@ -394,7 +452,7 @@ SienaDrinksDessertValidate.validate(document);       // measures & reports; need
 
 ```jsonc
 {
-  "cocktails": [ /* open-ended */ {
+  "cocktails": [ /* max 7, +1 line total — see §1d */ {
     "id": "ck-1", "name": "Godfather",
     "desc": "Maker's Mark Bourbon and Amaretto Disaronno. Brando's drink on set!",
     "price": "14.00",
@@ -477,8 +535,9 @@ Playfair on spirits/liquori names.
 
 ### Add / remove / reorder
 
-Cocktails, Spirits & Beer, and Spritz support add, remove, and reorder —
-no printed maximum (see §1). Liquori does not get this UI — see §1c. The
+Spirits & Beer and Spritz support add, remove, and reorder — no printed
+maximum (see §1). Cocktails supports edit, remove, reorder, and add
+only while under 7 drinks (§1d). Liquori does not get this UI — see §1c. The
 editor, for the open-ended lists:
 
 - Generates a fresh opaque `id` on add.
@@ -494,6 +553,11 @@ editor, for the open-ended lists:
 
 Baked into `template.html`, no data hooks, not surfaced in the editor:
 
+- The Cocktails Thursday callout (`.cocktails-promo`): "THURSDAYS /
+  Every signature cocktail / $10" in a double-rule box with the martini
+  sketch to its left, directly under the title. Static copy, prints
+  "$10" with a `$` on purpose. To change the deal, edit template.html
+  (owner-level change), not data.
 - The four page titles: "Signature Cocktails", "Spritz Menu", "Spirits &
   Beer", "Liquori". **Cocktails and Spirits & Beer titles are plain
   centered text — no flanking rules.** Spritz and Liquori titles keep the
@@ -638,13 +702,10 @@ button.
 
 ---
 
-- **Cocktails and Spritz have growth headroom; Spirits & Beer and
-  Liquori do not.** Cocktails tolerates up to 8 items, Spritz up to 11,
-  each via an automatic `.hide-image` / `.spritz-compact` toggle in
-  `render.js` (see the changelog above for the exact thresholds and why
-  the mechanism differs between the two cards). Don't assume the same
-  release valve exists on Spirits & Beer or Liquori — it doesn't; their
-  current counts are a hard ceiling.
+- **Only Spritz has growth headroom.** Spritz tolerates up to 11 items
+  via the automatic `.spritz-compact` toggle in `render.js`. Cocktails
+  is hard-capped at 7 drinks and +1 line (§1d). Spirits & Beer and
+  Liquori counts are a hard ceiling.
 
 ## 8a. Owner customizations layered on top of this handoff (NOT our contract)
 
@@ -677,6 +738,15 @@ future install until/unless they're formally folded into the handoff:
    and unaffected by `.spritz-compact` since compact mode never touches the
    tagline's own font-size/line-height).
 
+4. **No Spritz compact mode / image hiding** (Aug 2026, Joe). The designer's
+   `render.js` + `template.html` still ship `SPRITZ_COMPACT_AT` /
+   `.spritz-compact` / `.page.hide-image .spritz-image` — leave them OUT.
+   Spritz always renders at full design size.
+5. **Oct 2026 install note:** handoff (6) changed ONLY Signature Cocktails
+   (Thursday $10 callout, 7-drink / +1-line caps). It was merged hunk-by-hunk;
+   its Spritz `white-space: nowrap` heading fix was deliberately NOT taken
+   (owner asked for no changes to other pages) — revisit only if asked.
+
 ## 9. What "done" looks like
 
 - Editor loads all four cards from the seed data, populated exactly as
@@ -688,6 +758,9 @@ future install until/unless they're formally folded into the handoff:
   the worst section.
 - Manager removes the Siena Margarita's floater note → the note line
   disappears entirely from the rendered card, not just goes blank.
+- Manager tries to add an 8th cocktail → "Add" is unavailable.
+- Manager lengthens one cocktail description by a line → saves. Then
+  lengthens another by a line → save blocked: "Cocktails is 1 line over."
 - Manager reorders cocktails by drag → save → reload → new order
   persists and prints in that order.
 - Manager adds a 10th spritz with a new tasting note and category →

@@ -211,6 +211,30 @@ export async function runSpritzTest() {
   }
 }
 
+/**
+ * Signature Cocktails: Thursday callout is static chrome; no growth
+ * release valve (render never adds .hide-image to cocktails). The 7-item /
+ * +1-line caps live in validate.js and need a real browser (§1d).
+ */
+export async function runCocktailsTest() {
+  const [template, dataRaw, renderer] = await Promise.all([
+    readFile(join(here, 'template.html'), 'utf8'),
+    readFile(join(here, 'menu-data.json'), 'utf8'),
+    loadRenderer(),
+  ]);
+  const base = JSON.parse(dataRaw);
+  if (base.cocktails.length > 7) throw new Error('Seed data exceeds the 7-cocktail cap.');
+  const grown = JSON.parse(JSON.stringify(base));
+  grown.cocktails.push({ id: 'ck-extra', name: 'Test', desc: 'Test.', price: '14.00' });
+  const dom = new JSDOM(template);
+  renderer.render(dom.window.document, grown);
+  const d = dom.window.document;
+  const page = d.querySelector('[data-page-id="cocktails"]');
+  if (page.classList.contains('hide-image')) throw new Error('Cocktails should never get .hide-image.');
+  const price = d.querySelector('.cocktails-promo-price');
+  if (!price || price.textContent !== '$10') throw new Error('Thursday callout missing or wrong price.');
+}
+
 if (typeof globalThis.describe === 'function') {
   // eslint-disable-next-line no-undef
   describe('Siena Drinks & Dessert menu rendering', () => {
@@ -234,11 +258,15 @@ if (typeof globalThis.describe === 'function') {
     test('Spritz Menu: shared data drives both designs, category sorts design B only, $ price', async () => {
       await runSpritzTest();
     });
+    // eslint-disable-next-line no-undef
+    test('Cocktails: static Thursday callout, no hide-image valve', async () => {
+      await runCocktailsTest();
+    });
   });
 }
 
 if (process.argv[1] && process.argv[1].endsWith('snapshot-test.spec.js')) {
-  Promise.all([runSnapshotTest(), runOptionalFieldsTest(), runCardinalityTest(), runLiquoriTest(), runSpritzTest()])
+  Promise.all([runSnapshotTest(), runOptionalFieldsTest(), runCardinalityTest(), runLiquoriTest(), runSpritzTest(), runCocktailsTest()])
     .then(() => { console.log('✓ Drinks menu snapshot + optional-field + cardinality + liquori + spritz tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

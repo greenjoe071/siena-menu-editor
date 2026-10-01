@@ -1,5 +1,13 @@
 # Siena Drinks Menu — Developer Handoff
 
+**Latest: Signature Cocktails now has a Thursday $10 callout under its
+title, and is hard-capped — max 7 drinks, and at most one extra
+rendered line on the whole card versus today's copy.** See
+`BUILD-SPEC.md` §1d and `validate.js` (`COCKTAILS_MAX_ITEMS`,
+`COCKTAILS_LINE_BUDGET`). The editor must not offer "add" at 7
+drinks. The old "Cocktails up to 8 via .hide-image" headroom below is
+superseded.
+
 **Two real bugs found and fixed this round, plus growth headroom added.**
 Testing with real browser layout + real content (not a visual mockup
 compare) found Spirits & Beer genuinely overflowing and Spritz sitting
@@ -37,7 +45,7 @@ crop line), and §1c for why Liquori isn't edited like the other cards.
 | `snapshot-test.spec.mjs` | Vitest test: snapshot match, optional-field behavior (cocktail note), open-ended cardinality, the Liquori fixed-category contract, and the Spritz shared-data/dual-design contract. Resolves paths from its own file location, not CWD. |
 | `BUILD-SPEC.md` | Full spec — physical product, constraint model, data shape, editable fields, gotchas. **Read this before writing the editor.** |
 | `assets/spritz-garnish-sketch.png` | Static illustration pinned to the bottom of the Spritz card — not a data field, see BUILD-SPEC §5. |
-| `assets/cocktails-martini-sketch.png` | Static illustration pinned to the bottom of the Cocktails card — same treatment as the Spritz illustration above. |
+| `assets/cocktails-martini-sketch.png` | Static illustration inside the Cocktails Thursday callout, left of the double-rule box. |
 | `fonts/` | Self-hosted Playfair Display variable fonts (regular + italic). Montserrat loads from Google Fonts at runtime. |
 
 ## Quickstart

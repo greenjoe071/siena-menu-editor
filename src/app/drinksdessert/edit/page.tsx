@@ -44,7 +44,12 @@ interface DrinksDessertMenuData {
 }
 
 // validate.js report shape
-interface PageReport { id: string; fits: boolean; shrunk: boolean; overflowPx: number; worstList: string | null; }
+interface PageReport {
+  id: string; fits: boolean; shrunk: boolean; overflowPx: number; worstList: string | null;
+  // Signature Cocktails only — hard caps (max 7 drinks, seed lines + 1)
+  itemCount?: number; maxItems?: number; itemCountOk?: boolean;
+  lines?: number; lineBudget?: number; lineBudgetOk?: boolean;
+}
 interface ValidateReport { fits: boolean; pages: PageReport[]; error?: string; }
 
 // ── Static config ─────────────────────────────────────────────────────────
@@ -229,7 +234,7 @@ function ItemRow({
 }
 
 function EditableList({
-  listId, items, descMode, note, addLabel, namePlaceholder, onItemsChange,
+  listId, items, descMode, note, addLabel, namePlaceholder, onItemsChange, maxItems, maxLabel,
 }: {
   listId: string;
   items: Item[];
@@ -238,12 +243,15 @@ function EditableList({
   addLabel: string;
   namePlaceholder: string;
   onItemsChange: (items: Item[]) => void;
+  maxItems?: number;      // hide "add" at this count (Cocktails: 7)
+  maxLabel?: string;
 }) {
+  const atMax = maxItems !== undefined && items.length >= maxItems;
   function updateAt(i: number, updated: Item) {
     const next = [...items]; next[i] = updated; onItemsChange(next);
   }
   function removeAt(i: number) { onItemsChange(items.filter((_, idx) => idx !== i)); }
-  function add() { onItemsChange([...items, { id: newId(listId), name: '', price: '', ...(descMode === 'required' ? { desc: '' } : {}) }]); }
+  function add() { if (atMax) return; onItemsChange([...items, { id: newId(listId), name: '', price: '', ...(descMode === 'required' ? { desc: '' } : {}) }]); }
 
   return (
     <div>
@@ -266,7 +274,7 @@ function EditableList({
           </div>
         )}
       </Droppable>
-      <button className="btn-add-dish" onClick={add}>{addLabel}</button>
+      <button className="btn-add-dish" onClick={add} disabled={atMax}>{atMax ? maxLabel ?? 'List is full' : addLabel}</button>
     </div>
   );
 }
@@ -364,9 +372,10 @@ function CardPanel({
   const pr = report?.pages.find(p => p.id === pageId);
   let status: React.ReactNode = null;
   if (pr) {
-    if (!pr.fits) status = <span className="dd-chip dd-chip--bad">⚠ too long</span>;
+    const lineInfo = pr.lineBudget ? ` · ${pr.lines}/${pr.lineBudget} lines` : '';
+    if (!pr.fits) status = <span className="dd-chip dd-chip--bad">⚠ too long{lineInfo}</span>;
     else if (pr.shrunk) status = <span className="dd-chip dd-chip--warn">✓ fits (reduced type)</span>;
-    else status = <span className="dd-chip dd-chip--ok">✓ fits</span>;
+    else status = <span className="dd-chip dd-chip--ok">✓ fits{lineInfo}</span>;
   }
   return (
     <div className={`section-block section-block--${variant}`}>
@@ -443,7 +452,11 @@ export default function DrinksDessertEditorPage() {
         const bad = rep.pages.find(p => !p.fits);
         const card = bad ? (CARD_LABELS[bad.id] ?? bad.id) : 'A card';
         setSaveStatus('error');
-        if (bad?.worstList === 'spritz-tagline') {
+        if (bad?.id === 'cocktails' && bad.itemCountOk === false) {
+          setSaveMsg(`${card} holds at most ${bad.maxItems} drinks — remove one to add another.`);
+        } else if (bad?.id === 'cocktails' && bad.lineBudgetOk === false) {
+          setSaveMsg(`${card} is out of room (${bad.lines} of ${bad.lineBudget} lines). Shorten a name, description, or note.`);
+        } else if (bad?.worstList === 'spritz-tagline') {
           setSaveMsg(`${card} — the tagline line is too long to fit on one line. Shorten it.`);
         } else {
           const worst = bad?.worstList ? LIST_LABELS[bad.worstList] ?? bad.worstList : null;
@@ -541,7 +554,7 @@ export default function DrinksDessertEditorPage() {
 
           <div className="editor-scroll chef-mode">
             <div className="weekend-instructions" style={{ margin: '12px 0 8px' }}>
-              <p>Four cards, printed on <strong>two sheets</strong> (A: Signature Cocktails + Spritz Menu · B: Spirits &amp; Beer + Liquori). Add or remove items freely on Cocktails, Spirits &amp; Beer, and Spritz — a card will tell you if it runs out of room. Liquori is a curated top-shelf list; talk to Joe before changing it rather than adding/removing freely.</p>
+              <p>Four cards, printed on <strong>two sheets</strong> (A: Signature Cocktails + Spritz Menu · B: Spirits &amp; Beer + Liquori). Signature Cocktails holds up to 7 drinks, with room for about one extra line of text. Add or remove items freely on Spirits &amp; Beer and Spritz — a card will tell you if it runs out of room. Liquori is a curated top-shelf list; talk to Joe before changing it rather than adding/removing freely.</p>
             </div>
 
             {/* Cocktails */}
@@ -551,6 +564,7 @@ export default function DrinksDessertEditorPage() {
                 <EditableList
                   listId="cocktails" items={menu.cocktails} descMode="required" note
                   addLabel="+ Add cocktail" namePlaceholder="e.g. Negroni Sbagliato"
+                  maxItems={7} maxLabel="7 cocktails is the max — remove one to add another"
                   onItemsChange={setCocktails}
                 />
               </CardPanel>

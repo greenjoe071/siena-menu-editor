@@ -58,7 +58,18 @@
   tagline) is IDENTICAL between designs and lives once in the DOM — only
   the item-list portion below it swaps. See BUILD-SPEC.md §1a.
 
-  LATEST REVISION — Signature Cocktails + Spirits & Beer.
+  LATEST REVISION — Signature Cocktails: Thursday $10 callout + hard caps.
+  =========================================================
+  A double-rule "Thursdays / Every signature cocktail / $10" callout now
+  sits directly under the Cocktails title, with the martini sketch moved
+  from the bottom of the card to the left of the callout. Item gap
+  21px → 15px, title gap 36px → 18px. Cocktails no longer has growth
+  headroom: max 7 items (hard cap), and total rendered text lines on the
+  card may exceed the seed baseline by at most ONE line. See
+  BUILD-SPEC.md §1d and validate.js (COCKTAILS_MAX_ITEMS /
+  COCKTAILS_LINE_BUDGET).
+
+  PRIOR REVISION — Signature Cocktails + Spirits & Beer.
   =========================================================
   "Aperol Spritz" was removed from Signature Cocktails (redundant now
   that Spritz has its own dedicated card). The whole Cocktails card was
@@ -169,7 +180,7 @@ body {
    NOTE: these are physical px values copied 1:1 from the design mockup —
    do NOT run them through any px→pt conversion; only font-size uses that
    conversion (see BUILD-SPEC.md "Exact-value parity" section). */
-.page[data-page-id="cocktails"] .page-title { margin-bottom: 36px; }
+.page[data-page-id="cocktails"] .page-title { margin-bottom: 18px; }
 .page[data-page-id="spirits"]   .page-title { margin-bottom: 16px; }
 .page[data-page-id="liquori"]   .page-title { margin-bottom: 20px; }
 .page[data-page-id="spritz"]    .page-title { margin-bottom: 4px; }
@@ -260,7 +271,7 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .item-list { display: flex; flex-direction: column; }
 
 /* ── Cocktails — name/price row + wrapping description + optional note ── */
-.item-list[data-list-id="cocktails"] .item { margin-bottom: 21px; }
+.item-list[data-list-id="cocktails"] .item { margin-bottom: 15px; }
 .item-list[data-list-id="cocktails"] .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .cocktail-name { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 15.75pt; color: #3a1a06; line-height: 1.15; }
 .cocktail-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 13.5pt; color: #3a1a06; line-height: 1.15; white-space: nowrap; }
@@ -268,7 +279,18 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
 .cocktail-note { font-family: 'Montserrat', sans-serif; font-size: 9.75pt; color: #6b4c2a; margin-top: 3px; }
 /* Static asset, bottom of the Cocktails card — added this revision,
    same decorative treatment/exemption as .spritz-image below. */
-.cocktails-image { width: 108px; margin: 18px auto 0; display: block; flex-shrink: 0; }
+.cocktails-image { width: 84px; display: block; flex-shrink: 0; }
+/* Thursday $10 callout — static chrome, directly under the Cocktails
+   title. Sketch left, double-rule box right. Fonts converted px→pt
+   (11px→8.25pt, 17px→12.75pt, 26px→19.5pt); spacing copied 1:1 in px.
+   Never shrunk by .shrink-1pt (and Cocktails never shrinks anyway, §1d).
+   "$10" deliberately prints WITH a "$" — second exception to the no-$
+   rule, alongside the Spritz price. */
+.cocktails-promo { display: flex; align-items: center; gap: 14px; margin: 0 0 22px; flex-shrink: 0; }
+.cocktails-promo-box { flex: 1; border-top: 3px double #3a1a06; border-bottom: 3px double #3a1a06; padding: 8px 0; text-align: center; }
+.cocktails-promo-kicker { font-family: 'Montserrat', sans-serif; font-size: 8.25pt; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #3a1a06; }
+.cocktails-promo-line { font-family: 'Playfair Display', serif; font-style: italic; font-size: 12.75pt; color: #3a1a06; line-height: 1.25; margin-top: 3px; }
+.cocktails-promo-price { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 19.5pt; color: #3a1a06; line-height: 1.1; margin-top: 2px; }
 
 /* ── Spirits & Liquori (name + price only, no description) — same
    visual treatment on both pages ── */
@@ -318,13 +340,10 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
    line (see validate.js's contentBottomIn, which skips [data-decorative]
    elements). See BUILD-SPEC.md §1a/§5. */
 .spritz-image { width: 108px; margin: 8px auto 0; display: block; flex-shrink: 0; }
-/* Growth release valve \u2014 Cocktails ONLY (Aug 2026, Joe: removed entirely
-   for Spritz \u2014 no compact mode, no item-count-driven behavior on that
-   card at all; see render.js). render.js toggles `.hide-image` on the
-   Cocktails .page once its item count crosses COCKTAILS_HIDE_IMAGE_AT.
-   Hiding is plain display:none inside a flex column, so the space it
-   occupied closes automatically. */
-.page.hide-image .cocktails-image { display: none; }
+/* No growth release valve on any card now: Cocktails is hard-capped
+   (7 drinks / +1 line, BUILD-SPEC.md §1d — its martini sketch moved into
+   the Thursday callout), and Spritz has no compact mode or image hiding
+   (Aug 2026, Joe — owner customization, see BUILD-SPEC.md §8a). */
 </style>
 </head>
 <body>
@@ -336,8 +355,15 @@ body.spritz-design-b .spritz-body-b { display: flex; flex-direction: column; }
     <div class="page-title">
       <div class="page-title-text">Signature Cocktails</div>
     </div>
+    <div class="cocktails-promo">
+      <img class="cocktails-image" src="assets/cocktails-martini-sketch.png" alt="" data-decorative>
+      <div class="cocktails-promo-box">
+        <div class="cocktails-promo-kicker">Thursdays</div>
+        <div class="cocktails-promo-line">Every signature cocktail</div>
+        <div class="cocktails-promo-price">$10</div>
+      </div>
+    </div>
     <div class="item-list" data-list-id="cocktails"></div>
-    <img class="cocktails-image" src="assets/cocktails-martini-sketch.png" alt="" data-decorative>
   </div>
 
   <div class="cut-guide"></div>

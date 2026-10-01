@@ -52,18 +52,15 @@
  *   - spritz.items[i].desc     — tasting note, required (design A shows it
  *     under every name; design B does too, inside its category group).
  *
- * GROWTH HEADROOM — Cocktails only (Aug 2026, Joe: removed for Spritz —
- * no compact mode, no automatic item-count-driven behavior at all on that
- * card; it always renders at the designer's original full size). Spirits
- * & Beer and Liquori remain hard-capped at their current counts, see
- * BUILD-SPEC.md:
- *   - Cocktails: at COCKTAILS_HIDE_IMAGE_AT (8) or more items, render()
- *     hides the bottom illustration (`.hide-image` on the page) so the
- *     card doesn't overflow its physical 11in bottom edge.
- *
- * Liquori and Spirits & Beer items have NO description field — name and
- * price only, by design. Don't add a `desc` key to either; render.js has
- * no code path for it.
+ * GROWTH HEADROOM — none. Cocktails, Spirits & Beer and Liquori are
+ * hard-capped (see BUILD-SPEC.md):
+ *   - Cocktails: NO growth. Max 7 items, and at most ONE extra rendered
+ *     line vs. the seed data across the whole card. Enforced by
+ *     validate.js (COCKTAILS_MAX_ITEMS / COCKTAILS_LINE_BUDGET), not
+ *     here — render() still renders whatever it's given. The Thursday
+ *     $10 callout under the title is static template chrome.
+ *   - Spritz: no compact mode, no item-count-driven behavior at all
+ *     (Aug 2026, Joe) — it always renders at the designer's full size.
  *
  * SPRITZ HEADER — showNew / tagline (NOT part of this handoff's contract;
  * kept from the prior implementation per owner request, layered on top of
@@ -112,7 +109,6 @@
 
   var SPRITZ_CATEGORIES = ['bright', 'herbal', 'earthy'];
   var SPRITZ_CATEGORY_LIST_ID = { bright: 'spritz-b-bright', herbal: 'spritz-b-herbal', earthy: 'spritz-b-earthy' };
-  var COCKTAILS_HIDE_IMAGE_AT = 8;
 
   function renderCocktails(doc, items) {
     const list = clearList(doc, 'cocktails');
@@ -207,8 +203,6 @@
     const spritz = data.spritz || {};
 
     renderCocktails(doc, data.cocktails);
-    var cocktailsPage = doc.querySelector('[data-page-id="cocktails"]');
-    if (cocktailsPage) cocktailsPage.classList.toggle('hide-image', (data.cocktails || []).length >= COCKTAILS_HIDE_IMAGE_AT);
 
     renderPlainList(doc, 'spirits-bourbon', spirits.bourbon);
     renderPlainList(doc, 'spirits-scotch', spirits.scotch);

@@ -1,8 +1,21 @@
 /**
  * Siena Drinks Menu — Layout Validator.
  *
- * Constraint model: Cocktails, Spirits & Beer, and Spritz item counts and
+ * Constraint model: Spirits & Beer and Spritz item counts and
  * descriptions are OPEN-ENDED — no hard per-field or per-section cap.
+ *
+ * SIGNATURE COCKTAILS IS HARD-CAPPED (BUILD-SPEC.md §1d):
+ *   - At most COCKTAILS_MAX_ITEMS (7) drinks. The editor must not offer
+ *     "add" once there are 7; a drink can only be REPLACED (edited in
+ *     place, or deleted then re-added).
+ *   - Total rendered text lines on the card (every cocktail name,
+ *     description and note line, counted after wrapping) may not exceed
+ *     COCKTAILS_LINE_BUDGET = seed baseline (25) + 1. The one spare line
+ *     can land anywhere on the card — a longer description, a wrapping
+ *     name, or a new note — but only one, total.
+ *   - Lines are counted at normal type size only. The 1pt shrink step
+ *     is NOT applied to Cocktails; over budget = blocked.
+ *   - The crop-line / 11in checks still run as a backstop.
  * Liquori is curated by hand instead (see BUILD-SPEC.md §1c) but is
  * still measured here like any other card. Every save runs through this
  * validator, which is the single source of truth for "does this fit?"
@@ -55,7 +68,8 @@
  *   {
  *     fits: false,
  *     pages: [
- *       { id: "cocktails", fits: true,  shrunk: false, overflowPx: 0,  cropLineOk: true,  contentBottomIn: 9.72, worstList: null },
+ *       { id: "cocktails", fits: true,  shrunk: false, overflowPx: 0,  cropLineOk: true,  contentBottomIn: 9.66, worstList: null,
+ *         itemCount: 7, maxItems: 7, itemCountOk: true, lines: 25, lineBudget: 26, lineBudgetOk: true },
  *       { id: "spirits",   fits: false, shrunk: true,  overflowPx: 34, cropLineOk: false, contentBottomIn: 10.1, worstList: "spirits-beer" },
  *       { id: "spritz",    fits: true,  shrunk: false, overflowPx: 0,  cropLineOk: true,  contentBottomIn: 8.9,  worstList: null },
  *       { id: "liquori",   fits: true,  shrunk: false, overflowPx: 0,  cropLineOk: true,  contentBottomIn: 9.94, worstList: null }
@@ -97,6 +111,49 @@
     return {
       fits: page.scrollHeight <= page.clientHeight + 1,
       overflowPx: Math.max(0, Math.round(page.scrollHeight - page.clientHeight))
+    };
+  }
+
+  // Signature Cocktails hard caps — see header + BUILD-SPEC.md §1d.
+  // COCKTAILS_BASELINE_LINES was measured in a real browser (Chromium,
+  // self-hosted Playfair + Google Fonts Montserrat loaded) against
+  // menu-data.json's 7 seed cocktails. Re-measure with countCocktailLines()
+  // if the owner ever changes the design or approves new seed copy.
+  var COCKTAILS_MAX_ITEMS = 7;
+  var COCKTAILS_BASELINE_LINES = 25;
+  var COCKTAILS_LINE_BUDGET = COCKTAILS_BASELINE_LINES + 1;
+
+  // Counts visual lines by collecting the distinct line-box tops of each
+  // text run's client rects (works for wrapping inline + block text).
+  function countCocktailLines(page) {
+    var doc = page.ownerDocument;
+    var n = 0;
+    page.querySelectorAll('.cocktail-name, .cocktail-desc, .cocktail-note').forEach(function (el) {
+      var range = doc.createRange();
+      range.selectNodeContents(el);
+      var tops = {};
+      Array.prototype.forEach.call(range.getClientRects(), function (r) {
+        if (r.width > 0) tops[Math.round(r.top)] = true;
+      });
+      n += Object.keys(tops).length;
+    });
+    return n;
+  }
+
+  function validateCocktails(page) {
+    page.classList.remove('shrink-1pt');
+    var itemCount = page.querySelectorAll('[data-list-id="cocktails"] .item').length;
+    var lines = countCocktailLines(page);
+    var itemCountOk = itemCount <= COCKTAILS_MAX_ITEMS;
+    var lineBudgetOk = lines <= COCKTAILS_LINE_BUDGET;
+    var r = checkBoth(page);
+    var fits = itemCountOk && lineBudgetOk && r.fits;
+    return {
+      id: 'cocktails', fits: fits, shrunk: false,
+      overflowPx: r.overflowPx, cropLineOk: r.cropLineOk, contentBottomIn: r.contentBottomIn,
+      itemCount: itemCount, maxItems: COCKTAILS_MAX_ITEMS, itemCountOk: itemCountOk,
+      lines: lines, lineBudget: COCKTAILS_LINE_BUDGET, lineBudgetOk: lineBudgetOk,
+      worstList: fits ? null : 'cocktails'
     };
   }
 
@@ -188,6 +245,7 @@
 
     // Tagline never shrinks (see isTaglineWrapped comment) — computed once,
     // outside the shrink loop, same as the fixed cropLine check.
+    if (id === 'cocktails') return validateCocktails(page);
     const tagWrapped = id === 'spritz' && isTaglineWrapped(page);
 
     page.classList.remove('shrink-1pt');
@@ -224,5 +282,10 @@
     return waitForLayout(doc).then(function () { return validate(doc); });
   }
 
-  return { validate: validate, waitForLayout: waitForLayout, renderAndValidate: renderAndValidate, CROP_LINE_IN: CROP_LINE_IN };
+  return {
+    validate: validate, waitForLayout: waitForLayout, renderAndValidate: renderAndValidate,
+    countCocktailLines: countCocktailLines,
+    CROP_LINE_IN: CROP_LINE_IN, COCKTAILS_MAX_ITEMS: COCKTAILS_MAX_ITEMS,
+    COCKTAILS_BASELINE_LINES: COCKTAILS_BASELINE_LINES, COCKTAILS_LINE_BUDGET: COCKTAILS_LINE_BUDGET
+  };
 });
