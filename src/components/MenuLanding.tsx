@@ -51,6 +51,10 @@ export interface MenuLandingProps {
   // draft buttons, and moves Home out of the header to a big button at the
   // top of the left column.
   plainNav?: boolean;
+  // Nothing has been published yet (Generic Menu's first use): only "Work on
+  // a New Menu" is shown, already open, and its buttons say the first draft
+  // starts from a sample. Current/Past Menus appear after the first publish.
+  firstUse?: boolean;
 }
 
 function PrintLinks({
@@ -121,12 +125,14 @@ type SectionKey = 'current' | 'new' | 'past';
 
 export default function MenuLanding({
   menuName, editHref, fixHref, apiBase, previewHref, printHref, currentDate,
-  draftExists = false, published = [], printVariants, editOnly = false, plainNav = false,
+  draftExists = false, published = [], printVariants, editOnly = false, plainNav = false, firstUse = false,
 }: MenuLandingProps) {
-  const [active, setActive] = useState<SectionKey | null>(plainNav ? null : 'current');
+  const [active, setActive] = useState<SectionKey | null>(firstUse ? 'new' : plainNav ? null : 'current');
 
   const navItems: { key: SectionKey; label: string; hint?: string }[] = editOnly
     ? [{ key: 'current', label: 'View, Print, or Make a Change', hint: `Current as of ${currentDate}` }]
+    : firstUse
+    ? [{ key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined }]
     : [
         { key: 'current', label: plainNav ? 'Most Recent Menu: View, Print, or Make a Change' : 'View, Print, or Fix Current Menu', hint: `Current as of ${currentDate}` },
         { key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined },
@@ -140,7 +146,11 @@ export default function MenuLanding({
           {editOnly && <Link href="/" className="dl-back-btn">← Back</Link>}
           {!plainNav && <Link href="/" className="dl-back">🏠 Home</Link>}
           <h1 className="dl-title">{menuName}</h1>
-          <p className="dl-subtitle">{editOnly ? 'View or print the current menu, or make a change.' : 'View or print the current menu, fix a mistake, or start a new draft.'}</p>
+          <p className="dl-subtitle">{
+            editOnly ? 'View or print the current menu, or make a change.'
+            : firstUse ? 'No menu has been made yet — start your first one below.'
+            : 'View or print the current menu, fix a mistake, or start a new draft.'
+          }</p>
         </div>
       </header>
 
@@ -203,13 +213,17 @@ export default function MenuLanding({
 
           {!editOnly && active === 'new' && (
             <div className="dl-pane">
-              <h2 className="dl-card-title">{draftExists ? 'Draft in Progress' : 'Start a New Menu'}</h2>
+              <h2 className="dl-card-title">{draftExists ? 'Draft in Progress' : firstUse ? 'Start Your First Menu' : 'Start a New Menu'}</h2>
               <p className="dl-card-note">
-                {draftExists
+                {firstUse
+                  ? (draftExists
+                      ? 'Your first menu is in progress. Keep editing where you left off, or start over from the sample.'
+                      : 'Your first menu starts from a sample you can change — swap in your dishes, price, and courses, then publish it when you’re happy.')
+                  : draftExists
                   ? 'You have an unpublished draft. Keep editing where you left off, or start over from the current menu.'
                   : 'Create a working draft based on the current menu. The current menu stays untouched while you edit — publish only when you’re happy with it.'}
               </p>
-              <DraftActions draftExists={draftExists} editHref={editHref ?? ''} apiBase={apiBase} mostRecentWording={plainNav} />
+              <DraftActions draftExists={draftExists} editHref={editHref ?? ''} apiBase={apiBase} mostRecentWording={plainNav} firstUse={firstUse} />
             </div>
           )}
 

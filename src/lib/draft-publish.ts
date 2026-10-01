@@ -102,10 +102,15 @@ export interface DraftPublishConfig<T> {
   schema:          Parser<T>;
   readCurrent:     () => Promise<T>;   // existing readXMenu()
   defaultPublishedAt?: number;
+  // The current menu is only a designer sample until the first publish
+  // (Generic Menu). That first publish replaces it WITHOUT archiving it to
+  // Past Menus.
+  sampleUntilPublished?: boolean;
 }
 
 export interface DraftPublish<T> {
   readCurrentMeta: () => Promise<CurrentMeta>;
+  hasPublished:    () => Promise<boolean>;   // false until the first publish stamps meta
   hasDraft:        () => Promise<boolean>;
   readDraft:       () => Promise<T>;
   writeDraft:      (data: T) => Promise<void>;
@@ -132,6 +137,10 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
       } catch { /* fall through */ }
     }
     return { publishedAt: defaultPublishedAt };
+  }
+
+  async function hasPublished(): Promise<boolean> {
+    return (await kvRead(metaKey)) !== null;
   }
 
   async function hasDraft(): Promise<boolean> {
@@ -164,7 +173,8 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
 
     // Archive the outgoing current with the date it had been current since.
     const currentRaw = await kvRead(currentKey);
-    if (currentRaw) {
+    const currentIsSample = cfg.sampleUntilPublished && !(await hasPublished());
+    if (currentRaw && !currentIsSample) {
       const meta = await readCurrentMeta();
       const envelope = JSON.stringify({ publishedAt: meta.publishedAt, data: JSON.parse(currentRaw) });
       await kvWrite(`${publishedPrefix}${ts}`, envelope);
@@ -233,7 +243,7 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
   }
 
   return {
-    readCurrentMeta, hasDraft, readDraft, writeDraft, discardDraft,
+    readCurrentMeta, hasPublished, hasDraft, readDraft, writeDraft, discardDraft,
     publishDraft, listPublished, readPublished, readMenuBySrc, updateNote,
   };
 }

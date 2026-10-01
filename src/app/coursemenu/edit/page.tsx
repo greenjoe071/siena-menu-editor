@@ -105,19 +105,35 @@ const toggleBoxStyle = { width: '16px', height: '16px', cursor: 'pointer', accen
 
 // ── CourseCard ────────────────────────────────────────────────────────────
 
-function CourseCard({ course, index, canRemove, flagged, onChange, onRemove }: {
+function CourseCard({ course, index, count, canRemove, flagged, onChange, onRemove, onMove }: {
   course: Course;
   index: number;
+  count: number;
   canRemove: boolean;
   flagged: boolean;
   onChange: (index: number, updated: Course) => void;
   onRemove: (index: number) => void;
+  onMove: (index: number, dir: -1 | 1) => void;
 }) {
   return (
     <div className="dish-row" style={flagged ? { outline: '2px solid #c0392b', outlineOffset: '2px' } : undefined}>
       <div className="dish-row-header">
         <span className="dish-name-preview">
           {ROMAN[index]} — {course.title || 'Course ' + ROMAN[index]}
+        </span>
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: '2px' }}>
+          <button
+            className="btn-move-course"
+            disabled={index === 0}
+            title="Move this course up"
+            onClick={() => onMove(index, -1)}
+          >↑</button>
+          <button
+            className="btn-move-course"
+            disabled={index === count - 1}
+            title="Move this course down"
+            onClick={() => onMove(index, 1)}
+          >↓</button>
         </span>
         <button
           className="btn-remove-dish"
@@ -173,6 +189,7 @@ export default function CourseMenuEditorPage() {
   // Add-on is "on" when it has a title; this keeps the fields open while the
   // title is still blank right after ticking the box.
   const [addonOpen, setAddonOpen]   = useState(false);
+  const [everPublished, setEverPublished] = useState(true);
   const iframeRef      = useRef<HTMLIFrameElement>(null);
   const prevJsonRef    = useRef<string>('');
   const pendingSaveRef = useRef<CourseMenuData | null>(null);
@@ -186,6 +203,10 @@ export default function CourseMenuEditorPage() {
       })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
+
+  useEffect(() => {
+    fetch('/api/coursemenu/status').then(r => r.json()).then(d => setEverPublished(!!d.published)).catch(() => {});
+  }, []);
 
   const debouncedMenu = useDebounce(menu, 800);
 
@@ -275,6 +296,17 @@ export default function CourseMenuEditorPage() {
       : m);
   }
 
+  function handleMoveCourse(index: number, dir: -1 | 1) {
+    setMenu(m => {
+      if (!m) return m;
+      const j = index + dir;
+      if (j < 0 || j >= m.courses.length) return m;
+      const courses = [...m.courses];
+      [courses[index], courses[j]] = [courses[j], courses[index]];
+      return { ...m, courses: renumber(courses) };
+    });
+  }
+
   function handleRemoveCourse(index: number) {
     if (!menu) return;
     const c = menu.courses[index];
@@ -311,7 +343,10 @@ export default function CourseMenuEditorPage() {
     const missing = missingRequired(menu);
     if (missing.length) { alert(`Before publishing, fill in ${missing.join(', ')}.`); return; }
     if (report && !report.fits) { alert('The menu doesn’t fit on the page yet — fix the problem shown at the top first.'); return; }
-    if (!confirm('Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.')) return;
+    const msg = everPublished
+      ? 'Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.'
+      : 'Publish your first Generic Menu?\n\nThis draft becomes the current menu dated today, ready to view and print.';
+    if (!confirm(msg)) return;
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -432,10 +467,12 @@ export default function CourseMenuEditorPage() {
                   key={i}
                   course={course}
                   index={i}
+                  count={n}
                   canRemove={n > MIN_COURSES}
                   flagged={flagged.has(course.id)}
                   onChange={handleCourseChange}
                   onRemove={handleRemoveCourse}
+                  onMove={handleMoveCourse}
                 />
               ))}
             </div>

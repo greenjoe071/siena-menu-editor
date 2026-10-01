@@ -504,6 +504,20 @@ button {
 }
 .btn-remove-dish:disabled { opacity: 0.25; cursor: default; }
 
+/* Up/down reorder arrows on a course card (Generic Menu) */
+.btn-move-course {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.btn-move-course:hover:not(:disabled) { color: var(--gold); background: rgba(184, 150, 42, 0.12); }
+.btn-move-course:disabled { opacity: 0.25; cursor: default; }
+
 .weekend-action-bar {
   display: flex;
   align-items: center;

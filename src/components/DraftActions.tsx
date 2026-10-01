@@ -11,6 +11,7 @@ export default function DraftActions({
   editHref,
   apiBase,
   mostRecentWording = false,
+  firstUse = false,
 }: {
   draftExists: boolean;
   editHref: string;   // e.g. '/weekend/edit'
@@ -18,12 +19,17 @@ export default function DraftActions({
   // Tue–Wed (Sep 2026): spell out that both buttons copy the "Most Recent
   // Menu" and that starting over throws the draft away.
   mostRecentWording?: boolean;
+  // Nothing published yet — the draft starts from a designer sample, not a
+  // "Most Recent Menu".
+  firstUse?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function startOver() {
-    const msg = mostRecentWording
+    const msg = firstUse
+      ? 'Throw out your draft and start over?\n\nYour draft will be deleted and replaced with a fresh copy of the sample menu.'
+      : mostRecentWording
       ? 'Throw out your draft and start fresh?\n\nYour draft will be deleted and replaced with a copy of the Most Recent Menu.'
       : 'Start over from the current menu?\n\nYour current draft will be discarded and a fresh draft will be created from the current menu.';
     if (!confirm(msg)) return;
@@ -39,7 +45,7 @@ export default function DraftActions({
     return (
       <div className="dl-actions">
         <a className="dl-btn dl-btn--primary" href={editHref}>
-          {mostRecentWording ? 'Start a New Draft (copy of Most Recent Menu) →' : 'Start a New Draft →'}
+          {firstUse ? 'Start Your First Menu →' : mostRecentWording ? 'Start a New Draft (copy of Most Recent Menu) →' : 'Start a New Draft →'}
         </a>
       </div>
     );
@@ -50,11 +56,13 @@ export default function DraftActions({
       <div className="dl-actions">
         <a className="dl-btn dl-btn--primary" href={editHref}>Continue Your Draft →</a>
         <button className="dl-btn dl-btn--ghost" onClick={startOver} disabled={busy}>
-          {busy ? 'Starting over…' : mostRecentWording ? 'Start Fresh from Most Recent Menu' : 'Start Over from Current'}
+          {busy ? 'Starting over…' : firstUse ? 'Start Over from the Sample' : mostRecentWording ? 'Start Fresh from Most Recent Menu' : 'Start Over from Current'}
         </button>
       </div>
       {mostRecentWording && (
-        <p className="dl-draft-hint">Throws out this draft and starts a new copy of the most recent menu.</p>
+        <p className="dl-draft-hint">{firstUse
+          ? 'Throws out this draft and starts again from the sample menu.'
+          : 'Throws out this draft and starts a new copy of the most recent menu.'}</p>
       )}
     </>
   );

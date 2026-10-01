@@ -52,9 +52,11 @@ export const coursemenuDP = createDraftPublish<CourseMenuData>({
   schema:             CourseMenuSchema,
   readCurrent:        readCourseMenu,
   defaultPublishedAt: Date.parse('2026-09-30T17:00:00Z'),
+  sampleUntilPublished: true,
 });
 
 export const readCurrentMeta = coursemenuDP.readCurrentMeta;
+export const hasPublished    = coursemenuDP.hasPublished;
 export const hasDraft        = coursemenuDP.hasDraft;
 export const listPublished   = coursemenuDP.listPublished;
 export const readMenuBySrc   = coursemenuDP.readMenuBySrc;
