@@ -44,6 +44,10 @@ export interface MenuLandingProps {
   // just the current-menu card, and labels the edit button "Make a Change"
   // instead of "Fix a Mistake" (there's no draft to distinguish it from).
   editOnly?: boolean;
+  // Plain nav (Tue–Wed, Sep 2026): no step numbers (they read as a sequence
+  // to follow) and nothing selected on open — the right column stays empty
+  // until an option is picked.
+  plainNav?: boolean;
 }
 
 function PrintLinks({
@@ -114,9 +118,9 @@ type SectionKey = 'current' | 'new' | 'past';
 
 export default function MenuLanding({
   menuName, editHref, fixHref, apiBase, previewHref, printHref, currentDate,
-  draftExists = false, published = [], printVariants, editOnly = false,
+  draftExists = false, published = [], printVariants, editOnly = false, plainNav = false,
 }: MenuLandingProps) {
-  const [active, setActive] = useState<SectionKey>('current');
+  const [active, setActive] = useState<SectionKey | null>(plainNav ? null : 'current');
 
   const navItems: { key: SectionKey; label: string; hint?: string }[] = editOnly
     ? [{ key: 'current', label: 'View, Print, or Make a Change', hint: `Current as of ${currentDate}` }]
@@ -148,7 +152,7 @@ export default function MenuLanding({
                   className={`dl-nav-item ${active === item.key ? 'active' : ''}`}
                   onClick={() => setActive(item.key)}
                 >
-                  <span className="dl-nav-num">{i + 1}</span>
+                  {!plainNav && <span className="dl-nav-num">{i + 1}</span>}
                   <span className="dl-nav-text">
                     <span className="dl-nav-label">{item.label}</span>
                     {item.hint && <span className="dl-nav-hint">{item.hint}</span>}
