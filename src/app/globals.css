@@ -892,20 +892,20 @@ button {
 /* ── Menu card grid ──────────────────────────────────── */
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 28px;
-  padding: 48px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
+  padding: 36px 48px;
   max-width: 1100px;
   margin: 0 auto;
   width: 100%;
 }
 
 .menu-card {
-  border-radius: 14px;
-  padding: 32px 28px;
+  border-radius: 10px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 9px;
   text-decoration: none;
   position: relative;
 }
@@ -913,14 +913,14 @@ button {
 /* "NEW" badge (top-right corner of a card) */
 .menu-card-new {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -8px;
+  right: -8px;
   background: #c0392b;
   color: #fff;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  padding: 5px 11px;
+  padding: 3px 8px;
   border-radius: 20px;
   box-shadow: 0 3px 10px rgba(192, 57, 43, 0.4);
   z-index: 2;
@@ -930,14 +930,14 @@ button {
    "changes pending, don't rely on this yet" rather than "just launched" */
 .menu-card-inprogress {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -8px;
+  right: -8px;
   background: #b8821e;
   color: #fff;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  padding: 5px 11px;
+  padding: 3px 8px;
   border-radius: 20px;
   box-shadow: 0 3px 10px rgba(184, 130, 30, 0.4);
   z-index: 2;
@@ -956,7 +956,7 @@ button {
 }
 
 .menu-card--active:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-5px) scale(1.02);
   box-shadow: 0 20px 48px rgba(26, 58, 92, 0.38), 0 4px 16px rgba(184, 150, 42, 0.2);
   outline-color: var(--gold);
   outline-offset: 3px;
@@ -973,7 +973,7 @@ button {
 
 /* ── Card contents ──────────────────────────────────── */
 .menu-card-icon {
-  font-size: 40px;
+  font-size: 26px;
   line-height: 1;
   display: inline-block;
   transition: transform 0.2s ease-out;
@@ -996,9 +996,9 @@ button {
 }
 
 .menu-card-title {
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   line-height: 1.2;
 }
 
@@ -1007,8 +1007,8 @@ button {
 }
 
 .menu-card-desc {
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .menu-card--active .menu-card-desc {
@@ -1024,9 +1024,9 @@ button {
   background: var(--gold);
   color: #fff;
   font-weight: 700;
-  font-size: 16px;
-  padding: 14px 20px;
-  border-radius: 10px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 7px;
   text-align: center;
   transition: background 0.18s, letter-spacing 0.18s;
   letter-spacing: 0;
