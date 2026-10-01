@@ -1,0 +1,19 @@
+{
+  "header": "Three Course Special",
+  "price": "55",
+  "description": "Chef’s celebration of the autumn harvest, available for a limited time",
+  "courses": [
+    { "id": "course-1", "title": "Ricotta Montata", "desc": "Whipped ricotta with spicy orange honey, wood-grilled country bread, fresh mint, basil, and cracked pepper." },
+    { "id": "course-2", "title": "Tortelli di Zucca al Burro", "desc": "Butternut squash tortelli, brown butter, crispy sage, toasted chestnuts, amaretti crumble, Parmigiano." },
+    { "id": "course-3", "title": "Brasato al Chianti Classico", "desc": "Beef short rib braised in Chianti Classico, soft polenta, roasted cipollini onions, gremolata, natural jus." }
+  ],
+  "addon": {
+    "title": "Affogato al Caffè",
+    "price": "8",
+    "desc": "Vanilla gelato drowned in espresso"
+  },
+  "footer": {
+    "enabled": true,
+    "policy_line": "<strong>No split checks.</strong>&nbsp;·&nbsp;<strong>Gratuity of 22% for parties of 6 or more.</strong>"
+  }
+}

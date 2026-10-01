@@ -72,6 +72,16 @@ const MENUS = [
     action: 'Open →',
     badge: 'new',
   },
+  {
+    id: 'coursemenu',
+    label: 'Course Menu',
+    description: 'Flexible 2, 3, or 4-course menu for one-off specials and events',
+    icon: '📜',
+    ready: true,
+    href: '/coursemenu',
+    action: 'Open →',
+    badge: 'new',
+  },
 ];
 
 export default function HomePage() {

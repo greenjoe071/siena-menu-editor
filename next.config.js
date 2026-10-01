@@ -22,6 +22,8 @@ const nextConfig = {
       '/dessert-print':   ['./handoff-dessert/**'],
       '/arw-preview': ['./handoff-arw/**'],
       '/arw-print':   ['./handoff-arw/**'],
+      '/coursemenu-preview': ['./handoff-coursemenu/**'],
+      '/coursemenu-print':   ['./handoff-coursemenu/**'],
     },
   },
 };

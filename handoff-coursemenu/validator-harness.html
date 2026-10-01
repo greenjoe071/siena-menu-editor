@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Course Menu — Validator Harness</title>
+<style>
+body{margin:0;font:14px/1.4 system-ui,sans-serif;background:#f3ede4;color:#3a1a06;display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+aside{padding:20px;display:flex;flex-direction:column;gap:10px;border-right:1px solid #c9a87a;background:#faf6ef}
+h1{font-size:16px;margin:0 0 6px}
+button{padding:8px 10px;border:1px solid #b8821e;background:#fff;color:#3a1a06;border-radius:4px;cursor:pointer;text-align:left}
+button:hover{background:#b8821e;color:#fff}
+#status{padding:10px;border-radius:4px;font-weight:600;color:#fff}
+#status.ok{background:#4a7a3a}#status.bad{background:#a8321e}
+pre{font-size:11px;white-space:pre-wrap;margin:0}
+main{padding:20px;overflow:auto}
+iframe{width:880px;height:1150px;border:0;transform:scale(.8);transform-origin:0 0}
+a{color:#b8821e}a:hover{color:#5a2e0e}
+</style>
+</head>
+<body>
+<aside>
+<h1>Validator harness</h1>
+<button data-n="2">2 courses (seed)</button>
+<button data-n="3">3 courses (seed)</button>
+<button data-n="4">4 courses (seed)</button>
+<button data-case="max">4 courses · everything on</button>
+<button data-case="longdesc">Description too long</button>
+<button data-case="longhead">Header too long</button>
+<button data-case="overflow">4 courses · 5-line descriptions</button>
+<button data-case="minimal">2 courses · no description / add-on / footer</button>
+<div id="status">…</div>
+<pre id="report"></pre>
+</aside>
+<main><iframe id="f"></iframe></main>
+<script src="render.js"></script>
+<script src="validate.js"></script>
+<script>
+let template, seed;
+const EXTRA = [
+  { id: 'course-4', title: 'Torta della Nonna al Limone', desc: 'Lemon custard tart, toasted pine nuts, powdered sugar, Chantilly cream, fresh berries, and a mint leaf.' }
+];
+const FIRST = { id: 'course-1', title: 'Carpaccio di Manzo', desc: 'Thin-sliced beef tenderloin, wild arugula, shaved Parmigiano, fried capers, lemon, extra-virgin olive oil.' };
+function build(kind) {
+  const d = JSON.parse(JSON.stringify(seed));
+  const n = +kind;
+  if (n) { const all = [...d.courses, ...EXTRA]; d.courses = all.slice(0, n); d.header = ['', '', 'Two Course Special', 'Three Course Special', 'Four Course Special'][n]; return d; }
+  d.courses = [FIRST, ...d.courses.slice(1), ...EXTRA];
+  d.header = 'Four Course Special';
+  if (kind === 'longdesc') d.description = 'Chef’s celebration of the autumn harvest, available for a limited time only, every night of the week';
+  if (kind === 'longhead') d.header = 'Chef’s Special Four Course Tasting Menu';
+  if (kind === 'overflow') d.courses.forEach((c) => (c.desc += ' Finished tableside with a drizzle of our estate olive oil and flaky sea salt. Served with a basket of warm focaccia, whipped rosemary butter, and marinated Castelvetrano olives.'));
+  if (kind === 'minimal') { d.courses = d.courses.slice(0, 2); d.header = 'Two Course Special'; d.description = ''; d.addon = { title: '' }; d.footer.enabled = false; }
+  return d;
+}
+function run(kind) {
+  const f = document.getElementById('f');
+  f.onload = async () => {
+    const doc = f.contentDocument;
+    const r = await SienaCourseMenuValidate.renderAndValidate(doc, build(kind), SienaCourseMenuRender.render);
+    const s = document.getElementById('status');
+    s.className = r.fits ? 'ok' : 'bad';
+    s.textContent = r.fits ? 'FITS: Save enabled' : 'BLOCKED: ' + r.issues.map((i) => i.message).join(' ');
+    document.getElementById('report').textContent = JSON.stringify(r, null, 2);
+  };
+  f.srcdoc = template;
+}
+Promise.all([fetch('template.html').then((r) => r.text()), fetch('menu-data.json').then((r) => r.json())]).then(([t, s]) => {
+  template = t; seed = s;
+  document.querySelectorAll('button').forEach((b) => (b.onclick = () => run(b.dataset.n || b.dataset.case)));
+  run('3');
+});
+</script>
+</body>
+</html>

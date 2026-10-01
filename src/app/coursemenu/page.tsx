@@ -1,0 +1,28 @@
+import { readCurrentMeta, hasDraft, listPublished } from '@/lib/coursemenu-menu-store';
+import { formatMenuDate } from '@/lib/draft-publish';
+import MenuLanding from '@/components/MenuLanding';
+
+export const dynamic = 'force-dynamic';
+
+export default async function CourseMenuLandingPage() {
+  const [meta, draftExists, published] = await Promise.all([
+    readCurrentMeta(),
+    hasDraft(),
+    listPublished(),
+  ]);
+
+  return (
+    <MenuLanding
+      menuName="Course Menu"
+      editHref="/coursemenu/edit"
+      fixHref="/coursemenu/fix"
+      apiBase="/api/coursemenu"
+      previewHref="/coursemenu-preview"
+      printHref="/coursemenu-print"
+      currentDate={formatMenuDate(meta.publishedAt)}
+      draftExists={draftExists}
+      published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
+      plainNav
+    />
+  );
+}
