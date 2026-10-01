@@ -1479,6 +1479,7 @@ button {
 }
 .dl-btn--fix:hover { background: rgba(184, 39, 44, 0.08); }
 .dl-fix-hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; max-width: 380px; }
+.dl-draft-hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 10px; }
 
 /* Past-menu notes — click text to add/edit, saves on blur */
 .dl-note-text, .dl-note-add {

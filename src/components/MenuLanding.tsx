@@ -47,7 +47,8 @@ export interface MenuLandingProps {
   // Plain nav (Tue–Wed, Sep 2026): no step numbers (they read as a sequence
   // to follow) and nothing selected on open — the right column stays empty
   // until an option is picked. Also relabels the first item "Most Recent
-  // Menu: View, Print, or Make a Change".
+  // Menu: View, Print, or Make a Change" and uses the same wording on the
+  // draft buttons.
   plainNav?: boolean;
 }
 
@@ -206,7 +207,7 @@ export default function MenuLanding({
                   ? 'You have an unpublished draft. Keep editing where you left off, or start over from the current menu.'
                   : 'Create a working draft based on the current menu. The current menu stays untouched while you edit — publish only when you’re happy with it.'}
               </p>
-              <DraftActions draftExists={draftExists} editHref={editHref ?? ''} apiBase={apiBase} />
+              <DraftActions draftExists={draftExists} editHref={editHref ?? ''} apiBase={apiBase} mostRecentWording={plainNav} />
             </div>
           )}
 

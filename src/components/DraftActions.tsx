@@ -10,16 +10,23 @@ export default function DraftActions({
   draftExists,
   editHref,
   apiBase,
+  mostRecentWording = false,
 }: {
   draftExists: boolean;
   editHref: string;   // e.g. '/weekend/edit'
   apiBase: string;    // e.g. '/api/weekend'
+  // Tue–Wed (Sep 2026): spell out that both buttons copy the "Most Recent
+  // Menu" and that starting over throws the draft away.
+  mostRecentWording?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function startOver() {
-    if (!confirm('Start over from the current menu?\n\nYour current draft will be discarded and a fresh draft will be created from the current menu.')) return;
+    const msg = mostRecentWording
+      ? 'Throw out your draft and start fresh?\n\nYour draft will be deleted and replaced with a copy of the Most Recent Menu.'
+      : 'Start over from the current menu?\n\nYour current draft will be discarded and a fresh draft will be created from the current menu.';
+    if (!confirm(msg)) return;
     setBusy(true);
     try {
       await fetch(`${apiBase}/draft`, { method: 'DELETE' });
@@ -31,17 +38,24 @@ export default function DraftActions({
   if (!draftExists) {
     return (
       <div className="dl-actions">
-        <a className="dl-btn dl-btn--primary" href={editHref}>Start a New Draft →</a>
+        <a className="dl-btn dl-btn--primary" href={editHref}>
+          {mostRecentWording ? 'Start a New Draft (copy of Most Recent Menu) →' : 'Start a New Draft →'}
+        </a>
       </div>
     );
   }
 
   return (
-    <div className="dl-actions">
-      <a className="dl-btn dl-btn--primary" href={editHref}>Continue Your Draft →</a>
-      <button className="dl-btn dl-btn--ghost" onClick={startOver} disabled={busy}>
-        {busy ? 'Starting over…' : 'Start Over from Current'}
-      </button>
-    </div>
+    <>
+      <div className="dl-actions">
+        <a className="dl-btn dl-btn--primary" href={editHref}>Continue Your Draft →</a>
+        <button className="dl-btn dl-btn--ghost" onClick={startOver} disabled={busy}>
+          {busy ? 'Starting over…' : mostRecentWording ? 'Start Fresh from Most Recent Menu' : 'Start Over from Current'}
+        </button>
+      </div>
+      {mostRecentWording && (
+        <p className="dl-draft-hint">Throws out this draft and starts a new copy of the most recent menu.</p>
+      )}
+    </>
   );
 }
