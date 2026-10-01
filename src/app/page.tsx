@@ -74,7 +74,7 @@ const MENUS = [
   },
   {
     id: 'coursemenu',
-    label: 'Course Menu',
+    label: 'Generic Menu',
     description: 'Flexible 2, 3, or 4-course menu for one-off specials and events',
     icon: '📜',
     ready: true,

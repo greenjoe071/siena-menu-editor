@@ -13,7 +13,7 @@ export default async function CourseMenuLandingPage() {
 
   return (
     <MenuLanding
-      menuName="Course Menu"
+      menuName="Generic"
       editHref="/coursemenu/edit"
       fixHref="/coursemenu/fix"
       apiBase="/api/coursemenu"

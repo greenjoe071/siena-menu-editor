@@ -356,7 +356,7 @@ export default function CourseMenuEditorPage() {
       <div className="editor-pane">
         <div className="editor-header">
           <Link href="/coursemenu" className="btn-back">← Back</Link>
-          <h1>Course Menu</h1>
+          <h1>Generic Menu</h1>
           <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
@@ -593,7 +593,7 @@ export default function CourseMenuEditorPage() {
           ref={iframeRef}
           src={previewUrl}
           className="preview-iframe"
-          title="Course menu preview"
+          title="Generic menu preview"
         />
       </div>
 
