@@ -518,6 +518,26 @@ button {
 .btn-move-course:hover:not(:disabled) { color: var(--gold); background: rgba(184, 150, 42, 0.12); }
 .btn-move-course:disabled { opacity: 0.25; cursor: default; }
 
+/* 2 / 3 / 4 course picker at the top of the Generic Menu editor */
+.course-count-picker {
+  display: flex;
+  gap: 8px;
+}
+.course-count-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border-radius: var(--radius);
+  border: 2px solid rgba(212, 181, 122, 0.35);
+  background: transparent;
+  color: #d4b57a;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.course-count-btn:hover:not(.active) { border-color: var(--gold); background: rgba(184, 150, 42, 0.1); }
+.course-count-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
 .weekend-action-bar {
   display: flex;
   align-items: center;

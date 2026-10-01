@@ -44,8 +44,6 @@ const L = {
   policyLine:  300,
 } as const;
 
-const MIN_COURSES = 2;
-const MAX_COURSES = 4;
 const ROMAN = ['I', 'II', 'III', 'IV'] as const;
 const COUNT_WORDS = ['', '', 'Two', 'Three', 'Four'] as const;
 const headerFor = (n: number) => `${COUNT_WORDS[n]} Course Special`;
@@ -105,14 +103,12 @@ const toggleBoxStyle = { width: '16px', height: '16px', cursor: 'pointer', accen
 
 // ── CourseCard ────────────────────────────────────────────────────────────
 
-function CourseCard({ course, index, count, canRemove, flagged, onChange, onRemove, onMove }: {
+function CourseCard({ course, index, count, flagged, onChange, onMove }: {
   course: Course;
   index: number;
   count: number;
-  canRemove: boolean;
   flagged: boolean;
   onChange: (index: number, updated: Course) => void;
-  onRemove: (index: number) => void;
   onMove: (index: number, dir: -1 | 1) => void;
 }) {
   return (
@@ -135,12 +131,6 @@ function CourseCard({ course, index, count, canRemove, flagged, onChange, onRemo
             onClick={() => onMove(index, 1)}
           >↓</button>
         </span>
-        <button
-          className="btn-remove-dish"
-          disabled={!canRemove}
-          title={canRemove ? 'Remove this course' : `A menu needs at least ${MIN_COURSES} courses`}
-          onClick={() => onRemove(index)}
-        >×</button>
       </div>
       <div className="dish-fields">
         <div className="field-group">
@@ -290,10 +280,22 @@ export default function CourseMenuEditorPage() {
     });
   }
 
-  function handleAddCourse() {
-    setMenu(m => m && m.courses.length < MAX_COURSES
-      ? withCourses(m, [...m.courses, { id: 'course-4', title: '', desc: '' }])
-      : m);
+  // The 2 / 3 / 4 picker at the top. Going down drops courses off the END
+  // (use the arrows first to keep a different one) — confirm if they have text.
+  function handleSetCount(target: number) {
+    if (!menu || target === menu.courses.length) return;
+    if (target < menu.courses.length) {
+      const dropped = menu.courses.slice(target).filter(c => c.title || c.desc);
+      if (dropped.length && !confirm(
+        `Switch to ${target} courses?\n\nThis removes ${dropped.map(c => c.title || 'an unnamed course').join(' and ')} from the end of the menu.`
+      )) return;
+    }
+    setMenu(m => {
+      if (!m) return m;
+      const courses = m.courses.slice(0, target);
+      while (courses.length < target) courses.push({ id: 'course-4', title: '', desc: '' });
+      return withCourses(m, courses);
+    });
   }
 
   function handleMoveCourse(index: number, dir: -1 | 1) {
@@ -307,14 +309,6 @@ export default function CourseMenuEditorPage() {
     });
   }
 
-  function handleRemoveCourse(index: number) {
-    if (!menu) return;
-    const c = menu.courses[index];
-    if ((c.title || c.desc) && !confirm(`Remove course ${ROMAN[index]}${c.title ? ` (${c.title})` : ''}?`)) return;
-    setMenu(m => m && m.courses.length > MIN_COURSES
-      ? withCourses(m, m.courses.filter((_, i) => i !== index))
-      : m);
-  }
 
   function handleClearAll() {
     if (!confirm('Clear the menu?\n\nThis blanks the price, description, every dish, and the add-on so you can start fresh. The number of courses and the footer stay.')) return;
@@ -413,6 +407,25 @@ export default function CourseMenuEditorPage() {
 
         <div className="editor-scroll chef-mode">
 
+          {/* Course count */}
+          <div className="page-group">
+            <div className="page-group-label">How many courses?</div>
+            <div className="course-count-picker" role="radiogroup" aria-label="Number of courses">
+              {[2, 3, 4].map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={n === c}
+                  className={`course-count-btn ${n === c ? 'active' : ''}`}
+                  onClick={() => handleSetCount(c)}
+                >
+                  {c} Courses
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Header + price + description */}
           <div className="page-group">
             <div className="page-group-label">Top of the menu</div>
@@ -460,7 +473,7 @@ export default function CourseMenuEditorPage() {
 
           {/* Courses */}
           <div className="page-group">
-            <div className="page-group-label">The courses ({n} of {MAX_COURSES})</div>
+            <div className="page-group-label">The courses</div>
             <div className="dish-list">
               {menu.courses.map((course, i) => (
                 <CourseCard
@@ -468,17 +481,12 @@ export default function CourseMenuEditorPage() {
                   course={course}
                   index={i}
                   count={n}
-                  canRemove={n > MIN_COURSES}
                   flagged={flagged.has(course.id)}
                   onChange={handleCourseChange}
-                  onRemove={handleRemoveCourse}
                   onMove={handleMoveCourse}
                 />
               ))}
             </div>
-            <button className="btn-add-dish" disabled={n >= MAX_COURSES} onClick={handleAddCourse}>
-              {n >= MAX_COURSES ? `${MAX_COURSES} courses is the most this menu holds` : `+ Add course ${ROMAN[n]}`}
-            </button>
           </div>
 
           {/* Add-on */}
