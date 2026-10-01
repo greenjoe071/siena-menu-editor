@@ -46,7 +46,8 @@ export interface MenuLandingProps {
   editOnly?: boolean;
   // Plain nav (Tue–Wed, Sep 2026): no step numbers (they read as a sequence
   // to follow) and nothing selected on open — the right column stays empty
-  // until an option is picked.
+  // until an option is picked. Also relabels the first item "Most Recent
+  // Menu: View, Print, or Make a Change".
   plainNav?: boolean;
 }
 
@@ -125,7 +126,7 @@ export default function MenuLanding({
   const navItems: { key: SectionKey; label: string; hint?: string }[] = editOnly
     ? [{ key: 'current', label: 'View, Print, or Make a Change', hint: `Current as of ${currentDate}` }]
     : [
-        { key: 'current', label: 'View, Print, or Fix Current Menu', hint: `Current as of ${currentDate}` },
+        { key: 'current', label: plainNav ? 'Most Recent Menu: View, Print, or Make a Change' : 'View, Print, or Fix Current Menu', hint: `Current as of ${currentDate}` },
         { key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined },
         { key: 'past', label: 'Past Menus', hint: published.length ? `${published.length} saved` : undefined },
       ];
