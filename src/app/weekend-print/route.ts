@@ -52,7 +52,8 @@ ${settleSrc}
 })();
 </script>`;
 
-  html = html.replace('</body>', printScript + '\n</body>');
+  // Function replacer — see weekend-preview/route.ts.
+  html = html.replace('</body>', () => printScript + '\n</body>');
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

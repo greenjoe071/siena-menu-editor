@@ -1,54 +1,47 @@
-# Siena Weekend Specials Menu — Developer Handoff
+# Siena Weekend Specials Menu — Developer Handoff (v2, Oct 2026)
 
-This package is everything a developer needs to build a CMS editor that
-drives the Weekend Specials menu (*Specialità del Capo Cuoco* —
-Chef's Suggestions, Thursday through Saturday). Same pattern as the
-Monday $26 menu handoff in `../handoff-monday/` and the Spring dinner
-menu handoff in `../handoff/`.
+**v2 replaces `../handoff-weekend/` (v1).** Do not build from v1 — its
+two-column layout, colors, data shape and ladder order are all superseded.
+
+This package is everything a developer needs to build the CMS editor for the
+Weekend Specials menu (*Specialità del Capo Cuoco*, Thursday–Saturday).
+
+## What changed from v1
+
+- **Single centered column.** Every dish stacks full-width; descriptions run
+  margin to margin. The v1 2-column grid and `cnt-1`/`cnt-3` orphan classes
+  are gone.
+- **Dish name on the true center line, price hanging to its right**
+  (`.dish-head` is a `1fr auto 1fr` grid).
+- **No "Starters"/"Entrees" subtitles** and **no "Throughout the Week at
+  Siena" title** — both removed from the template AND the data model.
+- **Eyebrow now reads "Weekend Specials"** (static).
+- **Palette:** deep red `#7a1712` (section titles, dish names, bold policy
+  text), dark brown `#3a1a06` (eyebrow, day line, prices), black descriptions.
+  Gold `#b8821e` is now decorative rules only. Weekly footer colors unchanged.
+- **Dish block vertically centered** between the hero and the weekly footer.
+- **5-word last-line bind:** `render.js` joins the last 5 words of every
+  description (8+ words) with no-break spaces so a wrapped line never holds
+  fewer than 5 words.
+- **New ladder order:** day line → spacing → eyebrow → weekly footer.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `template.html` | The menu layout with `data-*` hooks the renderer targets, plus the `<template id="dish-template">` blueprint the renderer clones for each dish. Do not edit unless the design is changing. |
-| `render.js` | UMD module. `render(document, data)` hydrates the template DOM in place (content only). Exports as `module.exports` (Node/CommonJS) and as `SienaWeekendRender` on the root (browser). |
-| `settle.js` | UMD module (`SienaWeekendSettle`). The **auto-fit ladder** — runs in the browser after layout and sheds page chrome (eyebrow → day line → spacing → weekly footer) only while the page would overflow. Call after every preview render and before printing. Auto-runs on load. Not used by the snapshot test (needs a real layout engine). |
-| `menu-data.json` | Seed data — the canonical starting point. Ships with the **maximum** configuration (4 starters + 4 entrees) so the developer sees the full range. |
-| `expected-render.html` | The output of `render(template, menu-data.json)`. The snapshot test compares against this. |
-| `snapshot-test.spec.js` | Vitest- or node-test–compatible test that fails loudly on any unintended rendering drift. |
-| `BUILD-SPEC.md` | Full spec — data model, editable fields, character limits, cardinality rules, gotchas. **Read this before writing the editor.** |
-| `fonts/` | Self-hosted Playfair Display variable fonts (regular + italic). Montserrat is loaded from Google Fonts at runtime. |
+| `template.html` | Layout + `data-*` hooks + `<template id="dish-template">` blueprint. Do not edit unless the design changes. |
+| `render.js` | UMD (`SienaWeekendRender`). `render(document, data)` hydrates content; also exports `bindLastWords()`. |
+| `settle.js` | UMD (`SienaWeekendSettle`). Auto-fit ladder — call after every preview render and before printing. Auto-runs on load. |
+| `menu-data.json` | Seed data (4 starters + 4 entrees + dessert). |
+| `expected-render.html` | `render(template, menu-data.json)` output — the snapshot. |
+| `snapshot-test.spec.mjs` | Vitest / `node --test`. Snapshot + optional-dessert + last-words-bind tests. |
+| `BUILD-SPEC.md` | Full spec. **Read before writing the editor.** |
+| `fonts/` | Self-hosted Playfair Display variable fonts. Montserrat loads from Google Fonts. |
 
 ## Quickstart
 
-1. Read `BUILD-SPEC.md` — especially the **Constraint model** section
-   (auto-fit ladder, not rigid character caps) and the **variable
-   cardinality** rules.
-2. Stand up the editor as described there. Starters and entrees each
-   support 1–4 dishes; `render.js` rebuilds the `.dish-grid` from the
-   JSON `items` array on every render, and stamps `cnt-1` / `cnt-3` for
-   odd counts so a lone dish centers.
-3. Wire `settle.js` into the preview (call after each render) and the
-   `/print` page (call before `window.print()`). It also auto-runs on a
-   statically-served page.
-4. Wire `snapshot-test.spec.js` into CI. Block merges on test failure.
-5. When the chef rotates dishes for a new weekend: save the new
-   `menu-data.json`, re-render to refresh `expected-render.html`,
-   commit both together.
-
-## Relationship to the other menu handoffs
-
-This is a separate, parallel package alongside `../handoff/` (Spring
-dinner menu) and `../handoff-monday/` (Monday $26 prix-fixe). The three
-menus share a brand and a font stack — nothing else structurally:
-
-- **Spring dinner menu** — 3 pages, large fixed-count sections.
-- **Monday menu** — 1 page, fixed cardinality (2 + 4), prices optional
-  (prix fixe).
-- **Weekend menu** — 1 page, **variable cardinality (1..4 + 1..4)**,
-  **prices required** (à la carte), static masthead, **auto-fit ladder**
-  (`settle.js`) instead of rigid character caps.
-
-Keep them as three distinct editor surfaces in your app. The Weekend
-menu's variable-cardinality renderer behavior is the most significant
-behavioral difference — don't paste the Monday editor over this one.
+1. Read `BUILD-SPEC.md`.
+2. Build the editor; starters/entrees each support 1–4 dishes.
+3. Wire `settle.js` into preview (after every render) and `/print` (before `window.print()`).
+4. Wire `snapshot-test.spec.mjs` into CI; block merges on failure.
+5. When the seed changes: re-render, overwrite `expected-render.html`, commit both together.

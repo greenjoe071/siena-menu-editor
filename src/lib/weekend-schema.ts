@@ -5,11 +5,9 @@ import { z } from 'zod';
 // (auto-fit via settle.js) and only have a loose sanity guard.
 export const WEEKEND_CHAR_LIMITS = {
   sectionTitle:    20,
-  sectionSubtitle: 16,
   dishName:        26,   // hard — shares row with inline price
   dishDesc:       180,   // soft guard only — ladder absorbs vertical growth
   dishPrice:        8,   // hard — required, include $ glyph: "$17"
-  weeklyTitle:     42,
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
   weeklyDetail:   110,
@@ -25,9 +23,10 @@ const WeekendDishSchema = z.object({
 });
 
 // ── Course section ────────────────────────────────────────────────────────
+// v2 (Oct 2026): `subtitle` removed from the design + data model. Old saved
+// JSON that still has it parses fine — zod strips unknown keys.
 const WeekendSectionSchema = z.object({
   title:    z.string().min(1).max(WEEKEND_CHAR_LIMITS.sectionTitle),
-  subtitle: z.string().min(1).max(WEEKEND_CHAR_LIMITS.sectionSubtitle),
   items:    z.array(WeekendDishSchema).min(1).max(4),
 });
 
@@ -54,8 +53,8 @@ export const WeekendMenuSchema = z.object({
     entrees:  WeekendSectionSchema,
   }),
   dessert: WeekendDessertSchema.nullable().optional(),
+  // v2: `weekly.title` removed ("Throughout the Week at Siena" no longer shown).
   weekly: z.object({
-    title: z.string().min(1).max(WEEKEND_CHAR_LIMITS.weeklyTitle),
     rows:  z.array(WeeklyRowSchema).length(4),
   }),
   policy_line: z.string().min(1).max(WEEKEND_CHAR_LIMITS.policyLine),

@@ -2,7 +2,6 @@
   "sections": {
     "starters": {
       "title": "Antipasti",
-      "subtitle": "Starters",
       "items": [
         {
           "id": "d-s1",
@@ -32,7 +31,6 @@
     },
     "entrees": {
       "title": "Secondi",
-      "subtitle": "Entrees",
       "items": [
         {
           "id": "d-e1",
@@ -68,7 +66,6 @@
     "price": "$12"
   },
   "weekly": {
-    "title": "Throughout the Week at Siena",
     "rows": [
       {
         "id": "w-mon",

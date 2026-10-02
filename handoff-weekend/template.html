@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Siena Ristorante — Specialità del Capo Cuoco</title>
+<title>Siena Ristorante — Weekend Specials</title>
 <style>
 /* ── Self-hosted fonts ── */
 @font-face {
@@ -21,6 +21,12 @@
 
 @page { size: 8.5in 11in; margin: 0; }
 
+/* Palette (v2 centered redesign, Oct 2026):
+     deep red   #7a1712 — section titles, dish names, bold policy text
+     dark brown #3a1a06 — hero title, eyebrow, day line, prices (replaces the old gold TEXT)
+     black      #000    — dish descriptions
+     gold       #b8821e — decorative rules ONLY (+ the weekly footer, unchanged)
+     tan        #c9a87a — diamonds in the day line */
 body {
   font-family: 'Montserrat', sans-serif;
   background: #fff;
@@ -32,10 +38,11 @@ body {
 .page {
   width: 8.5in;
   height: 11in;
-  /* Asymmetric 0.7in bottom = hard-cover safe zone at max content. Do NOT normalize. */
+  /* Asymmetric 0.7in bottom = hard-cover safe zone. Do NOT normalize. */
   padding: 0.55in 0.65in 0.7in;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   page-break-after: always;
   overflow: hidden;
   position: relative;
@@ -52,181 +59,98 @@ body {
 }
 
 /* ── HERO (static — not in data model) ── */
-.hero {
-  text-align: center;
-  padding: 0 0 6pt;
-  position: relative;
-}
+.hero { text-align: center; padding: 0 0 6pt; position: relative; }
 .hero .eyebrow {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: 9pt;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #b8821e;
-  margin-bottom: 12pt;
+  font-weight: 600; font-size: 9pt; letter-spacing: 0.28em;
+  text-transform: uppercase; color: #3a1a06; margin-bottom: 12pt;
 }
-.hero .title-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18pt;
-}
-.hero .title-rule {
-  height: 0.75pt;
-  width: 0.6in;
-  background: #b8821e;
-  opacity: 0.55;
-}
+.hero .title-row { display: flex; align-items: center; justify-content: center; gap: 18pt; }
+.hero .title-rule { height: 0.75pt; width: 0.6in; background: #b8821e; opacity: 0.55; }
 .hero .title {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 40pt;
-  color: #3a1a06;
-  line-height: 1;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600;
+  font-size: 40pt; color: #3a1a06; line-height: 1; letter-spacing: -0.005em; white-space: nowrap;
 }
 .hero .meta {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 9pt;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #b8821e;
-  margin-top: 12pt;
+  font-weight: 700; font-size: 9pt; letter-spacing: 0.24em;
+  text-transform: uppercase; color: #3a1a06; margin-top: 12pt;
 }
-.hero .meta .dot {
-  margin: 0 9pt;
-  color: #c9a87a;
-}
+.hero .meta .dot { margin: 0 9pt; color: #c9a87a; }
 
-/* ── Course sections ──
-   space-evenly keeps sparse configs (e.g. 1+1) from bunching at the top with
-   dead space above the footer. The auto-fit ladder (settle.js) handles dense
-   configs by shedding chrome when the page would overflow. */
+/* ── MENU BODY ──
+   Single centered column. justify-content:center vertically centers the
+   whole dish block between the hero (day line) and the weekly footer, so
+   sparse configs (e.g. 1+1) don't leave a gap above the footer. Dense
+   configs have no slack, so centering is a no-op and settle.js takes over.
+   Top/bottom padding is balanced against .weekly-wrap's margin-top so the
+   centering is optically symmetric — keep them in step. */
 .menu-body {
-  padding: 8pt 0 0;
+  padding: 18pt 0 10pt;
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  gap: 14pt;
+  justify-content: center;
+  gap: 18pt;
 }
 
-.section {
-  display: flex;
-  flex-direction: column;
-}
+.section { display: flex; flex-direction: column; align-items: center; text-align: center; }
 
+/* Section head: title only, centered over a full-width gold rule.
+   (v1's "Starters"/"Entrees" subtitle was removed by the owner.) */
 .section-head {
-  margin-bottom: 8pt;
-  padding-bottom: 6pt;
-  border-bottom: 0.75pt solid #b8821e;
-  display: flex;
-  align-items: last baseline;
-  justify-content: space-between;
-  gap: 12pt;
-}
-.section-name {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 22pt;
-  color: #111;
-  line-height: 1;
-}
-.section-sub {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: 8.5pt;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #b8821e;
-  white-space: nowrap;
-}
-
-.dish-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12pt 36pt;
-  align-items: start;
-}
-/* Centered-orphan fix: render.js stamps cnt-1 / cnt-3 by item count so an odd
-   dish is centered instead of stranded in the left column. */
-.dish-grid.cnt-1 { grid-template-columns: 1fr; justify-items: center; }
-.dish-grid.cnt-1 .dish { width: 3.7in; max-width: 100%; }
-.dish-grid.cnt-3 .dish:nth-child(3) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 18pt); }
-
-.dish {
-  padding-top: 2pt;
-  break-inside: avoid;
-}
-/* Price sits inline on the dish-name baseline. */
-.dish-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10pt;
-  margin-bottom: 4pt;
-}
-.dish-name {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 18pt;
-  color: #111;
-  line-height: 1.12;
-}
-.dish-price {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 14pt;
-  color: #b8821e;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-.dish-desc {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 400;
-  font-size: 11.5pt;
-  color: #333;
-  line-height: 1.4;
-  text-wrap: pretty;
-}
-
-/* ── Dessert — single, centered, optional coda. Removed from DOM when data.dessert is absent. ── */
-.dessert-section .dish-grid {
-  grid-template-columns: 1fr;
-  justify-items: center;
-}
-.dessert-section .dish {
-  text-align: center;
-  max-width: 4.6in;
-}
-.dessert-section .dish-head { justify-content: center; gap: 14pt; }
-.dessert-section .dish-desc { text-align: center; }
-
-/* ── Weekly footer — same pattern as Monday menu ── */
-.weekly-wrap {
-  margin: 8pt 0 0;
-  position: relative;
-}
-.weekly-head {
-  text-align: center;
+  align-self: stretch;
   margin-bottom: 12pt;
   padding-bottom: 6pt;
   border-bottom: 0.75pt solid #b8821e;
+  text-align: center;
 }
-.weekly-title {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 600;
-  font-size: 15pt;
-  color: #5a2e0e;
-  line-height: 1;
+.section-name {
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: 22pt; color: #7a1712; line-height: 1;
+}
+
+.dish-grid { display: flex; flex-direction: column; align-items: stretch; gap: 11pt; width: 100%; }
+.dish { break-inside: avoid; text-align: center; }
+
+/* Dish head: 3-column grid (empty | name | price). The name sits on the
+   TRUE page center line; the price hangs off its right side. Do not switch
+   back to a centered flex row — that centers name+price as a unit and
+   shifts the name left of center. */
+.dish-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  column-gap: 12pt;
+  margin-bottom: 3pt;
+}
+.dish-head::before { content: ''; }
+.dish-name {
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: 18pt; color: #7a1712; line-height: 1.12;
+}
+.dish-price {
+  justify-self: start;
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600;
+  font-size: 14pt; color: #3a1a06; letter-spacing: 0.01em; white-space: nowrap;
+}
+/* Descriptions run margin to margin. Plain wrap (NOT balance/pretty) so line 1
+   fills the measure; render.js binds the last 5 words with no-break spaces
+   so a wrapped 2nd line never holds fewer than 5 words. */
+.dish-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400; font-size: 11.5pt; color: #000; line-height: 1.4;
+  text-wrap: wrap;
+}
+
+/* ── WEEKLY FOOTER — colors intentionally UNCHANGED from v1 (owner request).
+   The "Throughout the Week at Siena" title was removed; a gold rule on the
+   wrapper's top edge replaces the old title underline. ── */
+.weekly-wrap {
+  margin: 8pt 0 0;
+  padding-top: 12pt;
+  border-top: 0.75pt solid #b8821e;
+  position: relative;
 }
 .weekly-grid {
   display: grid;
@@ -236,61 +160,38 @@ body {
   /* Inset from page edges — hard-cover safe zone, same as Monday menu. */
   margin: 0 0.45in;
 }
-.weekly-cell {
-  text-align: center;
-}
+.weekly-cell { text-align: center; }
 .weekly-day {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: 8.5pt;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #b8821e;
-  margin-bottom: 6pt;
+  font-weight: 700; font-size: 8.5pt; letter-spacing: 0.22em;
+  text-transform: uppercase; color: #b8821e; margin-bottom: 6pt;
 }
 .weekly-headline {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 13.5pt;
-  color: #111;
-  line-height: 1.15;
-  margin-bottom: 5pt;
+  font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+  font-size: 13.5pt; color: #111; line-height: 1.15; margin-bottom: 5pt;
 }
 .weekly-detail {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 400;
-  font-size: 9.5pt;
-  color: #4a3a26;
-  line-height: 1.4;
-  text-wrap: pretty;
+  font-weight: 400; font-size: 9.5pt; color: #4a3a26; line-height: 1.4; text-wrap: pretty;
 }
 
 /* ── Footnote ── */
-.footnotes {
-  margin-top: 8pt;
-  text-align: center;
-}
+.footnotes { margin-top: 8pt; text-align: center; }
 .footnote {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
-  font-size: 10pt;
-  letter-spacing: 0.06em;
-  color: #555;
+  font-weight: 500; font-size: 10pt; letter-spacing: 0.06em; color: #555;
 }
-.footnote strong { color: #111; font-weight: 700; }
+.footnote strong { color: #7a1712; font-weight: 700; }
 
 /* ── RELEASE-VALVE LADDER ──
-   settle.js adds these classes one at a time, in order, ONLY while the page
-   would overflow. Owner-approved order: eyebrow → Thu/Fri/Sat line → tighter
-   spacing → "Throughout the Week". A page is never blocked; the densest
-   configs simply shed the weekly footer. */
-.page.v-eyebrow .hero .eyebrow { display: none; }
+   settle.js adds these one at a time, in this order, ONLY while the page
+   would overflow. v2 order (owner-approved Oct 2026):
+     Thu/Fri/Sat line → tighter spacing → "Weekend Specials" eyebrow → weekly footer */
 .page.v-days .hero .meta { display: none; }
-.page.v-tight .menu-body { gap: 8pt; padding-top: 4pt; }
-.page.v-tight .section-head { margin-bottom: 6pt; }
-.page.v-tight .dish-grid { gap: 8pt 36pt; }
-.page.v-tight .weekly-head { margin-bottom: 8pt; }
+.page.v-tight .menu-body { gap: 13pt; padding: 12pt 0 4pt; }
+.page.v-tight .section-head { margin-bottom: 9pt; }
+.page.v-tight .dish-grid { gap: 7pt; }
+.page.v-eyebrow .hero .eyebrow { display: none; }
 .page.v-weekly .weekly-wrap { display: none; }
 </style>
 </head>
@@ -300,7 +201,7 @@ body {
 
   <!-- HERO — STATIC. Not in the data model. The renderer never touches it. -->
   <div class="hero">
-    <div class="eyebrow">Chef&rsquo;s Suggestions</div>
+    <div class="eyebrow">Weekend Specials</div>
     <div class="title-row">
       <div class="title-rule"></div>
       <div class="title">Specialit&agrave; del Capo Cuoco</div>
@@ -316,7 +217,6 @@ body {
     <div class="section" data-section-id="starters">
       <div class="section-head">
         <div class="section-name" data-section-title-for="starters">Antipasti</div>
-        <div class="section-sub" data-section-subtitle-for="starters">Starters</div>
       </div>
       <div class="dish-grid"></div>
     </div>
@@ -325,13 +225,11 @@ body {
     <div class="section" data-section-id="entrees">
       <div class="section-head">
         <div class="section-name" data-section-title-for="entrees">Secondi</div>
-        <div class="section-sub" data-section-subtitle-for="entrees">Entrees</div>
       </div>
       <div class="dish-grid"></div>
     </div>
 
-    <!-- DESSERT — OPTIONAL, exactly one dish. When data.dessert is absent or null,
-         render.js removes this entire <div> from the DOM. -->
+    <!-- DESSERT — OPTIONAL, exactly one dish. Removed from DOM when data.dessert is absent/null. -->
     <div class="section dessert-section" data-section-id="dessert">
       <div class="section-head">
         <div class="section-name" data-section-title-for="dessert">Dolci</div>
@@ -346,12 +244,8 @@ body {
 
   </div><!-- /menu-body -->
 
-  <!-- WEEKLY FOOTER — same 4-row structure as Monday menu. -->
+  <!-- WEEKLY FOOTER — fixed 4 cells, no title. -->
   <div class="weekly-wrap">
-    <div class="weekly-head">
-      <span class="weekly-title" data-text-id="weekly-title">Throughout the Week at Siena</span>
-    </div>
-
     <div class="weekly-grid">
 
       <div class="weekly-cell" data-week-row-id="w-mon">
@@ -388,12 +282,8 @@ body {
 
 </div><!-- /page -->
 
-<!-- ────────────────────────────────────────────────────────────────────────
-     Dish DOM blueprint. The renderer clones this once per item in
-     sections.<id>.items and appends to the matching .dish-grid. Edit here
-     if and only if the dish layout itself changes. NOTE the inline-price
-     structure: name + price share a row inside .dish-head.
-     ──────────────────────────────────────────────────────────────────── -->
+<!-- Dish DOM blueprint. The renderer clones this once per item in
+     sections.<id>.items. .dish-head is a 3-col grid: (empty ::before) | name | price. -->
 <template id="dish-template"><div class="dish"><div class="dish-head"><span class="dish-name"></span><span class="dish-price"></span></div><div class="dish-desc"></div></div></template>
 
 <!-- Auto-fit ladder. Runs after fonts load; re-call SienaWeekendSettle.settle()

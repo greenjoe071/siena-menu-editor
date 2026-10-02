@@ -1,66 +1,58 @@
 /**
- * Snapshot + behavior tests — guards against formatting drift in the
- * Weekend Specials menu, plus pins the optional-dessert contract.
+ * Snapshot + behavior tests — Siena Weekend Specials menu, v2.
  *
  * Tests:
  *   1. render(template.html, menu-data.json) === expected-render.html
  *      (normalized to collapse whitespace).
- *   2. render(template.html, { …seed, dessert: null }) and the same with
- *      the `dessert` key omitted both produce DOM with no dessert section.
- *      render(template.html, seed) (dessert present) populates it.
+ *   2. Optional dessert: dessert:null and an omitted dessert key both remove
+ *      the dessert section; a present dessert populates it.
+ *   3. Last-5-words bind: descriptions of 8+ words get their last 5 words
+ *      joined by U+00A0; shorter descriptions are untouched.
  *
- * Runs under any modern test runner — examples below for Vitest and Node's
- * built-in test runner. Wire whichever fits your stack into CI.
- *
- * Install:
- *   npm i -D vitest jsdom
- * Or:
- *   npm i -D jsdom    # if using node --test
+ * Install:  npm i -D vitest jsdom      (or: npm i -D jsdom  for node --test)
  */
 
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
 
-const here = dirname(fileURLToPath(import.meta.url));
+const here = join(import.meta.dirname);
+const NBSP = '\u00A0';
 
 function normalize(html) {
   return html
     .replace(/<!DOCTYPE[^>]*>/i, '')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t\r\n]+/g, ' ')
     .replace(/>\s+</g, '><')
     .trim();
 }
 
 async function loadRenderer() {
-  // render.js is UMD. Evaluate it and grab the factory result.
   const src = await readFile(join(here, 'render.js'), 'utf8');
   const fakeRoot = {};
   const mod = { exports: {} };
   // eslint-disable-next-line no-new-func
   new Function('module', 'self', src)(mod, fakeRoot);
-  return (mod.exports && mod.exports.render)
-    ? mod.exports
-    : fakeRoot.SienaWeekendRender;
+  return (mod.exports && mod.exports.render) ? mod.exports : fakeRoot.SienaWeekendRender;
 }
 
-export async function runSnapshotTest() {
+async function loadAll() {
   const [template, expected, dataRaw, renderer] = await Promise.all([
     readFile(join(here, 'template.html'), 'utf8'),
     readFile(join(here, 'expected-render.html'), 'utf8'),
     readFile(join(here, 'menu-data.json'), 'utf8'),
     loadRenderer(),
   ]);
+  return { template, expected, data: JSON.parse(dataRaw), renderer };
+}
 
-  const data = JSON.parse(dataRaw);
+export async function runWeekendV2SnapshotTest() {
+  const { template, expected, data, renderer } = await loadAll();
   const dom = new JSDOM(template);
   renderer.render(dom.window.document, data);
   const actual = '<!DOCTYPE html>\n' + dom.window.document.documentElement.outerHTML;
-
   const a = normalize(actual);
   const b = normalize(expected);
-
   if (a !== b) {
     let i = 0;
     while (i < a.length && i < b.length && a[i] === b[i]) i++;
@@ -76,133 +68,81 @@ export async function runSnapshotTest() {
   }
 }
 
-/**
- * Coverage for the optional `dessert` key.
- *
- * When `data.dessert` is null / absent, the renderer MUST remove the entire
- * dessert section from the rendered DOM. This guards that contract so a
- * future edit to render.js can't silently leave an empty dessert section
- * sitting on the menu.
- */
-export async function runOptionalDessertTest() {
-  const [template, dataRaw, renderer] = await Promise.all([
-    readFile(join(here, 'template.html'), 'utf8'),
-    readFile(join(here, 'menu-data.json'), 'utf8'),
-    loadRenderer(),
-  ]);
+export async function runWeekendV2OptionalDessertTest() {
+  const { template, data: base, renderer } = await loadAll();
 
-  const baseData = JSON.parse(dataRaw);
-
-  // Case 1: dessert: null → section removed.
   {
     const dom = new JSDOM(template);
-    renderer.render(dom.window.document, { ...baseData, dessert: null });
+    renderer.render(dom.window.document, { ...base, dessert: null });
     const doc = dom.window.document;
-    if (doc.querySelector('[data-section-id="dessert"]')) {
-      throw new Error('dessert:null — dessert section still present in DOM.');
-    }
+    if (doc.querySelector('[data-section-id="dessert"]')) throw new Error('dessert:null — dessert section still present in DOM.');
     const html = doc.documentElement.outerHTML;
-    if (html.includes(baseData.dessert.name)) {
-      throw new Error('dessert:null — dessert dish name leaked into output.');
-    }
-    if (html.includes(baseData.dessert.title)) {
-      throw new Error('dessert:null — dessert section title leaked into output.');
-    }
+    if (html.includes(base.dessert.name)) throw new Error('dessert:null — dessert dish name leaked into output.');
+    if (html.includes(base.dessert.title)) throw new Error('dessert:null — dessert section title leaked into output.');
   }
-
-  // Case 2: dessert key omitted entirely → section removed.
   {
-    const { dessert: _drop, ...noDessert } = baseData;
+    const { dessert: _drop, ...noDessert } = base;
     const dom = new JSDOM(template);
     renderer.render(dom.window.document, noDessert);
-    if (dom.window.document.querySelector('[data-section-id="dessert"]')) {
-      throw new Error('dessert key omitted — dessert section still present in DOM.');
-    }
+    if (dom.window.document.querySelector('[data-section-id="dessert"]')) throw new Error('dessert key omitted — dessert section still present in DOM.');
   }
-
-  // Case 3: dessert present → section rendered with the data.
   {
     const dom = new JSDOM(template);
-    renderer.render(dom.window.document, baseData);
+    renderer.render(dom.window.document, base);
     const section = dom.window.document.querySelector('[data-section-id="dessert"]');
     if (!section) throw new Error('dessert present — section missing from DOM.');
     const name = section.querySelector('.dish-name')?.textContent;
     const price = section.querySelector('.dish-price')?.textContent;
-    if (name !== baseData.dessert.name) {
-      throw new Error('dessert present — name mismatch. got: ' + JSON.stringify(name));
-    }
-    if (price !== baseData.dessert.price) {
-      throw new Error('dessert present — price mismatch. got: ' + JSON.stringify(price));
-    }
+    if (name !== base.dessert.name) throw new Error('dessert present — name mismatch. got: ' + JSON.stringify(name));
+    if (price !== base.dessert.price) throw new Error('dessert present — price mismatch. got: ' + JSON.stringify(price));
   }
 }
 
-/**
- * Coverage for the centered-orphan classes.
- *
- * An odd dish count (1 or 3) must stamp the grid with `cnt-1` / `cnt-3` so the
- * lone dish centers instead of stranding in the left column. Even counts (2, 4)
- * get a bare `dish-grid` class. This guards the orphan-centering contract.
- */
-export async function runOrphanClassTest() {
-  const [template, dataRaw, renderer] = await Promise.all([
-    readFile(join(here, 'template.html'), 'utf8'),
-    readFile(join(here, 'menu-data.json'), 'utf8'),
-    loadRenderer(),
-  ]);
-  const base = JSON.parse(dataRaw);
-
-  const renderWith = (items) => {
-    const data = {
-      ...base,
-      sections: { ...base.sections, starters: { ...base.sections.starters, items } },
-    };
-    const dom = new JSDOM(template);
-    renderer.render(dom.window.document, data);
-    return dom.window.document
-      .querySelector('[data-section-id="starters"] .dish-grid')
-      .className;
+export async function runWeekendV2LastWordsBindTest() {
+  const { template, data: base, renderer } = await loadAll();
+  const long = 'Pan-seared Hawaiian blue snapper, sweet corn and crab risotto, lemon butter sauce.';
+  const short = 'Slow-braised veal shank, saffron risotto, gremolata.';
+  const data = {
+    ...base,
+    sections: {
+      ...base.sections,
+      starters: { ...base.sections.starters, items: [
+        { id: 't-long', name: 'Long', desc: long, price: '$1' },
+        { id: 't-short', name: 'Short', desc: short, price: '$1' },
+      ] },
+    },
   };
+  const dom = new JSDOM(template);
+  renderer.render(dom.window.document, data);
+  const get = (id) => dom.window.document.querySelector(`[data-dish-id="${id}"] .dish-desc`).textContent;
 
-  const cases = [
-    [1, 'dish-grid cnt-1'],
-    [2, 'dish-grid'],
-    [3, 'dish-grid cnt-3'],
-    [4, 'dish-grid'],
-  ];
-  for (const [n, expectedClass] of cases) {
-    const items = base.sections.starters.items.slice(0, n);
-    const got = renderWith(items);
-    if (got !== expectedClass) {
-      throw new Error(
-        `orphan class — ${n} dishes expected className ${JSON.stringify(expectedClass)}, got ${JSON.stringify(got)}.`
-      );
-    }
-  }
+  const gotLong = get('t-long');
+  const words = long.split(' ');
+  const want = words.slice(0, -5).join(' ') + ' ' + words.slice(-5).join(NBSP);
+  if (gotLong !== want) throw new Error('bind — long description not bound correctly. got: ' + JSON.stringify(gotLong));
+  if (gotLong.split(NBSP).length !== 5) throw new Error('bind — expected exactly 4 no-break spaces.');
+
+  const gotShort = get('t-short');
+  if (gotShort !== short) throw new Error('bind — short (≤7 word) description should be untouched. got: ' + JSON.stringify(gotShort));
+
+  // Stored data must not be mutated.
+  if (data.sections.starters.items[0].desc !== long) throw new Error('bind — renderer mutated the input JSON.');
 }
 
-// Vitest / Jest style
 if (typeof globalThis.describe === 'function') {
   // eslint-disable-next-line no-undef
-  describe('Siena Weekend Specials menu rendering', () => {
+  describe('Siena Weekend Specials menu rendering (v2)', () => {
     // eslint-disable-next-line no-undef
-    test('render(template, seedData) matches expected-render.html', async () => {
-      await runSnapshotTest();
-    });
+    test('render(template, seedData) matches expected-render.html', async () => { await runWeekendV2SnapshotTest(); });
     // eslint-disable-next-line no-undef
-    test('dessert section is fully removed when data.dessert is absent or null', async () => {
-      await runOptionalDessertTest();
-    });
+    test('dessert section is fully removed when data.dessert is absent or null', async () => { await runWeekendV2OptionalDessertTest(); });
     // eslint-disable-next-line no-undef
-    test('odd dish counts (1, 3) stamp cnt-1 / cnt-3 for orphan centering', async () => {
-      await runOrphanClassTest();
-    });
+    test('descriptions bind their last 5 words (8+ word descriptions only)', async () => { await runWeekendV2LastWordsBindTest(); });
   });
 }
 
-// node --test style (auto-detected when run directly)
-if (process.argv[1] && process.argv[1].endsWith(fileURLToPath(import.meta.url).split('/').pop())) {
-  Promise.all([runSnapshotTest(), runOptionalDessertTest(), runOrphanClassTest()])
-    .then(() => { console.log('✓ Weekend menu snapshot + optional-dessert + orphan-class tests passed.'); })
+if (process.argv[1] && process.argv[1].endsWith('snapshot-test.spec.mjs')) {
+  Promise.all([runWeekendV2SnapshotTest(), runWeekendV2OptionalDessertTest(), runWeekendV2LastWordsBindTest()])
+    .then(() => { console.log('✓ Weekend v2 snapshot + optional-dessert + last-words-bind tests passed.'); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

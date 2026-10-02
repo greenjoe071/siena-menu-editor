@@ -54,7 +54,9 @@ window.addEventListener('message', function(e) {
 });
 </script>`;
 
-  html = html.replace('</body>', liveScript + '\n</body>');
+  // Function replacer: `$` sequences in the injected JS must never be read as
+  // String.replace patterns ($', $&…) — that silently corrupts the script.
+  html = html.replace('</body>', () => liveScript + '\n</body>');
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

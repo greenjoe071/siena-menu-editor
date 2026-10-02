@@ -1,44 +1,40 @@
 /**
- * Siena Weekend Specials — Auto-Fit Ladder ("settle")
- * ===================================================
+ * Siena Weekend Specials — Auto-Fit Ladder ("settle") — v2
+ * ========================================================
  *
- * The Weekend menu has variable content: 1–4 starters, 1–4 entrees, an
- * optional dessert, plus long or short descriptions. Rather than block the
- * chef with rigid per-field caps, the page SELF-FITS: when the content would
- * run past the bottom of the 8.5×11 page, this helper sheds non-essential
- * chrome one step at a time until the page fits.
+ * When the content would run past the bottom of the 8.5×11 page, this helper
+ * sheds non-essential chrome one step at a time until the page fits.
  *
- * Owner-approved ladder order (least painful first):
- *   1. v-eyebrow  — drop the "Chef's Suggestions" eyebrow
- *   2. v-days     — drop the "Thursday ◆ Friday ◆ Saturday" line
- *   3. v-tight    — tighten section / dish / footer spacing
- *   4. v-weekly   — drop the "Throughout the Week" footer  (last resort)
+ * v2 ladder order (owner-approved Oct 2026 — CHANGED from v1):
+ *   1. v-days     — drop the "Thursday ◆ Friday ◆ Saturday" line
+ *   2. v-tight    — tighten section / dish spacing
+ *   3. v-eyebrow  — drop the "Weekend Specials" eyebrow
+ *   4. v-weekly   — drop the weekly specials footer (last resort)
  *
- * The page is NEVER hard-blocked. The only configs that reach step 4 are the
- * dense ones (dessert on + both course sections at 3–4 dishes, or unusually
- * long descriptions at high counts). See BUILD-SPEC.md §"Constraint model".
+ * The eyebrow moved from first-to-go to third because it now reads
+ * "Weekend Specials" and carries real meaning.
+ *
+ * The page is NEVER hard-blocked. If even step 4 doesn't fit (only possible
+ * with the 4+4+dessert maximum AND long descriptions), settle() returns
+ * fits:false and the editor should show a SOFT warning ("shorten a
+ * description or remove a dish") — not block save.
  *
  * WHERE THIS RUNS:
- *   • The /preview iframe — call settle() after EVERY render() (debounced).
+ *   • The preview iframe — call settle() after EVERY render() (debounced).
  *   • The /print page — call settle() before window.print().
- *   • This file also AUTO-RUNS once on load (after document.fonts.ready) if it
- *     finds a `.page`, so a statically-served page fits with no extra wiring.
+ *   • Auto-runs once on load (after document.fonts.ready) if it finds a .page.
  *
- * WHERE THIS DOES NOT RUN:
- *   • The snapshot test (JSDOM). JSDOM has no layout engine, so it can't
- *     measure overflow. expected-render.html is therefore the PRE-settle DOM
- *     (full content, no v-* classes). That is correct and intended.
+ * NOT in the snapshot test — JSDOM has no layout engine. expected-render.html
+ * is the PRE-settle DOM (no v-* classes). That is correct.
  *
- * MEASUREMENT NOTE (important): measure overflow at the `.page` level
- * (`page.scrollHeight > page.clientHeight`). Do NOT measure `.menu-body` or a
- * column — with `flex: 1` those grow to fill and never report overflow.
+ * MEASURE AT .page (scrollHeight > clientHeight). Never .menu-body — it is
+ * flex:1 and grows to fill, so it never reports overflow.
  *
- * Usage (browser):
- *   SienaWeekendSettle.settle();              // finds the first .page
- *   SienaWeekendSettle.settle(pageEl);        // or pass a specific .page / root
- *   const report = SienaWeekendSettle.settle();
- *   // report = { applied: ['v-eyebrow','v-days'], fits: true }
- *   //        or { applied: [...all], fits: false, overflowPx: 37 }  (shouldn't happen in practice)
+ * Usage:
+ *   SienaWeekendSettle.settle();          // first .page in document
+ *   SienaWeekendSettle.settle(pageEl);    // or a specific .page / root
+ *   // → { applied: ['v-days'], fits: true }
+ *   // → { applied: [...all], fits: false, overflowPx: 37 }
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -46,11 +42,9 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  var VALVES = ['v-eyebrow', 'v-days', 'v-tight', 'v-weekly'];
+  var VALVES = ['v-days', 'v-tight', 'v-eyebrow', 'v-weekly'];
 
-  function fits(page) {
-    return page.scrollHeight <= page.clientHeight + 2;
-  }
+  function fits(page) { return page.scrollHeight <= page.clientHeight + 2; }
 
   function resolvePage(target) {
     if (target && target.classList && target.classList.contains('page')) return target;
@@ -61,32 +55,19 @@
     return doc ? doc.querySelector('.page') : null;
   }
 
-  /**
-   * Apply the ladder to a page until it fits (or the ladder is exhausted).
-   * Idempotent: clears any previously-applied valves first, so it's safe to
-   * call repeatedly as the editor re-renders.
-   */
+  /** Idempotent: clears previously-applied valves first. */
   function settle(target) {
     var page = resolvePage(target);
     if (!page) return null;
-
-    // Reset — start from the full layout every time.
     VALVES.forEach(function (v) { page.classList.remove(v); });
     if (fits(page)) return { applied: [], fits: true };
-
     var applied = [];
     for (var i = 0; i < VALVES.length; i++) {
       page.classList.add(VALVES[i]);
       applied.push(VALVES[i]);
       if (fits(page)) return { applied: applied, fits: true };
     }
-    // Exhausted the ladder and still overflowing. With realistic content this
-    // does not occur; if it does, the editor can surface a soft warning.
-    return {
-      applied: applied,
-      fits: false,
-      overflowPx: Math.round(page.scrollHeight - page.clientHeight)
-    };
+    return { applied: applied, fits: false, overflowPx: Math.round(page.scrollHeight - page.clientHeight) };
   }
 
   function autorun() {

@@ -21,7 +21,6 @@ interface WeekendDish {
 
 interface WeekendSection {
   title: string;
-  subtitle: string;
   items: WeekendDish[];
 }
 
@@ -46,7 +45,6 @@ interface WeekendMenuData {
   };
   dessert?: WeekendDessert | null;
   weekly: {
-    title: string;
     rows: WeeklyRow[];
   };
   policy_line: string;
@@ -61,11 +59,9 @@ type SectionId = 'starters' | 'entrees';
 
 const L = {
   sectionTitle:    20,
-  sectionSubtitle: 16,
   dishName:        26,   // hard — shares row with inline price
   dishDesc:       180,   // soft guard only
   dishPrice:        8,
-  weeklyTitle:     42,
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
   weeklyDetail:   110,
@@ -106,7 +102,6 @@ function useDebounce<T>(value: T, ms: number): T {
 // Hard-capped fields only — descriptions are excluded because they are
 // governed by the auto-fit ladder (settle.js), not a hard character cap.
 function menuHasHardLimitViolation(m: WeekendMenuData): boolean {
-  if (m.weekly.title.length  > L.weeklyTitle)  return true;
   if (m.policy_line.length   > L.policyLine)   return true;
   if (m.dessert) {
     if (m.dessert.title.length > L.sectionTitle) return true;
@@ -116,7 +111,6 @@ function menuHasHardLimitViolation(m: WeekendMenuData): boolean {
   for (const sid of ['starters', 'entrees'] as SectionId[]) {
     const s = m.sections[sid];
     if (s.title.length    > L.sectionTitle)    return true;
-    if (s.subtitle.length > L.sectionSubtitle) return true;
     for (const d of s.items) {
       if (d.name.length  > L.dishName)  return true;
       if (d.price.length > L.dishPrice) return true;
@@ -276,13 +270,6 @@ function SectionBlock({
               </div>
               <input value={section.title} onChange={e => onChange(sectionId, { ...section, title: e.target.value })} />
             </div>
-            <div className="field-group" style={{ width: '130px', flexShrink: 0, marginBottom: 0 }}>
-              <div className="field-label-row">
-                <label>Subtitle</label>
-                <CharCount value={section.subtitle} max={L.sectionSubtitle} />
-              </div>
-              <input value={section.subtitle} onChange={e => onChange(sectionId, { ...section, subtitle: e.target.value })} />
-            </div>
           </div>
 
           <Droppable droppableId={sectionId} type="dish">
@@ -375,9 +362,8 @@ function WeeklyRowItem({ row, index, onChange }: {
 
 // ── Weekly block ──────────────────────────────────────────────────────────
 
-function WeeklyBlock({ weekly, onTitleChange, onRowChange }: {
+function WeeklyBlock({ weekly, onRowChange }: {
   weekly: WeekendMenuData['weekly'];
-  onTitleChange: (title: string) => void;
   onRowChange: (index: number, updated: WeeklyRow) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -391,13 +377,6 @@ function WeeklyBlock({ weekly, onTitleChange, onRowChange }: {
       </div>
       <div className={`collapsible-content ${open ? 'open' : ''}`}>
         <div className="section-body">
-          <div className="field-group section-title-field">
-            <div className="field-label-row">
-              <label>Section title</label>
-              <CharCount value={weekly.title} max={L.weeklyTitle} />
-            </div>
-            <input value={weekly.title} onChange={e => onTitleChange(e.target.value)} />
-          </div>
           <Droppable droppableId="weekly-rows" type="weekly-row">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps} className="dish-list">
@@ -624,10 +603,6 @@ export default function WeekendEditorPage() {
     setMenu(m => m && { ...m, dessert: d ?? undefined });
   }
 
-  function handleWeeklyTitleChange(title: string) {
-    setMenu(m => m && { ...m, weekly: { ...m.weekly, title } });
-  }
-
   function handleWeeklyRowChange(index: number, updated: WeeklyRow) {
     setMenu(m => {
       if (!m) return m;
@@ -751,7 +726,6 @@ export default function WeekendEditorPage() {
               <div className="page-group-label">Throughout the week</div>
               <WeeklyBlock
                 weekly={menu.weekly}
-                onTitleChange={handleWeeklyTitleChange}
                 onRowChange={handleWeeklyRowChange}
               />
             </div>
