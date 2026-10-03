@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readMenuBySrc } from '@/lib/happyhour-menu-store';
 import { renderHappyhourMenu } from '@/lib/render-happyhour-server';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,9 @@ ${renderSrc}
 </script>`;
 
   html = html.replace('</body>', printScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('happyhour', data));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

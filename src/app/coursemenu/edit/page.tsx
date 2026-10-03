@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // Generic 2–4 course menu editor (handoff-coursemenu). Same flow as Tue–Wed:
 // /coursemenu/edit edits the draft, /coursemenu/fix (same component) edits the
@@ -602,8 +603,9 @@ export default function CourseMenuEditorPage() {
             disabled={issues.length > 0}
             title={issues.length > 0 ? 'Fix the problem shown at the top before printing' : undefined}
             onClick={() => {
+              if (menu && !confirmPrintWarnings('coursemenu', menu)) return;
               localStorage.setItem('siena-coursemenu-print-data', JSON.stringify(menu));
-              window.open(`/coursemenu-print?src=${src}`, '_blank');
+              window.open(`/coursemenu-print?src=${src}&warned=1`, '_blank');
             }}
           >
             Print Menu

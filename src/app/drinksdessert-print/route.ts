@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readMenuBySrc } from '@/lib/drinksdessert-menu-store';
 import { renderDrinksDessertMenu } from '@/lib/render-drinksdessert-server';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -178,6 +179,9 @@ ${validateSrc}
   // Function replacer: `$` sequences in the injected JS ("'$' + it.price") must
   // be inserted literally, not interpreted as String.replace patterns.
   html = html.replace('</body>', () => printScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('drinksdessert', data));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -561,8 +562,9 @@ export default function ArwEditorPage() {
             disabled={activeOverflow}
             title={activeOverflow ? `${STYLE_LABEL[style]} overflows — shorten text before printing` : undefined}
             onClick={() => {
+              if (menu && !confirmPrintWarnings('arw', menu)) return;
               if (menu) localStorage.setItem('siena-arw-print-data', JSON.stringify(menu));
-              window.open(`/arw-print?style=${style}`, '_blank');
+              window.open(`/arw-print?style=${style}&warned=1`, '_blank');
             }}
           >
             Print Menu

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -694,8 +695,9 @@ export default function DinnerDraftEditorPage() {
             <button
               className="btn-print"
               onClick={() => {
+                if (menu && !confirmPrintWarnings('dinner', menu)) return;
                 if (menu) localStorage.setItem('siena-print-data', JSON.stringify(menu));
-                window.open(`/print?src=${isFix ? 'current' : 'draft'}`, '_blank');
+                window.open(`/print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
               }}
             >
               {isFix ? 'Print Menu' : 'Print Draft'}

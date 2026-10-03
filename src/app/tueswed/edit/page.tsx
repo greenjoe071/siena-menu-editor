@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -466,8 +467,9 @@ export default function TuewedEditorPage() {
             disabled={validationFits === false}
             title={validationFits === false ? 'Menu overflows — shorten text before printing' : undefined}
             onClick={() => {
+              if (menu && !confirmPrintWarnings('tueswed', menu)) return;
               if (menu) localStorage.setItem('siena-tueswed-print-data', JSON.stringify(menu));
-              window.open(`/tueswed-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
+              window.open(`/tueswed-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
             }}
           >
             Print Menu

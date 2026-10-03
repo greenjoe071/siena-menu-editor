@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -582,8 +583,9 @@ export default function HappyhourEditorPage() {
             disabled={validationFits === false}
             title={validationFits === false ? 'Fix overflow before printing' : undefined}
             onClick={() => {
+              if (menu && !confirmPrintWarnings('happyhour', menu)) return;
               if (menu) localStorage.setItem('siena-happyhour-print-data', JSON.stringify(menu));
-              window.open(`/happyhour-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
+              window.open(`/happyhour-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
             }}
           >
             Print Menu

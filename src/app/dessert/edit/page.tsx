@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -381,8 +382,9 @@ export default function DessertEditorPage() {
 
   function handlePrint() {
     if (!menu) return;
+    if (menu && !confirmPrintWarnings('dessert', menu)) return;
     localStorage.setItem('siena-dessert-print-data', JSON.stringify(menu));
-    window.open('/dessert-print?src=current', '_blank');
+    window.open('/dessert-print?src=current&warned=1', '_blank');
   }
 
   // ── Mutations ────────────────────────────────────────────────────────────

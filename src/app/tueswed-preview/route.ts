@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readMenuBySrc } from '@/lib/tueswed-menu-store';
 import { renderTuewedMenu } from '@/lib/render-tueswed-server';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +85,9 @@ document.fonts.ready.then(function() { _tuewedRunValidate(); });
 <button class="preview-print-btn" onclick="window.print()">🖨 Print Menu</button>`;
 
   html = html.replace('</body>', liveScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('tueswed', data));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

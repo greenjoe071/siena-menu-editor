@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readArwMenu } from '@/lib/arw-menu-store';
 import { renderArwMenu, isArwStyle } from '@/lib/render-arw-server';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +52,9 @@ ${validateSrc}
 </script>`;
 
   html = html.replace('</body>', () => printScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('arw', data));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

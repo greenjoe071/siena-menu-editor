@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -246,9 +247,10 @@ export default function PrivateDiningEditorPage() {
   }
 
   function handlePrint() {
+    if (defaultMenu && !confirmPrintWarnings('privatedining', defaultMenu)) return;
     localStorage.setItem('siena-privatedining-print-data', JSON.stringify(renderPayload));
     const q = mode === 'alternate' ? `&alt=${altId}` : '&src=draft';
-    window.open(`/privatedining-print?menu=${menuId}${q}`, '_blank');
+    window.open(`/privatedining-print?menu=${menuId}${q}&warned=1`, '_blank');
   }
 
   if (loading) {

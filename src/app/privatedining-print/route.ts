@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { getMenuDraftPublish, readAlternates } from '@/lib/privatedining-menu-store';
 import { renderPrivateDiningMenu, buildPrivateDiningRenderData } from '@/lib/render-privatedining-server';
 import { PRIVATEDINING_MENU_IDS, type PrivateDiningMenuId } from '@/lib/privatedining-schema';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,9 @@ ${validateSrc}
   // Function replacer: any literal `$` in the injected JS must be inserted
   // verbatim, not interpreted as a String.replace pattern.
   html = html.replace('</body>', () => printScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('privatedining', menuData));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readArwMenu } from '@/lib/arw-menu-store';
 import { renderArwMenu, isArwStyle } from '@/lib/render-arw-server';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +74,9 @@ document.fonts.ready.then(function () {
   // regex, etc.) must be inserted literally, not treated as String.replace
   // special patterns — see project Known Bugs list.
   html = html.replace('</body>', () => liveScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('arw', data));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },

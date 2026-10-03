@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -481,9 +482,10 @@ export default function DrinksDessertEditorPage() {
 
   function handlePrint() {
     if (!menu) return;
+    if (menu && !confirmPrintWarnings('drinksdessert', menu)) return;
     localStorage.setItem('siena-drinksdessert-print-data', JSON.stringify(menu));
     const q = printSelectRef.current?.value ?? '';
-    window.open(`/drinksdessert-print?src=current${q}`, '_blank');
+    window.open(`/drinksdessert-print?src=current${q}&warned=1`, '_blank');
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────

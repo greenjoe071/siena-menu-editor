@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -770,8 +771,9 @@ export default function WeekendEditorPage() {
               className="btn-print"
               onClick={() => {
                 if (saveStatus === 'error' && !confirm('Heads up: your latest changes are NOT saved yet (see the red message at the top).\n\nThe printout will include them, but they will be gone if you leave this page. Print anyway?')) return;
+                if (menu && !confirmPrintWarnings('weekend', menu)) return;
                 if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
-                window.open(`/weekend-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
+                window.open(`/weekend-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
               }}
             >
               Print Menu

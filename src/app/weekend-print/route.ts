@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readMenuBySrc } from '@/lib/weekend-menu-store';
 import { renderWeekendMenu } from '@/lib/render-weekend-server';
+import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,9 @@ ${settleSrc}
 
   // Function replacer — see weekend-preview/route.ts.
   html = html.replace('</body>', () => printScript + '\n</body>');
+
+  // Pre-print warnings (missing titles / prices) — see print-warnings.ts
+  html = withPrintGuard(html, request.url, printWarnings('weekend', data));
 
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
