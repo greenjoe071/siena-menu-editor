@@ -24,6 +24,7 @@ export default async function CourseMenuLandingPage() {
       draftExists={draftExists}
       published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
       plainNav
+      cardNav
       firstUse={!everPublished}
     />
   );

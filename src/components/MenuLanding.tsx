@@ -60,6 +60,9 @@ export interface MenuLandingProps {
   // New Menu" listed first, nav items styled as cards, and two coach-mark
   // pop-ups pointing at the cards (see ChefCoach.tsx).
   chefCoach?: boolean;
+  // Card-style nav + "Work on a New Menu" first, WITHOUT Chef's pop-ups
+  // (Happy Hour, Generic). chefCoach implies this.
+  cardNav?: boolean;
 }
 
 function PrintLinks({
@@ -131,8 +134,9 @@ type SectionKey = 'current' | 'new' | 'past';
 export default function MenuLanding({
   menuName, editHref, fixHref, apiBase, previewHref, printHref, currentDate,
   draftExists = false, published = [], printVariants, editOnly = false, plainNav = false, firstUse = false,
-  chefCoach = false,
+  chefCoach = false, cardNav = false,
 }: MenuLandingProps) {
+  const cards = chefCoach || cardNav;
   const navRefs = useRef<Partial<Record<SectionKey, HTMLButtonElement | null>>>({});
   const coachSteps = useMemo<CoachStep[]>(() => [
     {
@@ -159,7 +163,7 @@ export default function MenuLanding({
         { key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined },
         { key: 'past', label: 'Past Menus', hint: published.length ? `${published.length} saved` : undefined },
       ];
-  if (chefCoach && navItems.length === 3) {
+  if (cards && navItems.length === 3) {
     // New menu first — it's the weekly path; "Most Recent" is for fixes/printing.
     navItems.splice(0, 2, navItems[1], navItems[0]);
   }
@@ -189,7 +193,7 @@ export default function MenuLanding({
                   key={item.key}
                   ref={(el) => { navRefs.current[item.key] = el; }}
                   type="button"
-                  className={`dl-nav-item ${chefCoach ? 'dl-nav-item--card' : ''} ${active === item.key ? 'active' : ''}`}
+                  className={`dl-nav-item ${cards ? 'dl-nav-item--card' : ''} ${active === item.key ? 'active' : ''}`}
                   onClick={() => setActive(item.key)}
                 >
                   {!plainNav && <span className="dl-nav-num">{i + 1}</span>}
