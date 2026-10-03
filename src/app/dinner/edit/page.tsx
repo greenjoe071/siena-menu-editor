@@ -487,10 +487,6 @@ export default function DinnerDraftEditorPage() {
 
   async function handlePublish() {
     if (!menu) return;
-    if (!confirm(
-      'Make this draft the current menu?\n\n' +
-      'The menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.'
-    )) return;
 
     setPublishing(true);
     setSaveMsg('Publishing…');
@@ -513,15 +509,6 @@ export default function DinnerDraftEditorPage() {
       setPublishing(false);
       setSaveStatus('error');
       setSaveMsg('Network error while publishing');
-    }
-  }
-
-  async function handleDiscard() {
-    if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
-    try {
-      await fetch('/api/dinner/draft', { method: 'DELETE' });
-    } finally {
-      window.location.href = '/dinner';
     }
   }
 
@@ -703,7 +690,6 @@ export default function DinnerDraftEditorPage() {
           </div>
 
           <div className="editor-footer editor-footer--draft">
-            {!isFix && <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>}
             <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>{saveMsg || 'Auto-saves as you type'}</span>
             <button
               className="btn-print"

@@ -221,8 +221,7 @@ export default function PrivateDiningEditorPage() {
   // ── Publish / discard (default mode only) ────────────────────────────
   async function handlePublish() {
     if (!defaultMenu) return;
-    if (report && !report.fits) { alert('This menu is too long to fit one page. Shorten a description before publishing.'); return; }
-    if (!confirm('Make this draft the current default menu?\n\nThe current menu will be moved to past menus, and this draft becomes current, dated today.')) return;
+    if (report && !report.fits) { setSaveStatus('error'); setSaveMsg('This menu is too long to fit one page. Shorten a description before publishing.'); return; }
     setPublishing(true); setSaveMsg('Publishing…');
     try {
       await fetch(`/api/privatedining/${menuId}/draft`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(defaultMenu) });
@@ -230,11 +229,6 @@ export default function PrivateDiningEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
       router.push(`/privatedining/${menuId}`);
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
-  }
-  async function handleDiscard() {
-    if (!confirm("Discard this draft? Changes since the current menu will be lost.")) return;
-    try { await fetch(`/api/privatedining/${menuId}/draft`, { method: 'DELETE' }); }
-    finally { router.push(`/privatedining/${menuId}`); }
   }
   async function handleDeleteAlternate() {
     if (!alternate) return;
@@ -390,7 +384,6 @@ export default function PrivateDiningEditorPage() {
 
         {mode === 'default' && (
           <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
             <span className="publish-hint">
               {anyOverflow ? '⚠ Too long to fit — fix before publishing.' : 'Current menu is unchanged until you publish.'}
             </span>

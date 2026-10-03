@@ -442,7 +442,6 @@ export default function HappyhourEditorPage() {
 
   async function handlePublish() {
     if (!menu) return;
-    if (!confirm('Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.')) return;
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -451,12 +450,6 @@ export default function HappyhourEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
       window.location.href = '/happyhour';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
-  }
-
-  async function handleDiscard() {
-    if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
-    try { await fetch('/api/happyhour/draft', { method: 'DELETE' }); }
-    finally { window.location.href = '/happyhour'; }
   }
 
   if (!menu) {
@@ -578,7 +571,6 @@ export default function HappyhourEditorPage() {
 
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
-              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
               <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
               <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
             </div>

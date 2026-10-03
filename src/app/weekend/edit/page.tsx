@@ -651,8 +651,7 @@ export default function WeekendEditorPage() {
       if (blanks.length) missing.push(`${label} dish ${n + 1}: ${blanks.join(', ')}`);
     });
     if (menu.dessert && (!menu.dessert.name.trim() || !menu.dessert.desc.trim() || !menu.dessert.price.trim())) missing.push('Dessert: name, description, or price');
-    if (missing.length) { alert('Before making this the current menu, fill in:\n\n• ' + missing.join('\n• ') + '\n\n(Or remove the dishes you are not using.)'); return; }
-    if (!confirm('Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.')) return;
+    if (missing.length) { setSaveStatus('error'); setSaveMsg('Before making this the current menu, fill in: ' + missing.join('; ') + ' — or remove the dishes you are not using.'); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -661,12 +660,6 @@ export default function WeekendEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
       window.location.href = '/weekend';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
-  }
-
-  async function handleDiscard() {
-    if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
-    try { await fetch('/api/weekend/draft', { method: 'DELETE' }); }
-    finally { window.location.href = '/weekend'; }
   }
 
   if (!menu) {
@@ -695,7 +688,7 @@ export default function WeekendEditorPage() {
           </div>
 
           {saveStatus === 'error' && (
-          <div className="overflow-banner">⚠ Your latest changes are NOT saved — {saveMsg}</div>
+          <div className="overflow-banner">⚠ {saveMsg.startsWith('Before making') ? saveMsg : `Your latest changes are NOT saved — ${saveMsg}`}</div>
         )}
         {isFix ? (
             <div className="draft-banner fix-banner">
@@ -761,7 +754,6 @@ export default function WeekendEditorPage() {
 
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
-              <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
               <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
               <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
             </div>

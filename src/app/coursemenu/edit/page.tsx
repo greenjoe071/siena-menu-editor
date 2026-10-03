@@ -335,12 +335,8 @@ export default function CourseMenuEditorPage() {
   async function handlePublish() {
     if (!menu) return;
     const missing = missingRequired(menu);
-    if (missing.length) { alert(`Before publishing, fill in ${missing.join(', ')}.`); return; }
-    if (report && !report.fits) { alert('The menu doesn’t fit on the page yet — fix the problem shown at the top first.'); return; }
-    const msg = everPublished
-      ? 'Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.'
-      : 'Publish your first Generic Menu?\n\nThis draft becomes the current menu dated today, ready to view and print.';
-    if (!confirm(msg)) return;
+    if (missing.length) { setSaveStatus('error'); setSaveMsg(`Before publishing, fill in ${missing.join(', ')}.`); return; }
+    if (report && !report.fits) { setSaveStatus('error'); setSaveMsg('The menu doesn’t fit on the page yet — fix the problem shown at the top first.'); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -349,12 +345,6 @@ export default function CourseMenuEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
       window.location.href = '/coursemenu';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
-  }
-
-  async function handleDiscard() {
-    if (!confirm('Discard this draft?\n\nAll changes since the current menu will be lost. The current menu is not affected.')) return;
-    try { await fetch('/api/coursemenu/draft', { method: 'DELETE' }); }
-    finally { window.location.href = '/coursemenu'; }
   }
 
   if (!menu) {
@@ -595,7 +585,6 @@ export default function CourseMenuEditorPage() {
 
         {!isFix && (
           <div className="editor-footer editor-footer--publish">
-            <button className="btn-discard-draft" onClick={handleDiscard} disabled={publishing}>Discard Draft</button>
             <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
             <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
           </div>

@@ -136,14 +136,16 @@ export default function MenuLanding({
   const navRefs = useRef<Partial<Record<SectionKey, HTMLButtonElement | null>>>({});
   const coachSteps = useMemo<CoachStep[]>(() => [
     {
-      target: () => navRefs.current.current ?? null,
-      title: 'Fixing, viewing, or printing?',
-      body: 'Chef, only use this if you need to fix something on the menu we\u2019re using now, or to view or print the most recent menu.',
-    },
-    {
+      id: 'new',
       target: () => navRefs.current.new ?? null,
       title: 'Making this week\u2019s menu?',
       body: 'Chef, use this button every week when you\u2019re working on a new menu. When it\u2019s ready, press \u201cMake This the Current Menu\u201d so it becomes the most recent menu.',
+    },
+    {
+      id: 'current',
+      target: () => navRefs.current.current ?? null,
+      title: 'Fixing, viewing, or printing?',
+      body: 'Chef, only use this if you need to fix something on the menu we\u2019re using now, or to view or print the most recent menu.',
     },
   ], []);
   const [active, setActive] = useState<SectionKey | null>(firstUse ? 'new' : plainNav ? null : 'current');
