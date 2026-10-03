@@ -482,7 +482,7 @@ export default function DrinksDessertEditorPage() {
 
   function handlePrint() {
     if (!menu) return;
-    if (menu && !confirmPrintWarnings('drinksdessert', menu)) return;
+    if (menu && !confirmPrintWarnings('drinksdessert', menu, saveStatus === 'error')) return;
     localStorage.setItem('siena-drinksdessert-print-data', JSON.stringify(menu));
     const q = printSelectRef.current?.value ?? '';
     window.open(`/drinksdessert-print?src=current${q}&warned=1`, '_blank');

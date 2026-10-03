@@ -695,7 +695,7 @@ export default function DinnerDraftEditorPage() {
             <button
               className="btn-print"
               onClick={() => {
-                if (menu && !confirmPrintWarnings('dinner', menu)) return;
+                if (menu && !confirmPrintWarnings('dinner', menu, saveStatus === 'error')) return;
                 if (menu) localStorage.setItem('siena-print-data', JSON.stringify(menu));
                 window.open(`/print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
               }}

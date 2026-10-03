@@ -583,7 +583,7 @@ export default function HappyhourEditorPage() {
             disabled={validationFits === false}
             title={validationFits === false ? 'Fix overflow before printing' : undefined}
             onClick={() => {
-              if (menu && !confirmPrintWarnings('happyhour', menu)) return;
+              if (menu && !confirmPrintWarnings('happyhour', menu, saveStatus === 'error')) return;
               if (menu) localStorage.setItem('siena-happyhour-print-data', JSON.stringify(menu));
               window.open(`/happyhour-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
             }}

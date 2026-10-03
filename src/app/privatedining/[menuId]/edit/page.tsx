@@ -247,7 +247,7 @@ export default function PrivateDiningEditorPage() {
   }
 
   function handlePrint() {
-    if (defaultMenu && !confirmPrintWarnings('privatedining', defaultMenu)) return;
+    if (defaultMenu && !confirmPrintWarnings('privatedining', defaultMenu, saveStatus === 'error')) return;
     localStorage.setItem('siena-privatedining-print-data', JSON.stringify(renderPayload));
     const q = mode === 'alternate' ? `&alt=${altId}` : '&src=draft';
     window.open(`/privatedining-print?menu=${menuId}${q}&warned=1`, '_blank');

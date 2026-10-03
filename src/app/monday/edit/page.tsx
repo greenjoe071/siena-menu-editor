@@ -788,7 +788,7 @@ export default function MondayEditorPage() {
             <button
               className="btn-print"
               onClick={() => {
-                if (menu && !confirmPrintWarnings('monday', menu)) return;
+                if (menu && !confirmPrintWarnings('monday', menu, saveStatus === 'error')) return;
                 if (menu) localStorage.setItem('siena-monday-print-data', JSON.stringify(menu));
                 window.open(`/monday-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
               }}

@@ -382,7 +382,7 @@ export default function DessertEditorPage() {
 
   function handlePrint() {
     if (!menu) return;
-    if (menu && !confirmPrintWarnings('dessert', menu)) return;
+    if (menu && !confirmPrintWarnings('dessert', menu, saveStatus === 'error')) return;
     localStorage.setItem('siena-dessert-print-data', JSON.stringify(menu));
     window.open('/dessert-print?src=current&warned=1', '_blank');
   }

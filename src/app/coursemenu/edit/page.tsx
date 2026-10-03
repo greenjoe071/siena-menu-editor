@@ -603,7 +603,7 @@ export default function CourseMenuEditorPage() {
             disabled={issues.length > 0}
             title={issues.length > 0 ? 'Fix the problem shown at the top before printing' : undefined}
             onClick={() => {
-              if (menu && !confirmPrintWarnings('coursemenu', menu)) return;
+              if (menu && !confirmPrintWarnings('coursemenu', menu, saveStatus === 'error')) return;
               localStorage.setItem('siena-coursemenu-print-data', JSON.stringify(menu));
               window.open(`/coursemenu-print?src=${src}&warned=1`, '_blank');
             }}
