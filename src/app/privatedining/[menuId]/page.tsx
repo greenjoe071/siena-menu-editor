@@ -33,7 +33,7 @@ export default async function PrivateDiningMenuLandingPage({ params }: { params:
         <h1>{current.label}</h1>
         <p className="pd-home-hint">
           {current.internalPriceRef} per person (staff reference only — never printed) ·{' '}
-          Current as of {formatDate(meta.publishedAt)}
+          Active as of {formatDate(meta.publishedAt)}
         </p>
       </div>
 

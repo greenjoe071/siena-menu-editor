@@ -590,13 +590,9 @@ export default function DinnerDraftEditorPage() {
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
-          {isFix ? (
+          {isFix && (
             <div className="draft-banner fix-banner">
-              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
-            </div>
-          ) : (
-            <div className="draft-banner">
-              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+              ✏️ You&rsquo;re editing the <strong>active menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
             </div>
           )}
 
@@ -704,7 +700,7 @@ export default function DinnerDraftEditorPage() {
             </button>
             {!isFix && (
               <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
-                {publishing ? 'Publishing…' : 'Make This the Current Menu'}
+                {publishing ? 'Publishing…' : 'Make This the Active Menu'}
               </button>
             )}
           </div>

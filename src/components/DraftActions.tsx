@@ -31,7 +31,7 @@ export default function DraftActions({
       ? 'Throw out your draft and start over?\n\nYour draft will be deleted and replaced with a fresh copy of the sample menu.'
       : mostRecentWording
       ? 'Throw out your draft and start fresh?\n\nYour draft will be deleted and replaced with a copy of the Most Recent Menu.'
-      : 'Start over from the current menu?\n\nYour current draft will be discarded and a fresh draft will be created from the current menu.';
+      : 'Start over from the active menu?\n\nYour current draft will be discarded and a fresh draft will be created from the active menu.';
     if (!confirm(msg)) return;
     setBusy(true);
     try {

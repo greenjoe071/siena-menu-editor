@@ -315,7 +315,7 @@ export function makeFixHandlers<T>(readCurrent: () => Promise<T>, writeCurrent: 
       try {
         return NextResponse.json(await readCurrent());
       } catch {
-        return NextResponse.json({ error: 'Failed to read current menu' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to read active menu' }, { status: 500 });
       }
     },
     async POST(request: Request) {

@@ -652,7 +652,7 @@ export default function WeekendEditorPage() {
       if (blanks.length) missing.push(`${label} dish ${n + 1}: ${blanks.join(', ')}`);
     });
     if (menu.dessert && (!menu.dessert.name.trim() || !menu.dessert.desc.trim() || !menu.dessert.price.trim())) missing.push('Dessert: name, description, or price');
-    if (missing.length) { setSaveStatus('error'); setSaveMsg('Before making this the current menu, fill in: ' + missing.join('; ') + ' — or remove the dishes you are not using.'); return; }
+    if (missing.length) { setSaveStatus('error'); setSaveMsg('Before making this the active menu, fill in: ' + missing.join('; ') + ' — or remove the dishes you are not using.'); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -691,13 +691,9 @@ export default function WeekendEditorPage() {
           {saveStatus === 'error' && (
           <div className="overflow-banner">⚠ {saveMsg.startsWith('Before making') ? saveMsg : `Your latest changes are NOT saved — ${saveMsg}`}</div>
         )}
-        {isFix ? (
+        {isFix && (
             <div className="draft-banner fix-banner">
-              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
-            </div>
-          ) : (
-            <div className="draft-banner">
-              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+              ✏️ You&rsquo;re editing the <strong>active menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
             </div>
           )}
           <div className="editor-scroll chef-mode">
@@ -755,8 +751,8 @@ export default function WeekendEditorPage() {
 
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
-              <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
+              <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
             </div>
           )}
           <div className="editor-footer">

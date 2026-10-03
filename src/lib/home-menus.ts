@@ -14,7 +14,7 @@ export interface HomeMenu {
 
 export const HOME_MENUS: HomeMenu[] = [
   { id: 'dinner',        label: 'Dinner Menu',             href: '/dinner',        image: '/images/home/dinner.webp', core: true,
-    description: 'View or print the current menu, or start a new draft' },
+    description: 'View or print the active menu, or start a new draft' },
   { id: 'monday',        label: 'Monday $26 Specials',     href: '/monday',        image: '/images/home/monday.webp', core: true,
     description: 'Weekly Monday night specials' },
   { id: 'tuewed',        label: 'Tue – Wed $45 Specials',  href: '/tueswed',       image: '/images/home/tueswed.webp', core: true,

@@ -139,7 +139,7 @@ export default function MenuLanding({
       id: 'new',
       target: () => navRefs.current.new ?? null,
       title: 'Making this week\u2019s menu?',
-      body: 'Chef, use this button every week when you\u2019re working on a new menu. When it\u2019s ready, press \u201cMake This the Current Menu\u201d so it becomes the most recent menu.',
+      body: 'Chef, use this button every week when you\u2019re working on a new menu. When it\u2019s ready, press \u201cMake This the Active Menu\u201d so it becomes the most recent menu.',
     },
     {
       id: 'current',
@@ -151,11 +151,11 @@ export default function MenuLanding({
   const [active, setActive] = useState<SectionKey | null>(firstUse ? 'new' : plainNav ? null : 'current');
 
   const navItems: { key: SectionKey; label: string; hint?: string }[] = editOnly
-    ? [{ key: 'current', label: 'View, Print, or Make a Change', hint: `Current as of ${currentDate}` }]
+    ? [{ key: 'current', label: 'View, Print, or Make a Change', hint: `Active as of ${currentDate}` }]
     : firstUse
     ? [{ key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined }]
     : [
-        { key: 'current', label: plainNav ? 'Most Recent Menu: View, Print, or Make a Change' : 'View, Print, or Fix Current Menu', hint: `Current as of ${currentDate}` },
+        { key: 'current', label: plainNav ? 'Most Recent Menu: View, Print, or Make a Change' : 'View, Print, or Fix Active Menu', hint: `Active as of ${currentDate}` },
         { key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined },
         { key: 'past', label: 'Past Menus', hint: published.length ? `${published.length} saved` : undefined },
       ];
@@ -172,9 +172,9 @@ export default function MenuLanding({
           {!plainNav && <Link href="/" className="dl-back">🏠 Home</Link>}
           <h1 className="dl-title">{menuName}</h1>
           <p className="dl-subtitle">{
-            editOnly ? 'View or print the current menu, or make a change.'
+            editOnly ? 'View or print the active menu, or make a change.'
             : firstUse ? 'No menu has been made yet — start your first one below.'
-            : 'View or print the current menu, fix a mistake, or start a new draft.'
+            : 'View or print the active menu, fix a mistake, or start a new draft.'
           }</p>
         </div>
       </header>
@@ -210,8 +210,8 @@ export default function MenuLanding({
           {(editOnly || active === 'current') && (
             <div className="dl-pane dl-pane--current">
               <div className="dl-card-top">
-                <span className="dl-badge">Current {menuName} Menu</span>
-                <span className="dl-asof">Current as of {currentDate}</span>
+                <span className="dl-badge">Active {menuName} Menu</span>
+                <span className="dl-asof">Active as of {currentDate}</span>
               </div>
               <p className="dl-card-note">
                 {editOnly
@@ -230,7 +230,7 @@ export default function MenuLanding({
                   <span className="dl-fix-hint">
                     {editOnly
                       ? 'Opens the menu for editing — every change saves the second you make it.'
-                      : <>Spot a typo or wrong price? This opens the live menu, and saves the second you make a
+                      : <>Spot a typo or wrong price? This opens the active menu, and saves the second you make a
                           change — no draft, no publish button. For planning ahead instead, use &ldquo;Work on a New Menu.&rdquo;</>}
                   </span>
                 </div>
@@ -247,8 +247,8 @@ export default function MenuLanding({
                       ? 'Your first menu is in progress. Keep editing where you left off, or start over from the sample.'
                       : 'Your first menu starts from a sample you can change — swap in your dishes, price, and courses, then publish it when you’re happy.')
                   : draftExists
-                  ? 'You have an unpublished draft. Keep editing where you left off, or start over from the current menu.'
-                  : 'Create a working draft based on the current menu. The current menu stays untouched while you edit — publish only when you’re happy with it.'}
+                  ? 'You have an unpublished draft. Keep editing where you left off, or start over from the active menu.'
+                  : 'Create a working draft based on the active menu. The active menu stays untouched while you edit — publish only when you’re happy with it.'}
               </p>
               <DraftActions draftExists={draftExists} editHref={editHref ?? ''} apiBase={apiBase} mostRecentWording={plainNav} firstUse={firstUse} />
             </div>
@@ -266,7 +266,7 @@ export default function MenuLanding({
                   {published.map((p) => (
                     <div key={p.key} className="dl-past-row dl-past-row--note">
                       <div className="dl-past-main">
-                        <span className="dl-past-label">Current as of {p.label}</span>
+                        <span className="dl-past-label">Active as of {p.label}</span>
                         <PastMenuNote apiBase={apiBase} menuKey={p.key} initialNote={p.note} />
                       </div>
                       <div className="dl-past-actions">

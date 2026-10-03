@@ -272,12 +272,6 @@ export default function PrivateDiningEditorPage() {
           <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
-        {mode === 'default' && (
-          <div className="draft-banner">
-            ✎ You&rsquo;re editing a <strong>draft</strong> of the default menu. It stays locked until you press <strong>Make This the Current Menu</strong>.
-          </div>
-        )}
-
         <div className="editor-scroll chef-mode">
           {/* Event details — entered fresh per event, never saved with the menu */}
           <div className="section-block">
@@ -387,10 +381,10 @@ export default function PrivateDiningEditorPage() {
         {mode === 'default' && (
           <div className="editor-footer editor-footer--publish">
             <span className="publish-hint">
-              {anyOverflow ? '⚠ Too long to fit — fix before publishing.' : 'Current menu is unchanged until you publish.'}
+              {anyOverflow ? '⚠ Too long to fit — fix before publishing.' : 'Active menu is unchanged until you publish.'}
             </span>
             <button className="btn-publish" onClick={handlePublish} disabled={publishing || anyOverflow}>
-              {publishing ? 'Publishing…' : 'Make This the Current Menu'}
+              {publishing ? 'Publishing…' : 'Make This the Active Menu'}
             </button>
           </div>
         )}

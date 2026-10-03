@@ -318,13 +318,9 @@ export default function TuewedEditorPage() {
           </div>
         )}
 
-          {isFix ? (
+          {isFix && (
             <div className="draft-banner fix-banner">
-              ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
-            </div>
-          ) : (
-            <div className="draft-banner">
-              ✎ You&rsquo;re editing a <strong>draft</strong>. The current menu stays locked and unchanged until you press <strong>Make This the Current Menu</strong>.
+              ✏️ You&rsquo;re editing the <strong>active menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
             </div>
           )}
         <div className="editor-scroll chef-mode">
@@ -450,8 +446,8 @@ export default function TuewedEditorPage() {
 
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
-              <span className="publish-hint">You&rsquo;re editing a draft — the current menu is unchanged until you publish.</span>
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Current Menu'}</button>
+              <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
+              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
             </div>
           )}
         <div className="editor-footer">
