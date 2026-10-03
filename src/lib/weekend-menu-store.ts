@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { WeekendMenuSchema, type WeekendMenuData } from './weekend-schema';
+import { WeekendMenuSchema, WeekendDraftSchema, type WeekendMenuData } from './weekend-schema';
 import { getStore } from '@netlify/blobs';
 
 const DATA_PATH   = join(process.cwd(), 'weekend-menu-data.json');
@@ -154,6 +154,7 @@ export const weekendDP = createDraftPublish<WeekendMenuData>({
   metaKey:         'weekend-menu-meta',
   publishedPrefix: 'weekend-published-',
   schema:          WeekendMenuSchema,
+  draftSchema:     WeekendDraftSchema,   // half-typed drafts must always save
   readCurrent:     readWeekendMenu,
 });
 

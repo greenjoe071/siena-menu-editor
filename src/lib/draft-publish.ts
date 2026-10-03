@@ -101,6 +101,9 @@ export interface DraftPublishConfig<T> {
   publishedPrefix: string;   // e.g. 'weekend-published-'
   schema:          Parser<T>;
   readCurrent:     () => Promise<T>;   // existing readXMenu()
+  // Looser schema for the work-in-progress draft (blank fields allowed) so a
+  // half-typed menu always saves. Publishing still parses with `schema`.
+  draftSchema?:    Parser<T>;
   defaultPublishedAt?: number;
   // The current menu is only a designer sample until the first publish
   // (Generic Menu). That first publish replaces it WITHOUT archiving it to
@@ -126,6 +129,7 @@ export interface DraftPublish<T> {
 
 export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<T> {
   const { currentKey, draftKey, metaKey, publishedPrefix, schema, readCurrent } = cfg;
+  const draftSchema = cfg.draftSchema ?? schema;
   const defaultPublishedAt = cfg.defaultPublishedAt ?? DEFAULT_PUBLISHED_AT;
 
   async function readCurrentMeta(): Promise<CurrentMeta> {
@@ -149,14 +153,14 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
 
   async function readDraft(): Promise<T> {
     const raw = await kvRead(draftKey);
-    if (raw) return schema.parse(JSON.parse(raw));
+    if (raw) return draftSchema.parse(JSON.parse(raw));
     const current = await readCurrent();
     await kvWrite(draftKey, JSON.stringify(current, null, 2));
     return current;
   }
 
   async function writeDraft(data: T): Promise<void> {
-    schema.parse(data);
+    draftSchema.parse(data);
     await kvWrite(draftKey, JSON.stringify(data, null, 2));
   }
 
@@ -290,6 +294,9 @@ export function makePublishHandler<T>(dp: DraftPublish<T>) {
         const meta = await dp.publishDraft();
         return NextResponse.json({ ok: true, publishedAt: meta.publishedAt });
       } catch (err) {
+        if (err instanceof ZodError) {
+          return NextResponse.json({ error: 'Draft is incomplete', issues: err.issues }, { status: 422 });
+        }
         const msg = err instanceof Error ? err.message : 'Publish failed';
         return NextResponse.json({ error: msg }, { status: 500 });
       }

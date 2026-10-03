@@ -6,7 +6,8 @@ import { z } from 'zod';
 export const WEEKEND_CHAR_LIMITS = {
   sectionTitle:    20,
   dishName:        26,   // hard — shares row with inline price
-  dishDesc:       180,   // soft guard only — ladder absorbs vertical growth
+  dishDesc:       180,   // soft guard only — ladder absorbs vertical growth (editor counter)
+  dishDescMax:    400,   // paste-safety ceiling only; BUILD-SPEC: descriptions have no hard cap
   dishPrice:        8,   // hard — required, include $ glyph: "$17"
   weeklyDayLabel:  14,
   weeklyHeadline:  26,
@@ -18,7 +19,7 @@ export const WEEKEND_CHAR_LIMITS = {
 const WeekendDishSchema = z.object({
   id:    z.string(),
   name:  z.string().min(1, 'Dish name is required').max(WEEKEND_CHAR_LIMITS.dishName),
-  desc:  z.string().min(1, 'Description is required').max(WEEKEND_CHAR_LIMITS.dishDesc),
+  desc:  z.string().min(1, 'Description is required').max(WEEKEND_CHAR_LIMITS.dishDescMax),
   price: z.string().min(1, 'Price is required').max(WEEKEND_CHAR_LIMITS.dishPrice),
 });
 
@@ -42,7 +43,7 @@ const WeeklyRowSchema = z.object({
 const WeekendDessertSchema = z.object({
   title: z.string().min(1).max(WEEKEND_CHAR_LIMITS.sectionTitle),
   name:  z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishName),
-  desc:  z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishDesc),
+  desc:  z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishDescMax),
   price: z.string().min(1).max(WEEKEND_CHAR_LIMITS.dishPrice),
 });
 
@@ -61,3 +62,30 @@ export const WeekendMenuSchema = z.object({
 });
 
 export type WeekendMenuData = z.infer<typeof WeekendMenuSchema>;
+
+// ── Draft (work in progress) ──────────────────────────────────────────────
+// Same shape and caps, but every text field may be blank, so a half-typed
+// menu autosaves instead of being rejected (Oct 2026: Chef lost a whole
+// menu this way — Print showed his unsaved typing, so nothing looked wrong).
+// Publishing still requires the full WeekendMenuSchema.
+const L = WEEKEND_CHAR_LIMITS;
+const DraftDish = z.object({
+  id: z.string(), name: z.string().max(L.dishName), desc: z.string().max(L.dishDescMax), price: z.string().max(L.dishPrice),
+});
+export const WeekendDraftSchema = z.object({
+  sections: z.object({
+    starters: z.object({ title: z.string().max(L.sectionTitle), items: z.array(DraftDish).min(1).max(4) }),
+    entrees:  z.object({ title: z.string().max(L.sectionTitle), items: z.array(DraftDish).min(1).max(4) }),
+  }),
+  dessert: z.object({
+    title: z.string().max(L.sectionTitle), name: z.string().max(L.dishName),
+    desc: z.string().max(L.dishDescMax), price: z.string().max(L.dishPrice),
+  }).nullable().optional(),
+  weekly: z.object({
+    rows: z.array(z.object({
+      id: z.string(), day_label: z.string().max(L.weeklyDayLabel),
+      headline: z.string().max(L.weeklyHeadline), detail: z.string().max(L.weeklyDetail),
+    })).length(4),
+  }),
+  policy_line: z.string().max(L.policyLine),
+}) as unknown as typeof WeekendMenuSchema;

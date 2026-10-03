@@ -556,7 +556,7 @@ export default function WeekendEditorPage() {
   // ── New Week ────────────────────────────────────────────────────────────
 
   function handleNewWeek() {
-    if (!confirm('Start a new week?\n\nThis will clear all dish names, descriptions, and prices in both sections. The weekly promotions at the bottom will stay as-is.\n\nYour current menu will be saved as a backup.')) return;
+    if (!confirm('Start a new week?\n\nThis will clear all dish names, descriptions, and prices in both sections. The weekly promotions at the bottom will stay as-is.\n\nYour draft saves as you type, even before every dish is filled in.')) return;
     setMenu(m => {
       if (!m) return m;
       const clearSection = (s: WeekendSection): WeekendSection => ({
@@ -644,6 +644,14 @@ export default function WeekendEditorPage() {
 
   async function handlePublish() {
     if (!menu) return;
+    const missing: string[] = [];
+    const sec: [SectionId, string][] = [['starters', menu.sections.starters.title || 'Starters'], ['entrees', menu.sections.entrees.title || 'Entrees']];
+    for (const [sid, label] of sec) menu.sections[sid].items.forEach((d, n) => {
+      const blanks = [!d.name.trim() && 'name', !d.desc.trim() && 'description', !d.price.trim() && 'price'].filter(Boolean);
+      if (blanks.length) missing.push(`${label} dish ${n + 1}: ${blanks.join(', ')}`);
+    });
+    if (menu.dessert && (!menu.dessert.name.trim() || !menu.dessert.desc.trim() || !menu.dessert.price.trim())) missing.push('Dessert: name, description, or price');
+    if (missing.length) { alert('Before making this the current menu, fill in:\n\n• ' + missing.join('\n• ') + '\n\n(Or remove the dishes you are not using.)'); return; }
     if (!confirm('Make this draft the current menu?\n\nThe menu people are printing now will be moved to "Past Menus," and this draft becomes the current menu dated today.')) return;
     setPublishing(true);
     setSaveMsg('Publishing…');
@@ -686,7 +694,10 @@ export default function WeekendEditorPage() {
             <Link href="/" className="btn-home">🏠 Home</Link>
           </div>
 
-          {isFix ? (
+          {saveStatus === 'error' && (
+          <div className="overflow-banner">⚠ Your latest changes are NOT saved — {saveMsg}</div>
+        )}
+        {isFix ? (
             <div className="draft-banner fix-banner">
               ✏️ You&rsquo;re editing the <strong>live menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
             </div>
@@ -766,6 +777,7 @@ export default function WeekendEditorPage() {
             <button
               className="btn-print"
               onClick={() => {
+                if (saveStatus === 'error' && !confirm('Heads up: your latest changes are NOT saved yet (see the red message at the top).\n\nThe printout will include them, but they will be gone if you leave this page. Print anyway?')) return;
                 if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
                 window.open(`/weekend-print?src=${isFix ? 'current' : 'draft'}`, '_blank');
               }}
