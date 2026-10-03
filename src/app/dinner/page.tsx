@@ -23,6 +23,7 @@ export default async function DinnerLandingPage() {
       draftExists={draftExists}
       published={published.map((p) => ({ key: p.key, label: p.label, note: p.note }))}
       plainNav
+      chefCoach
     />
   );
 }

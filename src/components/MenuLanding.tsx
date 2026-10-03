@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import DraftActions from './DraftActions';
 import PrintPicker from './PrintPicker';
+import ChefCoach, { type CoachStep } from './ChefCoach';
 
 // Shared landing page for every menu: view/print/fix the protected current
 // menu, start/continue a draft, and view/print the last 3 past menus.
@@ -55,6 +56,10 @@ export interface MenuLandingProps {
   // a New Menu" is shown, already open, and its buttons say the first draft
   // starts from a sample. Current/Past Menus appear after the first publish.
   firstUse?: boolean;
+  // Chef training (Oct 2026 — Weekend, Monday, Tue–Wed, Dinner): "Work on a
+  // New Menu" listed first, nav items styled as cards, and two coach-mark
+  // pop-ups pointing at the cards (see ChefCoach.tsx).
+  chefCoach?: boolean;
 }
 
 function PrintLinks({
@@ -126,7 +131,21 @@ type SectionKey = 'current' | 'new' | 'past';
 export default function MenuLanding({
   menuName, editHref, fixHref, apiBase, previewHref, printHref, currentDate,
   draftExists = false, published = [], printVariants, editOnly = false, plainNav = false, firstUse = false,
+  chefCoach = false,
 }: MenuLandingProps) {
+  const navRefs = useRef<Partial<Record<SectionKey, HTMLButtonElement | null>>>({});
+  const coachSteps = useMemo<CoachStep[]>(() => [
+    {
+      target: () => navRefs.current.current ?? null,
+      title: 'Fixing, viewing, or printing?',
+      body: 'Chef, only use this if you need to fix something on the menu we\u2019re using now, or to view or print the most recent menu.',
+    },
+    {
+      target: () => navRefs.current.new ?? null,
+      title: 'Making this week\u2019s menu?',
+      body: 'Chef, use this button every week when you\u2019re working on a new menu. When it\u2019s ready, press \u201cMake This the Current Menu\u201d so it becomes the most recent menu.',
+    },
+  ], []);
   const [active, setActive] = useState<SectionKey | null>(firstUse ? 'new' : plainNav ? null : 'current');
 
   const navItems: { key: SectionKey; label: string; hint?: string }[] = editOnly
@@ -138,6 +157,10 @@ export default function MenuLanding({
         { key: 'new', label: 'Work on a New Menu', hint: draftExists ? 'Draft in progress' : undefined },
         { key: 'past', label: 'Past Menus', hint: published.length ? `${published.length} saved` : undefined },
       ];
+  if (chefCoach && navItems.length === 3) {
+    // New menu first — it's the weekly path; "Most Recent" is for fixes/printing.
+    navItems.splice(0, 2, navItems[1], navItems[0]);
+  }
 
   return (
     <div className="dinner-landing">
@@ -162,8 +185,9 @@ export default function MenuLanding({
               {navItems.map((item, i) => (
                 <button
                   key={item.key}
+                  ref={(el) => { navRefs.current[item.key] = el; }}
                   type="button"
-                  className={`dl-nav-item ${active === item.key ? 'active' : ''}`}
+                  className={`dl-nav-item ${chefCoach ? 'dl-nav-item--card' : ''} ${active === item.key ? 'active' : ''}`}
                   onClick={() => setActive(item.key)}
                 >
                   {!plainNav && <span className="dl-nav-num">{i + 1}</span>}
@@ -176,6 +200,7 @@ export default function MenuLanding({
             </nav>
 
             <div className="dl-divider" />
+            {chefCoach && !firstUse && <ChefCoach steps={coachSteps} />}
           </>
         )}
 
