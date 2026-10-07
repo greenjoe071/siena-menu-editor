@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readArwMenu } from '@/lib/arw-menu-store';
+import { readMenuBySrc } from '@/lib/arw-menu-store';
 import { renderArwMenu, isArwStyle } from '@/lib/render-arw-server';
 import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
@@ -10,11 +10,12 @@ const HANDOFF = join(process.cwd(), 'handoff-arw');
 
 // ?style=classic (default) | left-aligned
 export async function GET(request: Request) {
-  const styleParam = new URL(request.url).searchParams.get('style');
+  const params = new URL(request.url).searchParams;
+  const styleParam = params.get('style');
   const style = isArwStyle(styleParam) ? styleParam : 'classic';
 
   const [data, renderSrc, validateSrc, templateSrc] = await Promise.all([
-    readArwMenu(),
+    readMenuBySrc(params.get('src')),
     readFile(join(HANDOFF, 'render.js'), 'utf8'),
     readFile(join(HANDOFF, 'validate.js'), 'utf8'),
     readFile(join(HANDOFF, style === 'classic' ? 'template.html' : 'template-left-aligned.html'), 'utf8'),

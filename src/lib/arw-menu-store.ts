@@ -50,6 +50,8 @@ export const arwDP = createDraftPublish<ArwMenuData>({
   publishedPrefix: 'arw-published-',
   schema:          ArwMenuSchema,
   readCurrent:     readArwMenu,
+  // No publish has stamped meta yet — the live menu went up for the 2026 run.
+  defaultPublishedAt: Date.parse('2026-08-28T12:00:00Z'),
 });
 
 export const readCurrentMeta = arwDP.readCurrentMeta;

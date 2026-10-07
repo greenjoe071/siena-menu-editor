@@ -30,7 +30,7 @@ export const HOME_MENUS: HomeMenu[] = [
   { id: 'privatedining', label: 'Private Dining',          href: '/privatedining', image: '/images/home/privatedining.webp',
     description: 'San Gimignano, Firenze, and Siena menus, plus saved alternates for events', badge: 'inprogress' },
   { id: 'arw',           label: 'Austin Restaurant Weeks', href: '/arw',           image: '/images/home/arw-logo.png', fit: 'contain',
-    description: '$50 three-course prix fixe — Aug 28–Sep 13, 2026', badge: 'new' },
+    description: '$50 three-course prix fixe — Aug 28–Sep 13, 2026' },
 ];
 
 export const BADGE_TEXT: Record<NonNullable<HomeMenu['badge']>, string> = {

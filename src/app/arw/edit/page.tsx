@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
@@ -212,6 +212,12 @@ function CourseSection({
 
 export default function ArwEditorPage() {
   const router = useRouter();
+  // "Make a Change" (/arw/fix) reuses this exact editor but reads/writes the
+  // LIVE menu directly; /arw/edit works on the draft (Oct 2026 — ARW now has
+  // the same draft/publish flow as the other menus).
+  const pathname = usePathname();
+  const isFix = pathname?.endsWith('/fix') ?? false;
+  const src = isFix ? 'current' : 'draft';
 
   // Read ?style= from the plain browser URL on mount (not next/navigation's
   // useSearchParams, which needs a Suspense boundary in the App Router and
@@ -223,15 +229,11 @@ export default function ArwEditorPage() {
   const [style, setStyle] = useState<ArwStyle | null>(null);
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('style');
-    if (fromUrl !== 'classic' && fromUrl !== 'left-aligned') {
-      router.replace('/arw');
-      return;
-    }
-    setStyle(fromUrl);
+    setStyle(fromUrl === 'left-aligned' ? 'left-aligned' : 'classic');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const apiPath = '/api/arw/fix';
+  const apiPath = isFix ? '/api/arw/fix' : '/api/arw/draft';
 
   const [menu, setMenu]             = useState<ArwMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -390,7 +392,43 @@ export default function ArwEditorPage() {
   function switchStyle(next: ArwStyle) {
     if (!style || next === style) return;
     setStyle(next);
-    router.replace(`/arw/edit?style=${next}`, { scroll: false });
+    router.replace(`${pathname}?style=${next}`, { scroll: false });
+  }
+
+  // ── Publish / discard / clear ─────────────────────────────────────────
+  const [publishing, setPublishing] = useState(false);
+
+  async function handlePublish() {
+    if (!menu) return;
+    const missing: string[] = [];
+    for (const c of COURSES) menu.courses[c.key].items.forEach((it, n) => {
+      if (!it.name.trim()) missing.push(`${c.title} dish ${n + 1}`);
+    });
+    if (missing.length) {
+      setSaveStatus('error');
+      setSaveMsg('Before making this the active menu, give every dish a name: ' + missing.join(', '));
+      return;
+    }
+    setPublishing(true);
+    setSaveMsg('Publishing…');
+    try {
+      await fetch('/api/arw/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
+      const res = await fetch('/api/arw/publish', { method: 'POST' });
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      window.location.href = '/arw';
+    } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
+  }
+
+  function handleClearAll() {
+    if (!confirm('Clear every dish name, description, and upcharge?\n\nThe subtitle and featured cocktail stay as-is. Your draft saves as you type, even before every dish is filled in.')) return;
+    setMenu(m => {
+      if (!m) return m;
+      const courses = { ...m.courses };
+      for (const c of COURSES) {
+        courses[c.key] = { items: m.courses[c.key].items.map(it => ({ ...it, name: '', desc: '', upcharge: '' })) };
+      }
+      return { ...m, courses };
+    });
   }
 
   if (!style || !menu) {
@@ -434,7 +472,9 @@ export default function ArwEditorPage() {
         )}
 
         <div className="draft-banner fix-banner">
-          ✏️ Editing in <strong>{STYLE_LABEL[style]}</strong>. Every change saves right away.
+          {isFix
+            ? <>✏️ You&rsquo;re editing the <strong>active menu</strong> in <strong>{STYLE_LABEL[style]}</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.</>
+            : <>✏️ Editing a draft in <strong>{STYLE_LABEL[style]}</strong>. The active menu is unchanged until you publish.</>}
           {otherStyleAlsoOverflows && !activeOverflow && (
             <> Note: <strong>{STYLE_LABEL[otherStyle]}</strong> currently doesn&rsquo;t fit this content — switch to it before printing that style.</>
           )}
@@ -550,8 +590,15 @@ export default function ArwEditorPage() {
 
         </div>{/* end editor-scroll */}
 
+        {!isFix && (
+          <div className="editor-footer editor-footer--publish">
+            <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
+            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
+          </div>
+        )}
         <div className="editor-footer">
-          <span className={saveStatusClass} style={{ flex: 1 }}>
+          {!isFix && <button className="btn-new-week" onClick={handleClearAll}>Clear All</button>}
+          <span className={saveStatusClass} style={{ flex: 1, marginLeft: isFix ? 0 : '8px' }}>
             {saveStatus === 'saved'  ? '✓ Saved' :
              saveStatus === 'saving' ? 'Saving…' :
              saveStatus === 'error'  ? `⚠ ${saveMsg}` :
@@ -564,7 +611,7 @@ export default function ArwEditorPage() {
             onClick={() => {
               if (menu && !confirmPrintWarnings('arw', menu, saveStatus === 'error')) return;
               if (menu) localStorage.setItem('siena-arw-print-data', JSON.stringify(menu));
-              window.open(`/arw-print?style=${style}&warned=1`, '_blank');
+              window.open(`/arw-print?style=${style}&src=${src}&warned=1`, '_blank');
             }}
           >
             Print Menu
@@ -586,14 +633,14 @@ export default function ArwEditorPage() {
         </div>
         <iframe
           ref={iframeRefs.classic}
-          src={`/arw-preview?style=classic&v=${cacheBust}`}
+          src={`/arw-preview?style=classic&src=${src}&v=${cacheBust}`}
           className="preview-iframe"
           title="ARW menu preview — Two-Column Classic"
           style={style !== 'classic' ? { position: 'fixed', top: '-9999px', left: '-9999px', width: '816px', height: '1056px' } : undefined}
         />
         <iframe
           ref={iframeRefs['left-aligned']}
-          src={`/arw-preview?style=left-aligned&v=${cacheBust}`}
+          src={`/arw-preview?style=left-aligned&src=${src}&v=${cacheBust}`}
           className="preview-iframe"
           title="ARW menu preview — Left-Aligned"
           style={style !== 'left-aligned' ? { position: 'fixed', top: '-9999px', left: '-9999px', width: '816px', height: '1056px' } : undefined}
