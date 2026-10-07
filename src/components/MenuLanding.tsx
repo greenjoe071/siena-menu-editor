@@ -5,6 +5,9 @@ import Link from 'next/link';
 import DraftActions from './DraftActions';
 import PrintPicker from './PrintPicker';
 import ChefCoach, { type CoachStep } from './ChefCoach';
+import LandingHero, { heroImageFor } from './LandingHero';
+import { montserrat, playfair } from '@/lib/fonts';
+import { usePathname } from 'next/navigation';
 
 // Shared landing page for every menu: view/print/fix the protected current
 // menu, start/continue a draft, and view/print the last 3 past menus.
@@ -137,6 +140,7 @@ export default function MenuLanding({
   chefCoach = false, cardNav = false,
 }: MenuLandingProps) {
   const cards = chefCoach || cardNav;
+  const pathname = usePathname();
   const navRefs = useRef<Partial<Record<SectionKey, HTMLButtonElement | null>>>({});
   const coachSteps = useMemo<CoachStep[]>(() => [
     {
@@ -169,19 +173,17 @@ export default function MenuLanding({
   }
 
   return (
-    <div className="dinner-landing">
-      <header className="dl-header">
-        <div className="dl-header-inner">
-          {editOnly && <Link href="/" className="dl-back-btn">← Back</Link>}
-          {!plainNav && <Link href="/" className="dl-back">🏠 Home</Link>}
-          <h1 className="dl-title">{menuName}</h1>
-          <p className="dl-subtitle">{
-            editOnly ? 'View or print the active menu, or make a change.'
-            : firstUse ? 'No menu has been made yet — start your first one below.'
-            : 'View or print the active menu, fix a mistake, or start a new draft.'
-          }</p>
-        </div>
-      </header>
+    <div className={`dinner-landing ${montserrat.className} ${playfair.variable}`}>
+      <LandingHero
+        title={menuName}
+        image={heroImageFor(pathname)}
+        back={plainNav ? undefined : { href: '/', label: '← Home' }}
+        subtitle={
+          editOnly ? 'View or print the active menu, or make a change.'
+          : firstUse ? 'No menu has been made yet — start your first one below.'
+          : 'View or print the active menu, fix a mistake, or start a new draft.'
+        }
+      />
 
       <main className={`dl-split ${editOnly ? 'dl-split--single' : ''}`}>
         {!editOnly && (

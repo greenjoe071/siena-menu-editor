@@ -1771,3 +1771,151 @@ a.dd-chooser-card:hover {
 .dl-coach-skip { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; color: var(--muted); }
 .dl-coach-next { background: var(--gold); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .dl-coach-next:hover { background: #9a7a20; }
+
+/* ══ Landing pages, restyled to match the home screen's "Sera" look ═══════
+   (Oct 7 2026, Joe). Photo hero (LandingHero.tsx), cream page, home-style
+   cards: white, or dark espresso + gold rule for the selected one. Applies to
+   every MenuLanding page plus the Drinks & Dessert and Private Dining
+   choosers. Appended last so it overrides the older navy styles above. */
+.dinner-landing { background: #f6f2ec; color: #2b1a0c; }
+
+.lh-hero {
+  position: relative;
+  height: 260px;
+  background: #0b1030 center 40% / cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+}
+.lh-shade {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(8, 12, 30, 0.2) 0%, rgba(10, 8, 6, 0.8) 100%);
+}
+.lh-back {
+  position: absolute; top: 18px; left: 24px; z-index: 1;
+  color: #fff; text-decoration: none; font-size: 13px; font-weight: 600;
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(20, 14, 8, 0.45); border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+}
+.lh-back:hover { background: rgba(20, 14, 8, 0.7); }
+.lh-text {
+  position: relative; width: 100%; max-width: 1000px; margin: 0 auto;
+  padding: 0 48px 28px; color: #fff;
+}
+.lh-kicker {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.26em;
+  text-transform: uppercase; color: #e3c27f;
+}
+.lh-title { margin-top: 6px; font-style: italic; font-weight: 600; font-size: 44px; line-height: 1.05; }
+.lh-sub { margin-top: 8px; font-size: 14.5px; opacity: 0.82; }
+
+/* Two-column area */
+.dinner-landing .dl-split { max-width: 1000px; padding-top: 36px; }
+.dinner-landing .dl-divider { background: #e4d9c8; }
+
+/* Home button (plainNav) — espresso, gold rule */
+.dinner-landing .dl-nav-home {
+  background: #2a1a0e; color: #f5ead7;
+  border-radius: 14px; border-bottom: 2px solid #b8821e;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.12), 0 6px 16px rgba(43, 26, 12, 0.14);
+}
+.dinner-landing .dl-nav-home:hover { background: #3a2716; }
+
+/* Nav cards — home-card white, selected = espresso with gold rule */
+.dinner-landing .dl-nav-item--card {
+  background: #fff; border: 1px solid transparent; border-radius: 14px; padding: 16px 18px;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.06), 0 6px 18px rgba(43, 26, 12, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s, background 0.2s;
+}
+.dinner-landing .dl-nav-item--card:hover {
+  background: #fff; border-color: transparent; transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(43, 26, 12, 0.08), 0 14px 30px rgba(43, 26, 12, 0.13);
+}
+.dinner-landing .dl-nav-item--card .dl-nav-label {
+  font-family: var(--font-playfair), Georgia, serif; font-style: italic;
+  font-size: 18px; font-weight: 600; line-height: 1.25; color: #2b1a0c;
+}
+.dinner-landing .dl-nav-item--card .dl-nav-hint { color: #6f6255; margin-top: 3px; }
+.dinner-landing .dl-nav-item--card.active {
+  background: #2a1a0e; border-color: transparent; border-top: 2px solid #b8821e;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.12), 0 8px 22px rgba(43, 26, 12, 0.2);
+}
+.dinner-landing .dl-nav-item--card.active .dl-nav-label { color: #f5ead7; }
+.dinner-landing .dl-nav-item--card.active .dl-nav-hint { color: #cdb89a; }
+
+/* Right-hand panes */
+.dinner-landing .dl-pane {
+  border: none; border-radius: 14px; padding: 28px 30px;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.06), 0 6px 18px rgba(43, 26, 12, 0.07);
+}
+.dinner-landing .dl-pane--current { border-top: 3px solid #b8821e; }
+.dinner-landing .dl-badge {
+  background: none; color: #b8821e; padding: 0; border-radius: 0;
+  font-size: 11.5px; letter-spacing: 0.22em;
+}
+.dinner-landing .dl-asof { color: #2b1a0c; font-weight: 600; }
+.dinner-landing .dl-card-title {
+  font-family: var(--font-playfair), Georgia, serif; font-style: italic;
+  font-size: 23px; font-weight: 600; color: #2b1a0c;
+}
+.dinner-landing .dl-card-note,
+.dinner-landing .dl-fix-hint,
+.dinner-landing .dl-draft-hint { color: #6f6255; }
+
+/* Buttons — espresso + gold instead of navy */
+.dinner-landing .dl-btn--solid,
+.dinner-landing .dl-btn--small { background: #2a1a0e; color: #f5ead7; }
+.dinner-landing .dl-btn--solid:hover,
+.dinner-landing .dl-btn--small:hover { background: #3a2716; }
+.dinner-landing .dl-btn--primary { background: #b8821e; }
+.dinner-landing .dl-btn--primary:hover { background: #9c6d17; }
+.dinner-landing .dl-past-row { border-color: #eee4d4; }
+
+/* Drinks & Dessert chooser — espresso cards like the home screen's core menus */
+.dinner-landing .dd-chooser { max-width: 760px; padding-top: 40px; }
+.dinner-landing .dd-chooser-card {
+  background: #2a1a0e; color: #f5ead7; border: none; border-top: 2px solid #b8821e;
+  border-radius: 14px; padding: 34px 24px; gap: 8px;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.12), 0 8px 22px rgba(43, 26, 12, 0.18);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.dinner-landing a.dd-chooser-card:hover {
+  border-color: #b8821e; transform: translateY(-3px);
+  box-shadow: 0 2px 4px rgba(43, 26, 12, 0.14), 0 16px 34px rgba(43, 26, 12, 0.26);
+}
+.dinner-landing .dd-chooser-title { font-style: italic; font-weight: 600; font-size: 25px; }
+.dinner-landing .dd-chooser-hint { color: #cdb89a; font-size: 13.5px; }
+
+/* Private Dining chooser */
+.dinner-landing .pd-home-grid {
+  max-width: 1000px; width: 100%; margin: 0 auto; padding: 36px 48px 60px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px;
+}
+.dinner-landing .pd-menu-card {
+  background: #fff; border: none; border-radius: 14px; padding: 22px 22px 20px;
+  box-shadow: 0 1px 2px rgba(43, 26, 12, 0.06), 0 6px 18px rgba(43, 26, 12, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.dinner-landing .pd-menu-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 2px 4px rgba(43, 26, 12, 0.08), 0 16px 34px rgba(43, 26, 12, 0.14);
+}
+.dinner-landing .pd-menu-card-label { font-style: italic; font-weight: 600; font-size: 23px; color: #2b1a0c; }
+.dinner-landing .pd-menu-card-action { color: #b8821e; }
+
+/* Phone width — stack the nav above the pane, same gutters as home */
+@media (max-width: 700px) {
+  .lh-hero { height: 210px; }
+  .lh-back { left: 16px; top: 14px; }
+  .lh-text { padding: 0 16px 20px; }
+  .lh-title { font-size: 34px; }
+  .dinner-landing .dl-split { flex-direction: column; padding: 20px 16px 48px; }
+  .dinner-landing .dl-nav { flex: none; width: 100%; padding-right: 0; }
+  .dinner-landing .dl-divider { display: none; }
+  .dinner-landing .dl-content { width: 100%; padding-left: 0; margin-top: 18px; }
+  .dinner-landing .dl-pane { padding: 22px 18px; }
+  .dinner-landing .dd-chooser { padding: 24px 16px 48px; }
+  .dinner-landing .pd-home-grid { padding: 24px 16px 48px; grid-template-columns: 1fr; gap: 16px; }
+}
+.dinner-landing .dl-coach-title { color: #2b1a0c; }
+.dinner-landing .dl-coach-next { background: #b8821e; }
