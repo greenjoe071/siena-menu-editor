@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // Coach-mark pop-ups for Chef on the menu landing pages (Oct 2026, Joe:
 // train Chef to start each week with "Work on a New Menu" instead of typing
@@ -64,19 +64,40 @@ export default function ChefCoach({ steps }: { steps: CoachStep[] }) {
     return () => { el?.classList.remove('dl-coach-target'); window.removeEventListener('resize', measure); };
   }, [current, measure]);
 
-  if (!current || !place) return null;
+  const popRef = useRef<HTMLDivElement>(null);
 
-  function gotIt() {
-    if (dontShow) hide(current!.id);
+  const gotIt = useCallback(() => {
+    if (!current) return;
+    if (dontShow) hide(current.id);
     setDontShow(false);
     setPlace(null);
     setIdx((i) => i + 1);
-  }
+  }, [current, dontShow]);
+
+  // Clicking anywhere off the pop-up (or pressing Esc) closes it, same as
+  // "Got it" (Joe, Oct 7 2026). The click still goes through, so tapping the
+  // highlighted card both closes the tip and opens that card.
+  useEffect(() => {
+    if (!current || !place) return;
+    const onClick = (e: MouseEvent) => {
+      if (popRef.current && !popRef.current.contains(e.target as Node)) gotIt();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') gotIt(); };
+    document.addEventListener('click', onClick, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onClick, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [current, place, gotIt]);
+
+  if (!current || !place) return null;
 
   return (
     <>
       <div className="dl-coach-overlay" />
       <div
+        ref={popRef}
         className={`dl-coach-pop dl-coach-pop--${place.side}`}
         style={{ top: place.top, left: place.left, width: POP_W }}
         role="dialog"
