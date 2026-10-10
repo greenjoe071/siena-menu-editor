@@ -89,6 +89,10 @@ export const MenuSchema = z.object({
   raw_warning_main: z.string().min(1),
   raw_warning_qualifier: z.string().min(1),
   policy_line: z.string().min(1),
+  // Oct 2026: true = two-column grid sections list dishes left column top
+  // to bottom, then right column (render.js). Absent on older saved menus,
+  // which keep the original row-by-row order.
+  column_order: z.boolean().optional(),
   salad_addons: AddonBlockSchema,
   pasta_addons: AddonBlockSchema,
   steak_addons: AddonBlockSchema,

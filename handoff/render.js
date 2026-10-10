@@ -175,7 +175,7 @@
     return el;
   }
 
-  function renderSection(doc, sectionId, sectionData) {
+  function renderSection(doc, sectionId, sectionData, columnOrder) {
     const titleEl = doc.querySelector('[data-section-title-for="' + sectionId + '"]');
     if (titleEl) titleEl.textContent = sectionData.title;
 
@@ -196,6 +196,7 @@
     }
 
     const placed = {};
+    const queued = new Map(); // container → dish elements, in data order
     for (const dish of sectionData.items || []) {
       if (dish.enabled === false) continue;
       let el = dishEl[dish.id];
@@ -206,8 +207,30 @@
       }
       if (!el || !container) continue;
       renderDish(doc, el, dish);
-      container.appendChild(el);
+      if (!queued.has(container)) queued.set(container, []);
+      queued.get(container).push(el);
       placed[dish.id] = true;
+    }
+
+    // Column order (Oct 2026, owner request — local Claude Code change): when
+    // the data says `column_order: true`, a `.two-col` grid reads TOP TO
+    // BOTTOM — the first half of the visible dishes (rounded up) fill the
+    // left column, the rest the right. The grid itself fills row by row, so
+    // the elements are appended interleaved (left row 1, right row 1, …).
+    // Without the flag (older saved menus / Past Menus) the original
+    // row-by-row order is kept, so those print exactly as before.
+    // `.two-col-flow` sections already flow down each column.
+    for (const [container, els] of queued) {
+      let order = els;
+      if (columnOrder && container.classList.contains('two-col')) {
+        const rows = Math.ceil(els.length / 2);
+        order = [];
+        for (let r = 0; r < rows; r++) {
+          order.push(els[r]);
+          if (r + rows < els.length) order.push(els[r + rows]);
+        }
+      }
+      for (const el of order) container.appendChild(el);
     }
 
     // Remove hidden dishes and dishes no longer in the data.
@@ -261,7 +284,7 @@
 
     // Sections
     for (const [id, section] of Object.entries(data.sections)) {
-      renderSection(doc, id, section);
+      renderSection(doc, id, section, data.column_order === true);
     }
   }
 

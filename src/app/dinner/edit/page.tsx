@@ -56,6 +56,7 @@ interface MenuData {
   raw_warning_main: string;
   raw_warning_qualifier: string;
   policy_line: string;
+  column_order?: boolean;   // dishes read down the left column, then the right
   salad_addons: AddonBlock;
   pasta_addons: AddonBlock;
   steak_addons: AddonBlock;
@@ -429,6 +430,10 @@ function SectionBlock({
                 Long title ({titleLen} chars) — may crowd the gold rule
               </div>
             )}
+          </div>
+
+          <div className="field-hint" style={{ fontSize: '12px', opacity: 0.7, margin: '2px 0 8px' }}>
+            Order on the menu: down the left column, then down the right column.
           </div>
 
           <Droppable droppableId={sectionId} type="dish">
