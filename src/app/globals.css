@@ -1948,3 +1948,10 @@ a.dd-chooser-card:hover {
 .btn-move-addon:disabled { opacity: 0.25; cursor: default; }
 .btn-add-addon:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Pasta "+ Add a pasta dish" — solid green so it stands out (Joe, Oct 10 2026) */
+.btn-add-dish {
+  display: block; width: 100%; background: var(--success); color: #fff; border: none;
+  border-radius: var(--radius); font-size: 14px; font-weight: 700; padding: 10px 14px; cursor: pointer;
+}
+.btn-add-dish:hover:not(:disabled) { background: #24643f; }
+.btn-add-dish:disabled { background: #cfcabd; color: #6b6456; cursor: not-allowed; }

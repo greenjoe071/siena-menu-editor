@@ -492,7 +492,7 @@ function SectionBlock({
 
           {onAddDish && (
             <div style={{ marginTop: '10px' }}>
-              <button className="btn-add-addon" onClick={onAddDish} disabled={shown >= PASTA_MAX_VISIBLE}>+ Add a pasta dish</button>
+              <button className="btn-add-dish" onClick={onAddDish} disabled={shown >= PASTA_MAX_VISIBLE}>+ Add a pasta dish</button>
               <div className="field-hint" style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px' }}>
                 {shown >= PASTA_MAX_VISIBLE
                   ? `Pasta is full (${PASTA_MAX_VISIBLE} dishes showing). Hide one to add another.`
