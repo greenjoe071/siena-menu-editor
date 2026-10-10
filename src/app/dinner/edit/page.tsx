@@ -757,7 +757,7 @@ export default function DinnerDraftEditorPage() {
                       <SectionBlock
                         sectionId={sid}
                         section={menu.sections[sid]}
-                        defaultOpen={i === 0 && group.label === 'Page 1'}
+                        defaultOpen={false}
                         onChange={handleSectionChange}
                         onDishChange={handleDishChange}
                         onAddDish={sid === 'pasta' ? handleAddPastaDish : undefined}
