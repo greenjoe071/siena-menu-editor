@@ -289,16 +289,49 @@ function DishRow({
     onChange(sectionId, index, { ...dish, [field]: value });
   }
 
+  if (!isShown(dish)) {
+    // Hidden dish: a slim red strip (Joe, Oct 10 2026 — option B). Still
+    // draggable so it keeps its place; "Show on menu" brings the row back.
+    return (
+      <Draggable draggableId={dish.id} index={index}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            className="dish-hidden-strip"
+            style={{
+              ...provided.draggableProps.style,
+              boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : undefined,
+            }}
+          >
+            <span className="drag-handle" {...provided.dragHandleProps} title="Drag to reorder">⠿</span>
+            <span className="dish-hidden-eye" aria-hidden="true">🚫</span>
+            <span className="dish-hidden-text">
+              <strong>{dish.name || '(unnamed dish)'}</strong> is hidden from the printed menu
+            </span>
+            <button
+              type="button"
+              className="btn-show-dish"
+              onClick={() => onChange(sectionId, index, { ...dish, enabled: true })}
+            >
+              Show on menu
+            </button>
+          </div>
+        )}
+      </Draggable>
+    );
+  }
+
   return (
     <Draggable draggableId={dish.id} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`dish-row ${isShown(dish) ? '' : 'dish-row--hidden'}`}
+          className="dish-row"
           style={{
             ...provided.draggableProps.style,
-            opacity: snapshot.isDragging ? 0.85 : isShown(dish) ? 1 : 0.5,
+            opacity: snapshot.isDragging ? 0.85 : 1,
             boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : undefined,
           }}
         >
@@ -306,15 +339,15 @@ function DishRow({
             <span className="drag-handle" {...provided.dragHandleProps} title="Drag to reorder">
               ⠿
             </span>
-            <span className="dish-name-preview">{dish.name || '(unnamed)'}{!isShown(dish) && ' — hidden'}</span>
-            <label className="raw-toggle dish-show-toggle" title="Show or hide this dish on the printed menu (it stays saved either way)">
-              <input
-                type="checkbox"
-                checked={isShown(dish)}
-                onChange={(e) => onChange(sectionId, index, { ...dish, enabled: e.target.checked })}
-              />
-              {isShown(dish) ? 'Showing' : 'Hidden'}
-            </label>
+            <span className="dish-name-preview">{dish.name || '(unnamed)'}</span>
+            <button
+              type="button"
+              className="btn-hide-dish"
+              title="Take this dish off the printed menu (it stays saved, and you can show it again any time)"
+              onClick={() => onChange(sectionId, index, { ...dish, enabled: false })}
+            >
+              Hide
+            </button>
             <label className="raw-toggle" title="Add raw-food warning asterisk">
               <input
                 type="checkbox"

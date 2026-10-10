@@ -1921,8 +1921,25 @@ a.dd-chooser-card:hover {
 .dinner-landing .dl-coach-next { background: #b8821e; }
 
 /* Dinner editor, Oct 2026: dish show/hide, add-on reorder, Pasta "add" limit */
-.dish-row--hidden .dish-fields { filter: grayscale(1); }
-.dish-show-toggle { margin-left: auto; }
+/* Hidden dish = slim red strip (Joe picked option B, Oct 10 2026) */
+.dish-hidden-strip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border: 1.5px dashed #e0a0a0; border-radius: var(--radius);
+  background: #fcebeb; color: #8f2424; font-size: 13px;
+}
+.dish-hidden-eye { font-size: 15px; line-height: 1; }
+.dish-hidden-text { flex: 1; min-width: 0; }
+.dish-hidden-text strong { font-weight: 700; }
+.btn-show-dish {
+  background: var(--success); color: #fff; border: none; border-radius: var(--radius);
+  font-size: 13px; font-weight: 700; padding: 7px 14px; cursor: pointer; flex-shrink: 0;
+}
+.btn-show-dish:hover { background: #24643f; }
+.btn-hide-dish {
+  margin-left: auto; background: #fff; color: var(--muted); border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 11px; font-weight: 600; padding: 3px 10px; cursor: pointer;
+}
+.btn-hide-dish:hover { color: var(--danger); border-color: var(--danger); }
 .addon-move { display: inline-flex; flex-direction: column; gap: 1px; margin-right: 4px; }
 .btn-move-addon {
   border: 1px solid var(--border); background: #fff; color: var(--muted);
