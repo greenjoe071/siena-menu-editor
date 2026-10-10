@@ -1919,3 +1919,15 @@ a.dd-chooser-card:hover {
 }
 .dinner-landing .dl-coach-title { color: #2b1a0c; }
 .dinner-landing .dl-coach-next { background: #b8821e; }
+
+/* Dinner editor, Oct 2026: dish show/hide, add-on reorder, Pasta "add" limit */
+.dish-row--hidden .dish-fields { filter: grayscale(1); }
+.dish-show-toggle { margin-left: auto; }
+.addon-move { display: inline-flex; flex-direction: column; gap: 1px; margin-right: 4px; }
+.btn-move-addon {
+  border: 1px solid var(--border); background: #fff; color: var(--muted);
+  font-size: 8px; line-height: 1; padding: 2px 4px; border-radius: 3px; cursor: pointer;
+}
+.btn-move-addon:disabled { opacity: 0.25; cursor: default; }
+.btn-add-addon:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }

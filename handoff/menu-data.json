@@ -47,6 +47,7 @@
       "items": [
         {
           "id": "d-47b8",
+          "enabled": true,
           "name": "Whipped Ricotta",
           "desc": "Warm Spicy Honey, Calabrian Chili, Crispy Garlic, Basil, Toasted Bread",
           "price_format": "single",
@@ -54,6 +55,7 @@
         },
         {
           "id": "d-b86d",
+          "enabled": true,
           "name": "Fichi Ripieni",
           "desc": "Black Mission Figs, Prosciutto di Parma, Goat Cheese, Balsamic Reduction",
           "price_format": "single",
@@ -61,6 +63,7 @@
         },
         {
           "id": "d-876a",
+          "enabled": true,
           "name": "Calamari Fritti",
           "desc": "Flash Fried Squid, Tomatoes, Capers, Pepperoncini",
           "price_format": "single",
@@ -68,6 +71,7 @@
         },
         {
           "id": "d-8461",
+          "enabled": true,
           "name": "Polpette alla Toscana",
           "desc": "Meatballs, Pomodoro, Whipped Ricotta, Italian Salsa Verde",
           "price_format": "single",
@@ -75,6 +79,7 @@
         },
         {
           "id": "d-ce8a",
+          "enabled": true,
           "name": "Bruschetta",
           "desc": "Grilled Siena Bread, Braised Texas Wild Boar Ragù",
           "price_format": "single",
@@ -82,6 +87,7 @@
         },
         {
           "id": "d-95b2",
+          "enabled": true,
           "name": "Arancini",
           "desc": "Breaded Fried Risotto Balls, Stuffed with Buffalo Mozzarella, Marinara Aioli",
           "price_format": "single",
@@ -89,6 +95,7 @@
         },
         {
           "id": "d-e336",
+          "enabled": true,
           "name": "Antipasto Misto",
           "desc": "Cured Meats, Assorted Cheeses, Fig Marmellata, Pepperoncini, Crostini",
           "price_format": "single",
@@ -96,6 +103,7 @@
         },
         {
           "id": "d-6e6e",
+          "enabled": true,
           "name": "Schiacciata",
           "desc": "Flatbread, Gorgonzola, Prosciutto, Roasted Pears, Walnuts, Spicy Honey",
           "price_format": "single",
@@ -103,6 +111,7 @@
         },
         {
           "id": "d-35cb",
+          "enabled": true,
           "name": "Carpaccio",
           "desc": "Raw Wagyu Beef, Capers, Parmesan Frico, Truffle Aioli, Arugula, Roasted Mushrooms",
           "price_format": "single",
@@ -111,6 +120,7 @@
         },
         {
           "id": "d-1926",
+          "enabled": true,
           "name": "Cozze",
           "desc": "Mussels, White Wine, Butter, Garlic, Shallots, Grilled Bruschetta",
           "price_format": "single",
@@ -123,6 +133,7 @@
       "items": [
         {
           "id": "d-04d2",
+          "enabled": true,
           "name": "Tomato Bisque",
           "desc": "Tomato Basil Soup, Parmesan Croutons, Basil Pesto",
           "price_format": "dual",
@@ -133,6 +144,7 @@
         },
         {
           "id": "d-153d",
+          "enabled": true,
           "name": "Mele",
           "desc": "Granny Smith Apples, Young Greens, Gorgonzola, Bacon, Walnuts, Honey Apple Cider Vinaigrette",
           "price_format": "single",
@@ -140,6 +152,7 @@
         },
         {
           "id": "d-d841",
+          "enabled": true,
           "name": "Campo",
           "desc": "Young Mixed Greens, Truffle Balsamic Vinaigrette",
           "price_format": "single",
@@ -147,6 +160,7 @@
         },
         {
           "id": "d-4f86",
+          "enabled": true,
           "name": "Caesar Salad",
           "desc": "Romaine Hearts, Parmesan, White Anchovy Dressing, Croutons",
           "price_format": "single",
@@ -159,6 +173,7 @@
       "items": [
         {
           "id": "d-2260",
+          "enabled": true,
           "name": "Pappardelle al Cinghiale",
           "desc": "Homemade Pasta, Red Wine Braised Texas Wild Boar Ragù",
           "price_format": "single",
@@ -166,6 +181,7 @@
         },
         {
           "id": "d-756c",
+          "enabled": true,
           "name": "Linguine con Polpette e Salsiccia",
           "desc": "Homemade Sweet Italian Pork Sausage, Meatballs, Spicy Pomodoro, Parmesan",
           "price_format": "single",
@@ -173,6 +189,7 @@
         },
         {
           "id": "d-1292",
+          "enabled": true,
           "name": "Fettuccine ai Funghi",
           "desc": "Homemade Pasta, Wild Mushrooms, White Truffle Oil, Grana Padano, Cream",
           "price_format": "single",
@@ -180,6 +197,7 @@
         },
         {
           "id": "d-4b10",
+          "enabled": true,
           "name": "Tagliatelle alla Bolognese",
           "desc": "Homemade Pasta, Traditional Meat Sauce of Bologna, Grana Padano",
           "price_format": "single",
@@ -187,6 +205,7 @@
         },
         {
           "id": "d-11da",
+          "enabled": true,
           "name": "Casarecce Della Nonna",
           "desc": "Twisted Pasta, Grilled Chicken, Gorgonzola, Caramelized Onions, Rosemary, Cream",
           "price_format": "single",
@@ -194,6 +213,7 @@
         },
         {
           "id": "d-66b8",
+          "enabled": true,
           "name": "Penne alla Vodka",
           "desc": "House Made Vodka Pomodoro Sauce, Grana Padano, Pepperoncini, Basil",
           "price_format": "single",
@@ -201,6 +221,7 @@
         },
         {
           "id": "d-342d",
+          "enabled": true,
           "name": "Capellini con Gamberi",
           "desc": "Angel Hair Pasta, Shrimp, Tomatoes, Capers, Garlic, Olive Oil, Oregano, Basil, Red Chili",
           "price_format": "single",
@@ -213,6 +234,7 @@
       "items": [
         {
           "id": "d-3346",
+          "enabled": true,
           "name": "Verdure Miste",
           "desc": "Grilled Brussels, Eggplant, Asparagus, Potatoes, Mushrooms",
           "price_format": "single",
@@ -220,6 +242,7 @@
         },
         {
           "id": "d-3d81",
+          "enabled": true,
           "name": "Spinach",
           "desc": "Sautéed with Garlic and Olive Oil",
           "price_format": "single",
@@ -227,6 +250,7 @@
         },
         {
           "id": "d-5f2a",
+          "enabled": true,
           "name": "Brussel Sprouts",
           "desc": "Flash Fried, Calabrian Chili Agrodolce, Sliced Almonds",
           "price_format": "single",
@@ -234,6 +258,7 @@
         },
         {
           "id": "d-028f",
+          "enabled": true,
           "name": "Asparagus",
           "desc": "Wood Grilled, Extra Virgin Olive Oil",
           "price_format": "single",
@@ -241,6 +266,7 @@
         },
         {
           "id": "d-0450",
+          "enabled": true,
           "name": "Truffle Fries",
           "desc": "Flash Fried, Parmesan, Truffle Oil, Truffle Aioli",
           "price_format": "single",
@@ -248,6 +274,7 @@
         },
         {
           "id": "d-129c",
+          "enabled": true,
           "name": "Mashed Potatoes",
           "desc": "Whipped Russet Potatoes, Cream and Butter",
           "price_format": "single",
@@ -260,6 +287,7 @@
       "items": [
         {
           "id": "d-1a53",
+          "enabled": true,
           "name": "Cacciucco alla Livornese",
           "desc": "Shrimp, Mussels, Calamari, Fresh Fish, Scallops, Red Chili, Oregano, Garlic, Crushed Tomatoes, Pomodoro, Grilled Bruschetta",
           "price_format": "single",
@@ -267,6 +295,7 @@
         },
         {
           "id": "d-becc",
+          "enabled": true,
           "name": "Bistecca di Manzo alla Griglia",
           "desc": "16oz Ribeye Steak, Calabrian Chili Butter, Mashed Potatoes, Grilled Asparagus",
           "price_format": "single",
@@ -275,6 +304,7 @@
         },
         {
           "id": "d-26ab",
+          "enabled": true,
           "name": "Pollo al Marsala",
           "desc": "Seared Chicken Breast, Wild Mushrooms, Marsala Wine, Buttered Mash Potatoes",
           "price_format": "single",
@@ -282,6 +312,7 @@
         },
         {
           "id": "d-6a30",
+          "enabled": true,
           "name": "Trota in Crosta di Noci",
           "desc": "Walnut Crusted Trout, Shrimp, Sautéed Spinach, Lemon Butter Sauce",
           "price_format": "single",
@@ -289,6 +320,7 @@
         },
         {
           "id": "d-07aa",
+          "enabled": true,
           "name": "Salmone Toscano",
           "desc": "Grilled Salmon, Potato Mash, Grilled Shrimp, Crabmeat, Lemon Butter Sauce",
           "price_format": "single",
@@ -297,6 +329,7 @@
         },
         {
           "id": "d-f015",
+          "enabled": true,
           "name": "Costata di Maiale",
           "desc": "Wood Grilled 16oz Pork Chop, Truffle Whole Grain Honey Mustard Glaze, Mashed Potatoes, Sautéed Baby Spinach",
           "price_format": "single",
@@ -305,6 +338,7 @@
         },
         {
           "id": "d-e2a6",
+          "enabled": true,
           "name": "Pollo Parmigiano",
           "desc": "Breaded Chicken Cutlet, Fresh Buffalo Mozzarella, Parmigiano, Pomodoro, Linguine",
           "price_format": "single",
@@ -312,6 +346,7 @@
         },
         {
           "id": "d-3f05",
+          "enabled": true,
           "name": "Filetto di Manzo",
           "desc": "6oz Wood Grilled Beef Filet, Red Wine Demi, Mashed Potatoes, Grilled Asparagus",
           "price_format": "single",
@@ -325,6 +360,7 @@
       "items": [
         {
           "id": "d-be29",
+          "enabled": true,
           "name": "San Pellegrino",
           "desc": "Sparkling Mineral Water",
           "price_format": "dual",
@@ -335,6 +371,7 @@
         },
         {
           "id": "d-a7c2",
+          "enabled": true,
           "name": "Acqua Panna",
           "desc": "Still Mineral Water",
           "price_format": "dual",
@@ -345,6 +382,7 @@
         },
         {
           "id": "d-723d",
+          "enabled": true,
           "name": "A’ Siciliana Natural Soda",
           "desc": "Sicily Blood Orange  ·  Sicily Lemon",
           "price_format": "single",
@@ -352,6 +390,7 @@
         },
         {
           "id": "d-a7f4",
+          "enabled": true,
           "name": "Soft Drinks",
           "desc": "Coca-Cola, Diet Coke, Sprite",
           "price_format": "single",
@@ -359,6 +398,7 @@
         },
         {
           "id": "d-6a29",
+          "enabled": true,
           "name": "Lychee Mocktail",
           "desc": "Lychee Nectar, Lime Juice, Tonic Water with a hint of Grenadine, shaken and served up",
           "price_format": "single",
@@ -366,6 +406,7 @@
         },
         {
           "id": "d-3735",
+          "enabled": true,
           "name": "The Siena Mocktail",
           "desc": "Agave Nectar, Lime Juice, Orange Juice, Tonic Water over ice, Tajín rim",
           "price_format": "single",
@@ -373,6 +414,7 @@
         },
         {
           "id": "d-62a7",
+          "enabled": true,
           "name": "Fruit Smash",
           "desc": "Refreshing blend of Orange Juice, Pineapple Juice, Cranberry Juice and Sprite, over ice",
           "price_format": "single",
@@ -380,6 +422,7 @@
         },
         {
           "id": "d-d9e0",
+          "enabled": true,
           "name": "Ranch Water Mocktail",
           "desc": "Agave Nectar, Lime Juice and Club Soda",
           "price_format": "single",
@@ -387,6 +430,7 @@
         },
         {
           "id": "d-714a",
+          "enabled": true,
           "name": "Heineken 0.0",
           "desc": "Zero-Alcohol Beer",
           "price_format": "single",

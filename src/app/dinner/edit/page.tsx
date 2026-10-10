@@ -15,6 +15,7 @@ import {
 
 interface Dish {
   id: string;
+  enabled?: boolean;   // hide/show switch (absent = shown) — Oct 2026
   name: string;
   desc: string;
   raw?: boolean;
@@ -104,19 +105,48 @@ function useDebounce<T>(value: T, ms: number): T {
   return debounced;
 }
 
+// Fit report posted back by the preview iframe (handoff/validate.js).
+interface FitReport {
+  fits: boolean;
+  problems: { type: string; message: string }[];
+}
+
+const PASTA_MAX_VISIBLE = 8;
+
+const isShown = (d: Dish) => d.enabled !== false;
+
+function hex4() {
+  return Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0');
+}
+
+/** Fresh opaque id like "d-3f2a" that isn't already used. */
+function freshId(prefix: string, taken: Set<string>) {
+  let id = '';
+  do { id = `${prefix}-${hex4()}`; } while (taken.has(id));
+  return id;
+}
+
+const ADDON_ID_PREFIX: Record<string, string> = {
+  salad_addons: 'sa',
+  pasta_addons: 'a',
+  steak_addons: 'ta',
+};
+
 // ── Add-on block editor ───────────────────────────────────────────────────
 
+// Oct 2026: salad, pasta and steak lines all work the same — editable names
+// and prices, add / remove / reorder, per-item and whole-line show/hide.
+// The one-line rule is checked by the preview's fit validator, not by
+// counting characters.
 function AddonBlockEditor({
   blockKey,
   block,
-  nameEditable,
-  variableCardinality,
+  wraps,
   onChange,
 }: {
   blockKey: string;
   block: AddonBlock;
-  nameEditable: boolean;
-  variableCardinality: boolean;
+  wraps: boolean;
   onChange: (updated: AddonBlock) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -128,8 +158,17 @@ function AddonBlockEditor({
   }
 
   function addItem() {
-    const newItem: AddonItem = { id: `a-${Math.random().toString(36).slice(2, 6)}`, name: '', price: '', enabled: true };
+    const taken = new Set(block.items.map((it) => it.id));
+    const newItem: AddonItem = { id: freshId(ADDON_ID_PREFIX[blockKey] ?? 'a', taken), name: '', price: '', enabled: true };
     onChange({ ...block, items: [...block.items, newItem] });
+  }
+
+  function moveItem(index: number, dir: -1 | 1) {
+    const j = index + dir;
+    if (j < 0 || j >= block.items.length) return;
+    const items = [...block.items];
+    [items[index], items[j]] = [items[j], items[index]];
+    onChange({ ...block, items });
   }
 
   function removeItem(index: number) {
@@ -137,16 +176,12 @@ function AddonBlockEditor({
     onChange({ ...block, items });
   }
 
-  // Pasta single-line character count warning
-  const pastaCharCount = blockKey === 'pasta_addons'
-    ? block.items.filter(i => i.enabled).reduce((sum, i) => sum + i.name.length + i.price.length + 2, 0)
-    : 0;
-
   return (
     <div className="section-block addon-block">
       <div className="section-block-header" onClick={() => setOpen((o) => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{ADDON_LABELS[blockKey]}</span>
+        {wraps && <span className="dd-chip dd-chip--bad" style={{ marginLeft: '6px' }}>too long for one line</span>}
         <label className="addon-block-toggle" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
@@ -168,25 +203,25 @@ function AddonBlockEditor({
             />
           </div>
 
-          {pastaCharCount > 70 && (
+          {wraps && (
             <div className="field-warn">
-              Total characters across enabled items ({pastaCharCount}) exceeds 70 — items may wrap to a second line on the printed menu.
+              This line no longer fits on one printed line. Shorten a name, or hide or remove an item.
             </div>
           )}
 
           <div className="addon-items-list">
             {block.items.map((item, i) => (
               <div key={item.id} className="addon-item-row">
-                {nameEditable ? (
-                  <input
-                    className="addon-name-input"
-                    value={item.name}
-                    onChange={(e) => setItem(i, { ...item, name: e.target.value })}
-                    placeholder="Item name"
-                  />
-                ) : (
-                  <span className="addon-name-label">{item.name}</span>
-                )}
+                <span className="addon-move">
+                  <button type="button" className="btn-move-addon" onClick={() => moveItem(i, -1)} disabled={i === 0} title="Move left on the printed line">▲</button>
+                  <button type="button" className="btn-move-addon" onClick={() => moveItem(i, 1)} disabled={i === block.items.length - 1} title="Move right on the printed line">▼</button>
+                </span>
+                <input
+                  className="addon-name-input"
+                  value={item.name}
+                  onChange={(e) => setItem(i, { ...item, name: e.target.value })}
+                  placeholder="Item name"
+                />
                 <div className="addon-price-group">
                   <span className="addon-price-dollar">$</span>
                   <input
@@ -204,22 +239,18 @@ function AddonBlockEditor({
                   />
                   On
                 </label>
-                {variableCardinality && (
-                  <button
-                    className="btn-remove-addon"
-                    onClick={() => removeItem(i)}
-                    title="Remove this item"
-                  >
-                    ✕
-                  </button>
-                )}
+                <button
+                  className="btn-remove-addon"
+                  onClick={() => removeItem(i)}
+                  title="Remove this item"
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
 
-          {variableCardinality && (
-            <button className="btn-add-addon" onClick={addItem}>+ Add item</button>
-          )}
+          <button className="btn-add-addon" onClick={addItem}>+ Add item</button>
 
           {blockKey === 'pasta_addons' && (
             <div className="field-group" style={{ marginTop: '10px' }}>
@@ -263,10 +294,10 @@ function DishRow({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="dish-row"
+          className={`dish-row ${isShown(dish) ? '' : 'dish-row--hidden'}`}
           style={{
             ...provided.draggableProps.style,
-            opacity: snapshot.isDragging ? 0.85 : 1,
+            opacity: snapshot.isDragging ? 0.85 : isShown(dish) ? 1 : 0.5,
             boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : undefined,
           }}
         >
@@ -274,7 +305,15 @@ function DishRow({
             <span className="drag-handle" {...provided.dragHandleProps} title="Drag to reorder">
               ⠿
             </span>
-            <span className="dish-name-preview">{dish.name || '(unnamed)'}</span>
+            <span className="dish-name-preview">{dish.name || '(unnamed)'}{!isShown(dish) && ' — hidden'}</span>
+            <label className="raw-toggle dish-show-toggle" title="Show or hide this dish on the printed menu (it stays saved either way)">
+              <input
+                type="checkbox"
+                checked={isShown(dish)}
+                onChange={(e) => onChange(sectionId, index, { ...dish, enabled: e.target.checked })}
+              />
+              {isShown(dish) ? 'Showing' : 'Hidden'}
+            </label>
             <label className="raw-toggle" title="Add raw-food warning asterisk">
               <input
                 type="checkbox"
@@ -354,22 +393,26 @@ function SectionBlock({
   defaultOpen,
   onChange,
   onDishChange,
+  onAddDish,
 }: {
   sectionId: SectionId;
   section: Section;
   defaultOpen: boolean;
   onChange: (sectionId: SectionId, updated: Section) => void;
   onDishChange: (sectionId: SectionId, index: number, updated: Dish) => void;
+  onAddDish?: () => void;   // Pasta only (Oct 2026)
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const titleLen = section.title.length;
+  const shown = section.items.filter(isShown).length;
+  const hidden = section.items.length - shown;
 
   return (
     <div className="section-block">
       <div className="section-block-header" onClick={() => setOpen((o) => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{section.title}</span>
-        <span className="section-count">{section.items.length} dishes</span>
+        <span className="section-count">{shown} dishes{hidden ? ` · ${hidden} hidden` : ''}</span>
       </div>
 
       <div className={`collapsible-content ${open ? 'open' : ''}`}>
@@ -408,6 +451,17 @@ function SectionBlock({
               </div>
             )}
           </Droppable>
+
+          {onAddDish && (
+            <div style={{ marginTop: '10px' }}>
+              <button className="btn-add-addon" onClick={onAddDish} disabled={shown >= PASTA_MAX_VISIBLE}>+ Add a pasta dish</button>
+              <div className="field-hint" style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px' }}>
+                {shown >= PASTA_MAX_VISIBLE
+                  ? `Pasta is full (${PASTA_MAX_VISIBLE} dishes showing). Hide one to add another.`
+                  : `Pasta can show up to ${PASTA_MAX_VISIBLE} dishes. Other sections can hide dishes but not add them.`}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -431,6 +485,18 @@ export default function DinnerDraftEditorPage() {
   const [previewUrl, setPreviewUrl] = useState(`/preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
+  // Fit check from the preview (validate.js). Joe, Oct 2026: typing ALWAYS
+  // saves; a menu that doesn't fit only blocks "Make This the Active Menu".
+  const [fit, setFit] = useState<FitReport | null>(null);
+
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.source !== iframeRef.current?.contentWindow) return;
+      if (e.data?.type === 'SIENA_MENU_VALIDATE_RESULT') setFit(e.data.report as FitReport);
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   useEffect(() => {
     fetch(apiPath)
@@ -468,9 +534,6 @@ export default function DinnerDraftEditorPage() {
       }
       setSaveStatus('saved');
       setSaveMsg(isFix ? 'Saved' : 'Draft saved');
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: 'SIENA_MENU_UPDATE', payload: data }, '*'
-      );
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
       setSaveStatus('error');
@@ -480,14 +543,55 @@ export default function DinnerDraftEditorPage() {
 
   useEffect(() => {
     if (debouncedMenu && prevJsonRef.current !== '') {
+      if (JSON.stringify(debouncedMenu) !== prevJsonRef.current) {
+        setFit(null);
+        iframeRef.current?.contentWindow?.postMessage({ type: 'SIENA_MENU_UPDATE', payload: debouncedMenu }, '*');
+      }
       saveAndRefresh(debouncedMenu);
     }
   }, [debouncedMenu, saveAndRefresh]);
 
   // ── Publish / discard ──────────────────────────────────────────────────
 
+  function publishBlockers(m: MenuData): string[] {
+    const out: string[] = [];
+    for (const sid of Object.keys(m.sections) as SectionId[]) {
+      m.sections[sid].items.forEach((d, n) => {
+        if (!isShown(d)) return;
+        const where = `${SECTION_LABELS[sid]} dish ${n + 1}${d.name.trim() ? ` (${d.name.trim()})` : ''}`;
+        const prices = d.price_format === 'dual'
+          ? [d.price_a ?? d.bowl_price, d.price_b ?? d.cup_price]
+          : [d.price];
+        const blanks = [!d.name.trim() && 'name', !d.desc.trim() && 'description',
+          prices.some((p) => !p || !p.trim()) && 'price'].filter(Boolean);
+        if (blanks.length) out.push(`${where}: ${blanks.join(', ')}`);
+      });
+    }
+    const pastaShown = m.sections.pasta.items.filter(isShown).length;
+    if (pastaShown > PASTA_MAX_VISIBLE) out.push(`Pasta has ${pastaShown} dishes showing — hide ${pastaShown - PASTA_MAX_VISIBLE}`);
+    for (const key of ['salad_addons', 'pasta_addons', 'steak_addons'] as const) {
+      const b = m[key];
+      if (!b.enabled) continue;
+      b.items.forEach((it, n) => {
+        if (it.enabled && (!it.name.trim() || !it.price.trim())) out.push(`${ADDON_LABELS[key]} item ${n + 1}: name or price`);
+      });
+    }
+    return out;
+  }
+
   async function handlePublish() {
     if (!menu) return;
+    const blanks = publishBlockers(menu);
+    if (blanks.length) {
+      setSaveStatus('error');
+      setSaveMsg('Before making this the active menu, fill in: ' + blanks.join('; ') + ' — or hide what you are not using.');
+      return;
+    }
+    if (!fit || !fit.fits) {
+      setSaveStatus('error');
+      setSaveMsg(fit ? 'This menu doesn\u2019t fit the page yet — see the red note at the top. Your draft is saved.' : 'Still checking the page fit — try again in a second.');
+      return;
+    }
 
     setPublishing(true);
     setSaveMsg('Publishing…');
@@ -544,6 +648,16 @@ export default function DinnerDraftEditorPage() {
     });
   }
 
+  function handleAddPastaDish() {
+    setMenu((m) => {
+      if (!m) return m;
+      const taken = new Set(Object.values(m.sections).flatMap((s) => s.items.map((d) => d.id)));
+      const dish: Dish = { id: freshId('d', taken), enabled: true, name: '', desc: '', price_format: 'single', price: '' };
+      const pasta = m.sections.pasta;
+      return { ...m, sections: { ...m.sections, pasta: { ...pasta, items: [...pasta.items, dish] } } };
+    });
+  }
+
   function handleDragEnd(result: DropResult) {
     if (!result.destination) return;
     if (result.source.droppableId !== result.destination.droppableId) return;
@@ -573,11 +687,8 @@ export default function DinnerDraftEditorPage() {
     : saveStatus === 'error' ? 'save-status error'
     : 'save-status';
 
-  const ADDON_CONFIG: { key: 'salad_addons' | 'pasta_addons' | 'steak_addons'; nameEditable: boolean; variableCardinality: boolean }[] = [
-    { key: 'salad_addons', nameEditable: false, variableCardinality: false },
-    { key: 'pasta_addons', nameEditable: true, variableCardinality: true },
-    { key: 'steak_addons', nameEditable: false, variableCardinality: false },
-  ];
+  const addonWraps = (key: string) =>
+    !!fit?.problems.some((p) => p.type === 'addon-wrap' && `${(p as { block?: string }).block}_addons` === key);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -593,6 +704,17 @@ export default function DinnerDraftEditorPage() {
           {isFix && (
             <div className="draft-banner fix-banner">
               ✏️ You&rsquo;re editing the <strong>active menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+            </div>
+          )}
+
+          {fit && !fit.fits && (
+            <div className="overflow-banner">
+              ⚠ {isFix
+                ? 'This menu no longer fits the printed page — your changes ARE saved, but shorten or hide something before printing.'
+                : 'This menu doesn\u2019t fit the printed page yet — your draft IS saved, but it can\u2019t become the active menu until it fits.'}
+              <ul style={{ margin: '6px 0 0 18px' }}>
+                {fit.problems.map((p, i) => <li key={i}>{p.message}</li>)}
+              </ul>
             </div>
           )}
 
@@ -625,7 +747,6 @@ export default function DinnerDraftEditorPage() {
 
             {/* Sections by page, with add-on blocks inserted after their section */}
             {PAGE_GROUPS.map((group) => {
-              const addonCfg = group.addonKey ? ADDON_CONFIG.find(c => c.key === group.addonKey) : undefined;
               return (
                 <div key={group.label} className="page-group">
                   <div className="page-group-label">
@@ -639,13 +760,13 @@ export default function DinnerDraftEditorPage() {
                         defaultOpen={i === 0 && group.label === 'Page 1'}
                         onChange={handleSectionChange}
                         onDishChange={handleDishChange}
+                        onAddDish={sid === 'pasta' ? handleAddPastaDish : undefined}
                       />
-                      {group.addonKey && group.addonAfter === sid && addonCfg && (
+                      {group.addonKey && group.addonAfter === sid && (
                         <AddonBlockEditor
                           blockKey={group.addonKey}
                           block={menu[group.addonKey]}
-                          nameEditable={addonCfg.nameEditable}
-                          variableCardinality={addonCfg.variableCardinality}
+                          wraps={addonWraps(group.addonKey)}
                           onChange={(updated) => setAddonBlock(group.addonKey!, updated)}
                         />
                       )}
@@ -699,7 +820,12 @@ export default function DinnerDraftEditorPage() {
               {isFix ? 'Print Menu' : 'Print Draft'}
             </button>
             {!isFix && (
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>
+              <button
+                className="btn-publish"
+                onClick={handlePublish}
+                disabled={publishing || (!!fit && !fit.fits)}
+                title={fit && !fit.fits ? 'The menu doesn\u2019t fit the page yet — see the red note at the top' : undefined}
+              >
                 {publishing ? 'Publishing…' : 'Make This the Active Menu'}
               </button>
             )}

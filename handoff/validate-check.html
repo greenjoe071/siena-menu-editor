@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Spring Menu — Validator Check</title>
+<style>
+body{margin:0;font-family:Montserrat,system-ui,sans-serif;background:#f3efe7;color:#3a1a06;display:grid;grid-template-columns:340px minmax(0,1fr);height:100vh}
+aside{padding:18px;overflow:auto;border-right:1px solid #c9a87a;background:#faf6ef}
+h1{font:italic 700 20px 'Playfair Display',serif;margin:0 0 4px;color:#7a1712}
+p{font-size:12px;line-height:1.45;margin:0 0 12px}
+.btns{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+button{font:600 12px Montserrat,sans-serif;text-align:left;padding:8px 10px;border:1px solid #c9a87a;background:#fff;color:#3a1a06;border-radius:3px;cursor:pointer}
+button[aria-pressed="true"]{background:#5a2e0e;color:#fff;border-color:#5a2e0e}
+.verdict{font:700 13px Montserrat,sans-serif;padding:8px 10px;border-radius:3px;margin-bottom:10px}
+.ok{background:#e4efdc;color:#2c5a1a}.bad{background:#f6dcd9;color:#7a1712}
+ul{margin:0 0 12px;padding-left:18px;font-size:12px;line-height:1.45}
+pre{font-size:10.5px;background:#fff;border:1px solid #e3d6bf;padding:8px;white-space:pre-wrap;margin:0}
+a{color:#b8821e}a:hover{color:#5a2e0e}
+main{overflow:auto}iframe{border:0;width:860px;height:3400px;display:block;margin:0 auto}
+</style></head>
+<body>
+<aside>
+<h1>Validator check</h1>
+<p>Renders <code>template.html</code> with a scenario, then runs <code>validate.js</code>. Save in the editor should be disabled whenever this shows "Blocked".</p>
+<div class="btns" id="btns"></div>
+<div id="verdict" class="verdict"></div>
+<ul id="problems"></ul>
+<pre id="raw"></pre>
+</aside>
+<main><iframe id="f" title="Menu preview"></iframe></main>
+<script src="render.js"></script>
+<script src="validate.js"></script>
+<script>
+const LONG = ', Charred Lemon, Shaved Fennel, Toasted Pine Nuts, Calabrian Chili Oil, Micro Basil, Aged Balsamic, Sea Salt';
+const SCENARIOS = [
+  ['Seed data (should pass)', d => d],
+  ['Hide Schiacciata', d => { find(d,'antipasti','Schiacciata').enabled = false; return d; }],
+  ['Add an 8th pasta (should pass)', d => { d.sections.pasta.items.push({id:'d-9a01',name:'Gnocchi al Pesto',desc:'Potato Gnocchi, Basil Pesto, Pine Nuts, Parmesan',price_format:'single',price:'25'}); return d; }],
+  ['Add a 9th pasta (blocked)', d => { for (let i=0;i<2;i++) d.sections.pasta.items.push({id:'d-9a0'+(i+2),name:'Extra Pasta '+(i+1),desc:'Homemade Pasta, Butter, Sage',price_format:'single',price:'22'}); return d; }],
+  ['Too many steak add-ons (blocked)', d => { d.steak_addons.items.push({id:'ta-x1',name:'Gorgonzola Crust',price:'5'},{id:'ta-x2',name:'Truffle Butter',price:'6'},{id:'ta-x3',name:'Crab Oscar',price:'14'}); return d; }],
+  ['Very long Secondi descriptions (blocked)', d => { d.sections.secondi.items.forEach(x => x.desc += LONG); return d; }],
+  ['Only one Contorni left (centered)', d => { d.sections.contorni.items.forEach((x,i) => { if (i) x.enabled = false; }); return d; }],
+];
+function find(d, s, name){ return d.sections[s].items.find(x => x.name === name); }
+let seed;
+const f = document.getElementById('f');
+async function run(i){
+  [...document.querySelectorAll('#btns button')].forEach((b,j)=>b.setAttribute('aria-pressed', String(i===j)));
+  const data = SCENARIOS[i][1](JSON.parse(JSON.stringify(seed)));
+  await new Promise(r => { f.onload = r; f.src = 'template.html?' + Date.now(); });
+  const doc = f.contentDocument;
+  const report = await SienaSpringValidate.renderAndValidate(doc, data, SienaRender.render);
+  const v = document.getElementById('verdict');
+  v.className = 'verdict ' + (report.fits ? 'ok' : 'bad');
+  v.textContent = report.fits ? 'Fits \u2014 Save allowed' : 'Blocked \u2014 Save disabled';
+  document.getElementById('problems').innerHTML = report.problems.map(p => '<li>'+p.message+'</li>').join('');
+  document.getElementById('raw').textContent = JSON.stringify({pages: report.pages.map(p=>({page:p.page,fits:p.fits,overflowPx:p.overflowPx,spareRoomPx:p.spareRoomPx})), addons: report.addons}, null, 1);
+  window.__lastReport = report;
+}
+fetch('menu-data.json').then(r=>r.json()).then(d => {
+  seed = d;
+  const btns = document.getElementById('btns');
+  SCENARIOS.forEach((s,i) => { const b = document.createElement('button'); b.textContent = s[0]; b.onclick = () => run(i); btns.appendChild(b); });
+  run(0);
+});
+</script>
+</body></html>

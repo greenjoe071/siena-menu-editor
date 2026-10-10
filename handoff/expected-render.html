@@ -122,6 +122,12 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 0 28pt;
 }
+/* Only one dish in a section → center it at one column's width */
+.two-col > .dish:only-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 14pt);
+}
 /* Independent-column variant: each column packs tightly regardless
    of the other. Use this when descriptions vary in length so a long
    row in column 1 doesn't force a gap in column 2. */
@@ -129,6 +135,13 @@ body {
   column-count: 2;
   column-gap: 28pt;
   column-fill: balance;
+}
+/* Only one dish in a section → center it at one column's width */
+.two-col-flow:has(> .dish:only-child) {
+  column-count: 1;
+  width: calc(50% - 14pt);
+  margin-left: auto;
+  margin-right: auto;
 }
 .two-col-flow .dish {
   break-inside: avoid;
@@ -199,7 +212,7 @@ body {
 /* ── Drinks section special treatment ── */
 .drinks-panel {
   background: transparent;
-  border: 1.25pt solid #7a1712;
+  border: 3.25pt solid #7a1712;
   border-radius: 3pt;
   padding: 13pt 14pt 9pt;
   margin: auto 0 0;
@@ -216,18 +229,28 @@ body {
   box-shadow: 0 0 0 2.5pt #fff;
   transform: translate(-50%, -50%) rotate(45deg);
 }
-.drinks-panel::before { left: -0.625pt; }
-.drinks-panel::after { left: calc(100% + 0.625pt); }
+.drinks-panel::before { left: -1.625pt; }
+.drinks-panel::after { left: calc(100% + 1.625pt); }
+/* Title sits on the top border, interrupting it */
 .drinks-panel .section-head {
-  margin: 0 0 6pt;
+  position: absolute;
+  top: -1.625pt;
+  left: 0;
+  right: 0;
+  margin: 0;
+  justify-content: center;
+  transform: translateY(-50%);
+}
+.drinks-panel .section-head .section-title {
+  background: #fff;
+  padding: 0 8pt;
 }
 .drinks-panel .section-head .section-title {
   color: #7a1712;
   letter-spacing: 0.18em;
 }
 .drinks-panel .section-head .section-rule {
-  background: #7a1712;
-  opacity: 0.45;
+  display: none;
 }
 .drinks-panel .dish-name {
   font-size: 11.5pt;

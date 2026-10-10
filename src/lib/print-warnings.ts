@@ -95,8 +95,9 @@ const CHECKS: Record<PrintMenuId, (d: Data, c: Checker) => void> = {
   dinner(d, c) {
     for (const [id, s] of Object.entries<Data>(d?.sections ?? {})) {
       const label = DINNER_SECTION_NAMES[id] ?? id;
-      c.untitled(s?.title, s?.items, label);
-      c.list(s?.items, s?.title || label, (it) => it?.price_format === 'dual'
+      const shown = (s?.items ?? []).filter((it: Data) => it?.enabled !== false); // hidden dishes don't print
+      c.untitled(s?.title, shown, label);
+      c.list(shown, s?.title || label, (it) => it?.price_format === 'dual'
         ? [it.price_a || it.bowl_price, it.price_b || it.cup_price] : [it?.price]);
     }
     for (const key of ['salad_addons', 'pasta_addons', 'steak_addons']) {

@@ -20,6 +20,19 @@
  *     FIXED at template load time. The renderer never moves a dish across
  *     containers; it only re-orders items within each container.
  *
+ *   - Dish hide/show (Oct 2026) — every dish has `enabled` (absent = true).
+ *     A dish with `enabled: false`, or whose id is missing from the data,
+ *     is REMOVED from the DOM. Remaining dishes are appended in data order,
+ *     so later dishes shift back one slot (row-by-row in `.two-col`, column
+ *     flow in `.two-col-flow`). A container left empty is removed (plus the
+ *     Mocktails `.subsection-head` before it); a section with no visible
+ *     dishes loses its heading too. Only-one-dish centering is pure CSS.
+ *
+ *   - Adding dishes — ONLY the `pasta` section accepts dish ids that are not
+ *     in the template (max 8 visible, enforced by validate.js). The renderer
+ *     builds the new slot from a blank dish shape. Unknown ids in any other
+ *     section are ignored.
+ *
  *   - Add-on blocks (pasta / salad / steak) — each block is a single line
  *     under its section. The renderer rebuilds the `.addons-items` innerHTML
  *     from the JSON array each render. Items have an `enabled` flag (default
@@ -150,6 +163,18 @@
     oldPrice.replaceWith(newPrice);
   }
 
+  // Sections that may contain dishes not present in the template.
+  const ADDABLE_SECTIONS = { pasta: true };
+
+  function blankDish(doc, id) {
+    const el = doc.createElement('div');
+    el.className = 'dish';
+    el.setAttribute('data-dish-id', id);
+    el.innerHTML = '<div class="dish-left"><span class="dish-name"></span>' +
+      '<span class="dish-desc"></span></div><div class="dish-price"></div>';
+    return el;
+  }
+
   function renderSection(doc, sectionId, sectionData) {
     const titleEl = doc.querySelector('[data-section-title-for="' + sectionId + '"]');
     if (titleEl) titleEl.textContent = sectionData.title;
@@ -170,12 +195,47 @@
       }
     }
 
-    for (const dish of sectionData.items) {
-      const el = dishEl[dish.id];
-      const container = dishContainer[dish.id];
+    const placed = {};
+    for (const dish of sectionData.items || []) {
+      if (dish.enabled === false) continue;
+      let el = dishEl[dish.id];
+      let container = dishContainer[dish.id];
+      if (!el && ADDABLE_SECTIONS[sectionId] && containers.length === 1) {
+        el = blankDish(doc, dish.id);
+        container = containers[0];
+      }
       if (!el || !container) continue;
       renderDish(doc, el, dish);
       container.appendChild(el);
+      placed[dish.id] = true;
+    }
+
+    // Remove hidden dishes and dishes no longer in the data.
+    for (const id of Object.keys(dishEl)) {
+      if (!placed[id]) dishEl[id].remove();
+    }
+
+    // Remove containers left empty (and the Mocktails heading before one).
+    let visible = 0;
+    for (const c of containers) {
+      const n = c.querySelectorAll(':scope > [data-dish-id]').length;
+      visible += n;
+      if (n === 0) {
+        let prev = c.previousElementSibling;
+        if (prev && prev.classList.contains('subsection-head')) prev.remove();
+        c.remove();
+      }
+    }
+
+    // No visible dishes → remove the section heading too.
+    if (visible === 0) {
+      const heads = doc.querySelectorAll('.section-head[data-section-id="' + sectionId + '"]');
+      for (const h of heads) {
+        const panel = h.parentElement;
+        h.remove();
+        if (panel && panel.classList.contains('drinks-panel') &&
+            !panel.querySelector('[data-dish-id]')) panel.remove();
+      }
     }
   }
 

@@ -6,7 +6,7 @@ You are building a small web app that lets restaurant managers edit the content 
 
 ## RULES — READ BEFORE WRITING ANY CODE
 
-1. **`template.html` is the golden master.** Do not modify its CSS, HTML structure, or layout. The only things that legitimately change inside it at runtime are: text content of marked elements (`[data-text-id]`), text content inside dish slots (`[data-dish-id]`), and the *order* of dish elements within a section container.
+1. **`template.html` is the golden master.** Do not modify its CSS, HTML structure, or layout. The only things that legitimately change inside it at runtime are: text content of marked elements (`[data-text-id]`), text content inside dish slots (`[data-dish-id]`), the *order* of dish elements within a section container, removal of hidden dishes, and new Pasta dish slots — all done by `render.js`.
 
 2. **Do not rebuild the menu in a framework.** Do not use React/Vue/Svelte to recreate the printed menu. Use the provided **DOM hydration** approach: parse `template.html`, mutate via the provided `render.js`, serialize back to HTML.
 
@@ -39,7 +39,10 @@ You are building a small web app that lets restaurant managers edit the content 
 | `expected-render.html` | Snapshot baseline. `render(template, seed-data)` must equal this. |
 | `menu-data.json` | Seed data for initial DB population (or default JSON file). |
 | `render.js` | The renderer. Single source of truth for JSON → HTML. |
-| `snapshot-test.spec.js` | The safety net. Must pass on every commit. |
+| `validate.js` | Fit validator (HARD BLOCK). Disables Save if a page would be cut off or an add-on line wraps. New Oct 2026. |
+| `validate-check.html` | Open in Chrome (via a local server) to see the validator pass/block seven test scenarios. |
+| `CHANGES-2026-10.md` | What changed in the Oct 2026 update — read this first if you've built against an earlier version. |
+| `snapshot-test.spec.mjs` | The safety net. Must pass on every commit. |
 | `fonts/` | Self-hosted Playfair Display .ttf files. Ship to `/fonts/` on prod. |
 
 ---
@@ -67,7 +70,7 @@ The editor pane on the right is simply `<iframe src="/preview">` — re-load it 
 3. Implement `/api/menu` GET + PUT.
 4. Implement `/preview` and `/print`. Verify they render correctly against `template.html`.
 5. Wire up the snapshot test. Run it locally and in CI. Confirm it fails when you break things on purpose, then revert.
-6. Build the editor UI. Form fields for each editable field. Drag-to-reorder for dishes within a section.
+6. Build the editor UI. Form fields for each editable field. Drag-to-reorder for dishes within a section. Hide/show per dish. Wire `validate.js` so Save is disabled whenever the menu doesn't fit.
 7. Deploy. Test print from production. Verify fonts.
 8. Hand back the URL and a one-page user guide.
 
@@ -76,8 +79,7 @@ The editor pane on the right is simply `<iframe src="/preview">` — re-load it 
 ## Out of scope for v1
 
 - Authentication / per-user accounts (owner will add later if needed)
-- Adding/removing **dishes** (layout cannot accept extra dishes safely). The pasta add-on **items** are a separate, variable-cardinality list and CAN be edited — see BUILD-SPEC.
-- Adding/removing **salad or steak add-on items** — those cardinalities are fixed. (Their toggles + prices are editable, but the set of items is locked.)
+- Adding dishes outside Pasta (Pasta can add up to 8). Every dish can be hidden/shown — see BUILD-SPEC.
 - Adding/removing sections (each section's page placement is part of the design)
 - Moving dishes between sections (a Pasta in the Secondi column would mis-frame)
 - Editing the CSS, fonts, or page-break structure of `template.html`
