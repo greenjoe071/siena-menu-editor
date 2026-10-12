@@ -1,36 +1,38 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { readMenuBySrc } from '@/lib/tueswed-menu-store';
-import { renderTuewedMenu } from '@/lib/render-tueswed-server';
+import { loadTuewedPackage, renderTuewedMenu } from '@/lib/render-tueswed-server';
 import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
+import type { TuewedMenuData } from '@/lib/tueswed-schema';
 
 export const dynamic = 'force-dynamic';
 
-const HANDOFF = join(process.cwd(), 'handoff-tueswed');
-
+// ?src=current (default) | draft | published-<ts>
+// ?pkg=v3 forces the v3 package (the editor always edits in v3, even while
+// the saved copy it opened is still an older v2 menu).
 export async function GET(request: Request) {
-  const src = new URL(request.url).searchParams.get('src');
-  const [data, renderSrc, validateSrc, templateSrc] = await Promise.all([
-    readMenuBySrc(src),
-    readFile(join(HANDOFF, 'render.js'), 'utf8'),
-    readFile(join(HANDOFF, 'validate.js'), 'utf8'),
-    readFile(join(HANDOFF, 'template.html'), 'utf8'),
-  ]);
+  const params = new URL(request.url).searchParams;
+  const data = await readMenuBySrc(params.get('src'));
+  const forceV3 = params.get('pkg') === 'v3' && !data.special;
+  const pkgData = (forceV3 ? { ...data, special: { label: '', title: '', price: '', desc: '' } } : data) as TuewedMenuData;
+  const { template: templateSrc, renderSrc, validateSrc } = await loadTuewedPackage(pkgData);
 
-  // Extract the .page div's inner HTML from the raw template.
-  // render.js permanently removes optional nodes (addon, footnotes) when their
-  // content is empty. To allow those nodes to reappear on subsequent updates we
-  // reset the .page to its original template state before every live render.
-  const pageInnerMatch = templateSrc.match(/<div class="page">([\s\S]*?)<\/div><!-- \/page -->/);
-  const templatePageInner = pageInnerMatch ? pageInnerMatch[1] : '';
+  let html = await renderTuewedMenu(pkgData);
 
-  let html = await renderTuewedMenu(data);
+  // The template's screen body is a flex row, so in a preview pane narrower
+  // than 8.5in the .page would SHRINK and the fit check would report false
+  // overflow (same gotcha as Private Dining / Generic). Keep the page at full
+  // width in the preview only — print is untouched.
+  html = html.replace('</head>', '<style>@media screen{.page{flex-shrink:0}}</style></head>');
+
+  // render.js removes optional nodes (add-on, empty description lines) when
+  // their data is empty, so every live update re-renders a FRESH copy of the
+  // template and swaps it in — a field filled back in must come back.
+  const safeTemplate = JSON.stringify(templateSrc).replace(/<\/script/gi, '<\\/script');
 
   const liveScript = `<script>
+var _tpl = ${safeTemplate};
 ${renderSrc}
 ${validateSrc}
 var _tuewedValidateTimer = null;
-var _tuewedPageInner = ${JSON.stringify(templatePageInner)};
 
 function _tuewedRunValidate() {
   var Validate = window.SienaTuewedValidate || SienaTuewedValidate;
@@ -41,11 +43,13 @@ function _tuewedRunValidate() {
 }
 
 function _tuewedApplyUpdate(payload) {
-  // Reset the page to the raw template before rendering so that optional
-  // nodes removed by render.js (addon, footnotes) can come back.
-  var page = document.querySelector('.page');
-  if (page && _tuewedPageInner) page.innerHTML = _tuewedPageInner;
-  (window.SienaTuewedRender || SienaTuewedRender).render(document, payload);
+  var fresh = (new DOMParser()).parseFromString(_tpl, 'text/html');
+  (window.SienaTuewedRender || SienaTuewedRender).render(fresh, payload);
+  var y = window.scrollY;
+  var btn = document.querySelector('.preview-print-btn');
+  document.body.innerHTML = fresh.body.innerHTML;
+  if (btn) document.body.appendChild(btn);
+  window.scrollTo(0, y);
 }
 
 window.addEventListener('message', function(e) {
@@ -54,7 +58,7 @@ window.addEventListener('message', function(e) {
       _tuewedApplyUpdate(e.data.payload);
       clearTimeout(_tuewedValidateTimer);
       _tuewedValidateTimer = setTimeout(_tuewedRunValidate, 120);
-    } catch(_) {}
+    } catch(err) { console.warn('render error', err); }
   }
 });
 // Run initial validation after fonts ready
@@ -84,7 +88,8 @@ document.fonts.ready.then(function() { _tuewedRunValidate(); });
 </style>
 <button class="preview-print-btn" onclick="window.print()">🖨 Print Menu</button>`;
 
-  html = html.replace('</body>', liveScript + '\n</body>');
+  // Function replacer: `$` in the injected JS must be inserted literally.
+  html = html.replace('</body>', () => liveScript + '\n</body>');
 
   // Pre-print warnings (missing titles / prices) — see print-warnings.ts
   html = withPrintGuard(html, request.url, printWarnings('tueswed', data));

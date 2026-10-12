@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tues/Wed v3 — validator check</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:24px;color:#222}
+table{border-collapse:collapse;margin-top:12px}td,th{border:1px solid #ccc;padding:6px 10px;text-align:left;font-size:14px}
+.ok{color:#1a7f37;font-weight:700}.bad{color:#b42318;font-weight:700}
+iframe{position:absolute;left:-9999px;width:816px;height:1056px;border:0}
+</style>
+</head>
+<body>
+<h1>Tues/Wed v3 — validate.js scenarios</h1>
+<p>Each row renders template.html with an edited copy of menu-data.json in a hidden iframe, then runs SienaTuewedValidate.validate().</p>
+<table><thead><tr><th>Scenario</th><th>Expected</th><th>Got</th><th>Problems</th><th>Natural / max px</th><th>worstSection</th></tr></thead><tbody id="rows"></tbody></table>
+<script src="render.js"></script>
+<script src="validate.js"></script>
+<script>
+const LONG=' Finished with shaved Parmigiano Reggiano, toasted pine nuts, lemon zest, extra-virgin olive oil and a scattering of fresh garden herbs picked this morning.';
+const scenarios=[
+  ['Seed data',d=>d,true],
+  ['Add-on removed',d=>{d.addon.title='';return d},true],
+  ['Special desc removed',d=>{d.special.desc='';return d},true],
+  ['Course II desc one line longer',d=>{d.courses[1].desc+=' Finished with toasted pine nuts and lemon zest.';return d},true],
+  ['One very long course desc',d=>{d.courses[1].desc+=LONG;return d},false],
+  ['All 3 courses + special very long',d=>{d.courses.forEach(c=>c.desc+=LONG+LONG);d.special.desc+=LONG+LONG;return d},false],
+  ['Very long weekly details',d=>{d.weekly.forEach(w=>w.detail+=LONG+LONG+LONG);return d},false],
+  ['Label far too long',d=>{d.special.label='Tuesdays Only — Ask Your Server About Tonight’s Chef Special';return d},false],
+];
+(async()=>{
+  const [tpl,seed]=await Promise.all([fetch('template.html').then(r=>r.text()),fetch('menu-data.json').then(r=>r.json())]);
+  const rows=document.getElementById('rows');
+  for(const [name,fn,expect] of scenarios){
+    const f=document.createElement('iframe');document.body.appendChild(f);
+    f.srcdoc=tpl.replace('<head>','<head><base href="'+location.href+'">');
+    await new Promise(r=>f.onload=r);
+    const rep=await SienaTuewedValidate.renderAndValidate(f.contentDocument,fn(structuredClone(seed)),SienaTuewedRender.render);
+    const pass=rep.fits===expect;
+    rows.insertAdjacentHTML('beforeend',`<tr><td>${name}</td><td>${expect?'fits':'blocked'}</td><td class="${pass?'ok':'bad'}">${rep.fits?'fits':'blocked'} ${pass?'✓':'✗'}</td><td>${rep.problems.map(p=>p.code).join(', ')||'—'}</td><td>${rep.naturalHeightPx} / ${rep.maxHeightPx}</td><td>${rep.worstSection||'—'}</td></tr>`);
+  }
+  document.body.dataset.done='1';
+})();
+</script>
+</body>
+</html>

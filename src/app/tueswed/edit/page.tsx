@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
+import { TUESWED_CHAR_LIMITS as L, TUESWED_DEFAULT_WEEKLY } from '@/lib/tueswed-schema';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -19,25 +20,51 @@ interface TuewedAddon {
   price?: string;
 }
 
+// v3 (Oct 2026): "Tuesdays Only" box on top of the page.
+interface TuewedSpecial {
+  label: string;
+  title: string;
+  price: string;
+  desc: string;
+}
+
+interface TuewedWeekly {
+  id: 'week-1' | 'week-2' | 'week-3' | 'week-4';
+  day: string;
+  headline: string;
+  detail: string;
+}
+
 interface TuewedMenuData {
+  special?: TuewedSpecial;           // v3 only
   price: string;
   courses: [TuewedCourse, TuewedCourse, TuewedCourse];
   addon?: TuewedAddon;
-  policy_line: string;
+  weekly?: [TuewedWeekly, TuewedWeekly, TuewedWeekly, TuewedWeekly];   // v3 only
+  policy_line?: string;              // v2 only prints it; kept in the data either way
 }
 
-// ── Char limits (must match BUILD-SPEC.md and tueswed-schema.ts) ──────────
+// Fit check posted back by the preview (handoff-tueswed/validate.js).
+interface FitReport {
+  fits: boolean;
+  worstSection?: string | null;
+  problems?: { code: string; section?: string }[];
+}
 
-// Paste-safety caps (loose guards only — layout-budget validator is authoritative)
-const L = {
-  price:       3,
-  courseTitle: 60,
-  courseDesc:  240,
-  addonTitle:  40,
-  addonDesc:   120,
-  addonPrice:  3,
-  policyLine:  300,
-} as const;
+const SECTION_NAMES: Record<string, string> = {
+  special: 'the Tuesdays Only box',
+  header: 'the title',
+  'course-1': 'Course I',
+  'course-2': 'Course II',
+  'course-3': 'Course III',
+  addon: 'the add-on',
+  'week-1': 'weekly special 1',
+  'week-2': 'weekly special 2',
+  'week-3': 'weekly special 3',
+  'week-4': 'weekly special 4',
+  weekly: 'the weekly specials',
+  footnotes: 'the footer',
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -52,6 +79,15 @@ function useDebounce<T>(value: T, ms: number): T {
     return () => clearTimeout(t);
   }, [value, ms]);
   return debounced;
+}
+
+/** Older (v2) menus get the v3 parts added when a DRAFT is opened. */
+function upgradeToV3(m: TuewedMenuData): TuewedMenuData {
+  return {
+    ...m,
+    special: m.special ?? { label: 'Tuesdays Only', title: '', price: '', desc: '' },
+    weekly: m.weekly ?? (TUESWED_DEFAULT_WEEKLY.map(w => ({ ...w })) as TuewedMenuData['weekly']),
+  };
 }
 
 // ── CharCount ─────────────────────────────────────────────────────────────
@@ -140,35 +176,39 @@ function CourseCard({ course, index, onChange }: {
 export default function TuewedEditorPage() {
   // "Fix a Mistake" (/tueswed/fix) reuses this exact editor — same fields,
   // same validation, same live preview — but reads/writes the LIVE menu
-  // directly instead of a draft, and hides the publish/discard/New-Week footer.
+  // directly instead of a draft, and hides the publish/New-Week footer.
   const pathname = usePathname();
   const isFix = pathname?.endsWith('/fix') ?? false;
   const apiPath = isFix ? '/api/tueswed/fix' : '/api/tueswed/draft';
+  const src = isFix ? 'current' : 'draft';
+  // Drafts are always edited in the new (v3) design. "Make a Change" on an
+  // active menu that's still in the old design keeps it in the old design —
+  // it never turns the live menu into a half-filled new one.
+  const pkg = isFix ? '' : '&pkg=v3';
 
   const [menu, setMenu]                 = useState<TuewedMenuData | null>(null);
   const [saveStatus, setSaveStatus]     = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]           = useState('');
-  const [previewUrl, setPreviewUrl]     = useState(`/tueswed-preview?src=${isFix ? 'current' : 'draft'}`);
-  const [validationFits, setValidationFits] = useState<boolean | null>(null);
-  const [worstSection, setWorstSection]     = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl]     = useState(`/tueswed-preview?src=${src}${pkg}`);
+  const [fit, setFit]                   = useState<FitReport | null>(null);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
-  const pendingSaveRef = useRef<TuewedMenuData | null>(null);
 
   useEffect(() => {
     fetch(apiPath)
       .then(r => r.json())
-      .then(data => {
-        const normalized = { ...data, policy_line: data.policy_line ?? '' };
-        setMenu(normalized);
-        prevJsonRef.current = JSON.stringify(normalized);
+      .then((data: TuewedMenuData) => {
+        // Remember what's SAVED, so an upgraded draft gets saved right away.
+        prevJsonRef.current = JSON.stringify(data);
+        setMenu(isFix ? data : upgradeToV3(data));
       })
       .catch(() => setSaveStatus('error'));
-  }, [apiPath]);
+  }, [apiPath, isFix]);
 
   const debouncedMenu = useDebounce(menu, 800);
 
-  // Server save — only called after validation confirms the page fits
+  // Server save. Joe, Oct 2026: typing ALWAYS saves — a menu that doesn't
+  // fit the page only blocks "Make This the Active Menu".
   const saveToServer = useCallback(async (data: TuewedMenuData) => {
     const json = JSON.stringify(data);
     if (json === prevJsonRef.current) return;
@@ -199,50 +239,37 @@ export default function TuewedEditorPage() {
     }
   }, [apiPath]);
 
-  // ── Validation listener ─────────────────────────────────────────────────
+  // ── Fit check from the preview ──────────────────────────────────────────
   useEffect(() => {
     function onMessage(e: MessageEvent) {
+      if (e.source !== iframeRef.current?.contentWindow) return;
       if (!e.data || e.data.type !== 'SIENA_TUESWED_VALIDATE_RESULT') return;
-      const report = e.data.report as { fits: boolean; worstSection?: string | null };
-      setValidationFits(report.fits);
-      if (report.fits) {
-        setWorstSection(null);
-        if (pendingSaveRef.current) {
-          saveToServer(pendingSaveRef.current);
-          pendingSaveRef.current = null;
-        }
-      } else {
-        setWorstSection(report.worstSection ?? null);
-        pendingSaveRef.current = null;
-        setSaveStatus('error');
-        const section = report.worstSection
-          ? report.worstSection.replace('course-', 'Course ')
-          : 'the page';
-        setSaveMsg(`Content overflows in "${section}" — try shortening a description`);
-      }
+      setFit(e.data.report as FitReport);
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [saveToServer]);
+  }, []);
 
-  // Debounce menu edits → send to iframe for live preview + validation
+  // Debounced edits → live preview + fit check, and save.
   useEffect(() => {
     if (!debouncedMenu || prevJsonRef.current === '') return;
-    pendingSaveRef.current = debouncedMenu;
+    if (JSON.stringify(debouncedMenu) !== prevJsonRef.current) setFit(null);
     iframeRef.current?.contentWindow?.postMessage(
       { type: 'SIENA_TUESWED_UPDATE', payload: debouncedMenu },
       '*'
     );
-  }, [debouncedMenu]);
+    saveToServer(debouncedMenu);
+  }, [debouncedMenu, saveToServer]);
 
   // ── New Week ────────────────────────────────────────────────────────────
 
   function handleNewWeek() {
-    if (!confirm('Start a new week?\n\nThis will clear all course names and descriptions. The price and add-on will also be reset. Your current menu will be saved as a backup.')) return;
+    if (!confirm('Start a new week?\n\nThis clears the Tuesdays Only dish, all course names and descriptions, and the add-on. The price and the weekly specials stay as they are.')) return;
     setMenu(m => {
       if (!m) return m;
       return {
         ...m,
+        special: m.special ? { ...m.special, title: '', price: '', desc: '' } : m.special,
         courses: m.courses.map(c => ({ ...c, title: '', desc: '' })) as TuewedMenuData['courses'],
         addon: m.addon ? { title: '', desc: '', price: '' } : undefined,
       };
@@ -268,13 +295,49 @@ export default function TuewedEditorPage() {
     setMenu(m => m && { ...m, addon: updated });
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  function setSpecial(field: keyof TuewedSpecial, value: string) {
+    setMenu(m => m && m.special ? { ...m, special: { ...m.special, [field]: value } } : m);
+  }
 
-  // ── Publish / discard ──────────────────────────────────────────────────
+  function setWeekly(index: number, field: 'day' | 'headline' | 'detail', value: string) {
+    setMenu(m => {
+      if (!m || !m.weekly) return m;
+      const weekly = m.weekly.map((w, i) => (i === index ? { ...w, [field]: value } : w)) as TuewedMenuData['weekly'];
+      return { ...m, weekly };
+    });
+  }
+
+  // ── Publish ─────────────────────────────────────────────────────────────
   const [publishing, setPublishing] = useState(false);
+
+  function publishBlockers(m: TuewedMenuData): string[] {
+    const out: string[] = [];
+    if (m.special) {
+      if (!m.special.title.trim()) out.push('the Tuesdays Only dish name');
+      if (!m.special.price.trim()) out.push('the Tuesdays Only price');
+      if (!m.special.label.trim()) out.push('the Tuesdays Only label');
+    }
+    if (!m.price.trim()) out.push('the prix-fixe price');
+    m.courses.forEach((c, i) => {
+      if (!c.title.trim()) out.push(`Course ${ROMAN[i]} name`);
+      if (!c.desc.trim()) out.push(`Course ${ROMAN[i]} description`);
+    });
+    return out;
+  }
 
   async function handlePublish() {
     if (!menu) return;
+    const blanks = publishBlockers(menu);
+    if (blanks.length) {
+      setSaveStatus('error');
+      setSaveMsg('Before making this the active menu, fill in: ' + blanks.join(', ') + '.');
+      return;
+    }
+    if (!fit || !fit.fits) {
+      setSaveStatus('error');
+      setSaveMsg(fit ? 'This menu doesn’t fit the page yet — see the red note at the top. Your draft is saved.' : 'Still checking the page fit — try again in a second.');
+      return;
+    }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -294,6 +357,15 @@ export default function TuewedEditorPage() {
   }
 
   const showAddon = menu.addon !== undefined;
+  const isV3 = !!menu.special;
+  const fitProblems = fit && !fit.fits
+    ? [
+        ...(fit.problems ?? []).filter(p => p.code === 'label-overflow').map(() => 'The Tuesdays Only label is too wide for the box border — shorten it.'),
+        ...((fit.problems ?? []).some(p => p.code === 'page-overflow') || !(fit.problems ?? []).length
+          ? [`The page is too full${fit.worstSection ? ` — ${SECTION_NAMES[fit.worstSection] ?? fit.worstSection} is the biggest part` : ''}. Shorten something.`]
+          : []),
+      ]
+    : [];
 
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
@@ -307,27 +379,86 @@ export default function TuewedEditorPage() {
       <div className="editor-pane">
         <div className="editor-header">
           <Link href="/tueswed" className="btn-back">← Back</Link>
-          <h1>Tue–Wed $45 Prix Fixe</h1>
+          <h1>Tuesday &amp; Wednesday</h1>
             <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
-        {validationFits === false && (
+        {fitProblems.length > 0 && (
           <div className="overflow-banner">
-            ⚠ Menu is too long to fit on one page
-            {worstSection && ` — trim the "${worstSection.replace('course-', 'Course ')}" section`}
+            ⚠ {isFix
+              ? 'This menu no longer fits the page — your changes ARE saved, but shorten something before printing.'
+              : 'This menu doesn’t fit the page yet — your draft IS saved, but it can’t become the active menu until it fits.'}
+            <ul style={{ margin: '6px 0 0 18px' }}>
+              {fitProblems.map((p, i) => <li key={i}>{p}</li>)}
+            </ul>
           </div>
         )}
 
           {isFix && (
             <div className="draft-banner fix-banner">
               ✏️ You&rsquo;re editing the <strong>active menu</strong>. Every change saves right away — there&rsquo;s no draft and no publish step.
+              {!isV3 && <> This menu is in the <strong>older design</strong>; it switches to the new one the next time a new menu is made active.</>}
             </div>
           )}
         <div className="editor-scroll chef-mode">
 
+          {/* Tuesdays Only (v3) */}
+          {menu.special && (
+            <div className="page-group">
+              <div className="page-group-label">Tuesdays Only box (top of the page)</div>
+              <div className="dish-row">
+                <div className="dish-fields">
+                  <div className="dish-field-row" style={{ alignItems: 'flex-end', marginBottom: '10px' }}>
+                    <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
+                      <div className="field-label-row">
+                        <label>Dish name</label>
+                        <CharCount value={menu.special.title} max={L.specialTitle} />
+                      </div>
+                      <input
+                        value={menu.special.title}
+                        onChange={e => setSpecial('title', e.target.value)}
+                        placeholder="e.g. Costata di Maiale"
+                      />
+                    </div>
+                    <div className="field-group" style={{ width: '100px', flexShrink: 0, marginBottom: 0 }}>
+                      <div className="field-label-row">
+                        <label>Price</label>
+                        <CharCount value={menu.special.price} max={L.specialPrice} />
+                      </div>
+                      <PriceInput value={menu.special.price} onChange={v => setSpecial('price', v)} placeholder="25" />
+                    </div>
+                  </div>
+                  <div className="field-group">
+                    <div className="field-label-row">
+                      <label>Description (optional)</label>
+                      <CharCount value={menu.special.desc} max={L.specialDesc} />
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={menu.special.desc}
+                      onChange={e => setSpecial('desc', e.target.value)}
+                      placeholder="e.g. Bone-in pork chop with mashed potatoes and sautéed spinach."
+                    />
+                  </div>
+                  <div className="field-group" style={{ marginBottom: 0 }}>
+                    <div className="field-label-row">
+                      <label>Label on the box border</label>
+                      <CharCount value={menu.special.label} max={L.specialLabel} />
+                    </div>
+                    <input
+                      value={menu.special.label}
+                      onChange={e => setSpecial('label', e.target.value)}
+                      placeholder="Tuesdays Only"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Price */}
           <div className="page-group">
-            <div className="page-group-label">Menu price</div>
+            <div className="page-group-label">Three-course menu price</div>
             <div className="dish-row">
               <div className="dish-fields">
                 <div className="field-group" style={{ marginBottom: 0 }}>
@@ -420,26 +551,57 @@ export default function TuewedEditorPage() {
             </div>
           </div>
 
-          {/* Policy line */}
-          <div className="page-group">
-            <div className="page-group-label">Footer</div>
-            <div className="dish-row">
-              <div className="dish-fields">
-                <div className="field-group" style={{ marginBottom: 0 }}>
-                  <div className="field-label-row">
-                    <label>Policy line (HTML: &lt;strong&gt;, &lt;em&gt; allowed)</label>
-                    <CharCount value={menu.policy_line} max={L.policyLine} />
+          {/* Weekly specials (v3) */}
+          {menu.weekly && (
+            <div className="page-group">
+              <div className="page-group-label">Weekly specials (bottom of the page)</div>
+              <div className="dish-list">
+                {menu.weekly.map((w, i) => (
+                  <div key={w.id} className="dish-row">
+                    <div className="dish-fields">
+                      <div className="dish-field-row" style={{ gap: '8px', marginBottom: '8px' }}>
+                        <div className="field-group" style={{ width: '120px', flexShrink: 0, marginBottom: 0 }}>
+                          <label>Day</label>
+                          <input value={w.day} onChange={e => setWeekly(i, 'day', e.target.value)} placeholder="Mondays" />
+                        </div>
+                        <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
+                          <label>Headline</label>
+                          <input value={w.headline} onChange={e => setWeekly(i, 'headline', e.target.value)} placeholder="$26 for 26 Years" />
+                        </div>
+                      </div>
+                      <div className="field-group" style={{ marginBottom: 0 }}>
+                        <label>Details</label>
+                        <textarea rows={2} value={w.detail} onChange={e => setWeekly(i, 'detail', e.target.value)} />
+                      </div>
+                    </div>
                   </div>
-                  <textarea
-                    rows={2}
-                    value={menu.policy_line}
-                    onChange={e => setMenu(m => m && { ...m, policy_line: e.target.value })}
-                    placeholder="e.g. <strong>No split checks.</strong>"
-                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Policy line — older (v2) design only; the new design has no footer line */}
+          {!isV3 && (
+            <div className="page-group">
+              <div className="page-group-label">Footer</div>
+              <div className="dish-row">
+                <div className="dish-fields">
+                  <div className="field-group" style={{ marginBottom: 0 }}>
+                    <div className="field-label-row">
+                      <label>Policy line (HTML: &lt;strong&gt;, &lt;em&gt; allowed)</label>
+                      <CharCount value={menu.policy_line ?? ''} max={L.policyLine} />
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={menu.policy_line ?? ''}
+                      onChange={e => setMenu(m => m && { ...m, policy_line: e.target.value })}
+                      placeholder="e.g. <strong>No split checks.</strong>"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
         </div>{/* end editor-scroll */}
 
@@ -447,7 +609,14 @@ export default function TuewedEditorPage() {
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
               <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
+              <button
+                className="btn-publish"
+                onClick={handlePublish}
+                disabled={publishing || (!!fit && !fit.fits)}
+                title={fit && !fit.fits ? 'The menu doesn’t fit the page yet — see the red note at the top' : undefined}
+              >
+                {publishing ? 'Publishing…' : 'Make This the Active Menu'}
+              </button>
             </div>
           )}
         <div className="editor-footer">
@@ -460,12 +629,10 @@ export default function TuewedEditorPage() {
           </span>
           <button
             className="btn-print"
-            disabled={validationFits === false}
-            title={validationFits === false ? 'Menu overflows — shorten text before printing' : undefined}
             onClick={() => {
               if (menu && !confirmPrintWarnings('tueswed', menu, saveStatus === 'error')) return;
               if (menu) localStorage.setItem('siena-tueswed-print-data', JSON.stringify(menu));
-              window.open(`/tueswed-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
+              window.open(`/tueswed-print?src=${src}${pkg}&warned=1`, '_blank');
             }}
           >
             Print Menu
@@ -480,7 +647,7 @@ export default function TuewedEditorPage() {
           <button
             className="btn-ghost"
             style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '4px 10px' }}
-            onClick={() => setPreviewUrl(`/tueswed-preview?src=${isFix ? 'current' : 'draft'}&` + Date.now())}
+            onClick={() => setPreviewUrl(`/tueswed-preview?src=${src}${pkg}&` + Date.now())}
           >
             ↺ Reload from server
           </button>

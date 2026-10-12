@@ -1,55 +1,38 @@
 /**
- * Siena Tuesday/Wednesday Prix-Fixe Renderer — JSON → HTML hydrator.
+ * Siena Tuesday/Wednesday Menu Renderer — JSON → HTML hydrator.
  *
- * v2 (chapter-rule design, layout-budget constraint model)
+ * v3 (Oct 2026): "Tuesdays Only" special box on top, "Tuesday & Wednesday"
+ * title, Chef's Three-Course prix fixe, optional add-on, four editable
+ * weekly cells. Layout-budget constraint model (see validate.js).
  *
- * Mutates the template DOM in place. Does NOT regenerate structure,
- * CSS, or the static weekly-specials footer. If this file changes,
- * the snapshot test must still pass.
+ * UMD export name stays `SienaTuewedRender` (typo inherited from v1 —
+ * do not rename; the editor's calling code depends on it).
  *
  * Usage (browser):
  *   const doc = new DOMParser().parseFromString(templateHtml, 'text/html');
  *   SienaTuewedRender.render(doc, menuData);
- *   const html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+ *   const html = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
  *
- * Usage (node, for tests):
- *   const { JSDOM } = require('jsdom');
- *   const dom = new JSDOM(templateHtml);
- *   SienaTuewedRender.render(dom.window.document, menuData);
- *
- * Data shape (see menu-data.json for a realistic example):
+ * Data shape (see menu-data.json):
  *   {
- *     "price":   "45",                   // digits only; "$" stays static
- *     "courses": [                        // exactly 3 entries, fixed order
- *       { "id": "course-1", "title": "…", "desc": "…" },
- *       { "id": "course-2", "title": "…", "desc": "…" },
- *       { "id": "course-3", "title": "…", "desc": "…" }
- *     ],
- *     "addon": {                          // optional add-on (wine pairing,
- *       "title": "…",                     //  cheese course, etc.) — when
- *       "desc":  "…",                     //  title is empty/missing the
- *       "price": "18"                     //  whole block is removed
+ *     "special": {                   // ALWAYS shown (no on/off toggle)
+ *       "label": "Tuesdays Only",    //   required; sits on the top border
+ *       "title": "…",                //   required
+ *       "price": "25",               //   required, digits only ("$" static)
+ *       "desc":  "…"                 //   optional; empty → line removed
  *     },
- *     "policy_line": "…"                  // optional, allows HTML
+ *     "price": "45",                 // prix fixe price, digits only
+ *     "courses": [                   // exactly 3, fixed order
+ *       { "id": "course-1", "title": "…", "desc": "…" }, …
+ *     ],
+ *     "addon": { "title", "desc", "price" },   // title empty → block removed
+ *     "weekly": [                    // exactly 4, fixed order
+ *       { "id": "week-1", "day": "…", "headline": "…", "detail": "…" }, …
+ *     ]
  *   }
  *
- * Optional-field behaviour:
- *   - addon.title empty/missing → the entire add-on block is removed.
- *   - addon.price empty         → "Add $XX" pill removed; title row stays.
- *   - addon.desc  empty         → small caps note line removed; title stays.
- *   - policy_line empty/missing → the footnotes block is removed.
- *
- * Everything else (the hero title "Chef's Three-Course Menu", the
- * $ glyph, the "Add $" prefix, the "Prix Fixe · Tuesdays & Wednesdays"
- * tucked subtitle, the chapter-rule Roman numerals I/II/III, and the
- * four weekly-specials footer cells) is baked into the template and
- * not addressable here.
- *
- * v2 NOTE — constraint model changed.
- *   This handoff uses the LAYOUT-BUDGET constraint model. There are
- *   no per-field character caps in the renderer. The editor must
- *   call `validate.js` against a live-rendered preview after every
- *   edit to confirm the page still fits. See BUILD-SPEC.md §4.
+ * Static (not addressable): "Tuesday & Wednesday" title, "Chef's
+ * Three-Course Menu" text, "$" glyphs, "Add $" prefix, numerals I/II/III.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -61,78 +44,58 @@
     return v != null && String(v).trim() !== '';
   }
 
-  function setText(doc, textId, value, allowHtml) {
+  function setText(doc, textId, value) {
     const els = doc.querySelectorAll('[data-text-id="' + textId + '"]');
-    for (const el of els) {
-      if (allowHtml) el.innerHTML = String(value);
-      else el.textContent = String(value);
-    }
+    for (const el of els) el.textContent = String(value);
+  }
+
+  function removeSlot(doc, textId) {
+    const el = doc.querySelector('[data-text-id="' + textId + '"]');
+    if (el) el.remove();
+  }
+
+  function renderSpecial(doc, s) {
+    if (!s) return;
+    if (isFilled(s.label)) setText(doc, 'special-label', s.label);
+    if (isFilled(s.title)) setText(doc, 'special-title', s.title);
+    if (isFilled(s.price)) setText(doc, 'special-price', s.price);
+    if (isFilled(s.desc)) setText(doc, 'special-desc', s.desc);
+    else removeSlot(doc, 'special-desc');
   }
 
   function renderCourse(doc, course) {
     if (!course || !course.id) return;
-    // Each course's title and desc are addressed by their data-text-id slots.
-    // The id ties the JSON entry to the slot (course-1 / course-2 / course-3).
     setText(doc, course.id + '-title', isFilled(course.title) ? course.title : '');
-    setText(doc, course.id + '-desc',  isFilled(course.desc)  ? course.desc  : '');
+    setText(doc, course.id + '-desc', isFilled(course.desc) ? course.desc : '');
   }
 
   function renderAddon(doc, addon) {
     const block = doc.querySelector('[data-addon]');
     if (!block) return;
-
-    // Title empty → whole add-on block gone. This is the toggle.
-    if (!addon || !isFilled(addon.title)) {
-      block.remove();
-      return;
-    }
-
+    if (!addon || !isFilled(addon.title)) { block.remove(); return; }
     setText(doc, 'addon-title', addon.title);
-
-    // Price pill: remove if empty, otherwise update.
-    const pricePill = block.querySelector('.addon-price');
-    if (isFilled(addon.price)) {
-      setText(doc, 'addon-price', addon.price);
-    } else if (pricePill) {
-      pricePill.remove();
-    }
-
-    // Description note: remove if empty, otherwise update.
-    const descEl = block.querySelector('[data-text-id="addon-desc"]');
-    if (isFilled(addon.desc)) {
-      setText(doc, 'addon-desc', addon.desc);
-    } else if (descEl) {
-      descEl.remove();
-    }
+    const pill = block.querySelector('.addon-price');
+    if (isFilled(addon.price)) setText(doc, 'addon-price', addon.price);
+    else if (pill) pill.remove();
+    if (isFilled(addon.desc)) setText(doc, 'addon-desc', addon.desc);
+    else removeSlot(doc, 'addon-desc');
   }
 
-  function renderPolicy(doc, policyLine) {
-    const wrap = doc.querySelector('[data-footnotes]');
-    if (!wrap) return;
-    if (!isFilled(policyLine)) {
-      wrap.remove();
-      return;
-    }
-    // Policy line allows inline HTML (e.g. <strong>).
-    setText(doc, 'policy-line', policyLine, true);
+  function renderWeekCell(doc, cell) {
+    if (!cell || !cell.id) return;
+    setText(doc, cell.id + '-day', isFilled(cell.day) ? cell.day : '');
+    setText(doc, cell.id + '-headline', isFilled(cell.headline) ? cell.headline : '');
+    if (isFilled(cell.detail)) setText(doc, cell.id + '-detail', cell.detail);
+    else removeSlot(doc, cell.id + '-detail');
   }
 
   function render(doc, data) {
     if (!data) return;
-
-    // Hero price — digits only; "$" is static in the template.
+    renderSpecial(doc, data.special);
     if (isFilled(data.price)) setText(doc, 'price', data.price);
-
-    // Three courses (fixed cardinality, fixed order).
-    if (Array.isArray(data.courses)) {
-      for (const course of data.courses) renderCourse(doc, course);
-    }
-
-    // Add-on (optional).
+    if (Array.isArray(data.courses)) data.courses.forEach((c) => renderCourse(doc, c));
     renderAddon(doc, data.addon);
-
-    // Policy footnote (optional, HTML allowed).
-    renderPolicy(doc, data.policy_line);
+    if (Array.isArray(data.weekly)) data.weekly.forEach((w) => renderWeekCell(doc, w));
   }
 
   return { render };

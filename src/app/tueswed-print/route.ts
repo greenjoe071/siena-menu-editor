@@ -1,20 +1,20 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { readMenuBySrc } from '@/lib/tueswed-menu-store';
-import { renderTuewedMenu } from '@/lib/render-tueswed-server';
+import { loadTuewedPackage, renderTuewedMenu } from '@/lib/render-tueswed-server';
 import { printWarnings, withPrintGuard } from '@/lib/print-warnings';
 
 export const dynamic = 'force-dynamic';
 
-const HANDOFF = join(process.cwd(), 'handoff-tueswed');
-
 export async function GET(request: Request) {
-  const src = new URL(request.url).searchParams.get('src');
-  const [data, renderSrc, templateSrc] = await Promise.all([
-    readMenuBySrc(src),
-    readFile(join(HANDOFF, 'render.js'), 'utf8'),
-    readFile(join(HANDOFF, 'template.html'), 'utf8'),
-  ]);
+  const params = new URL(request.url).searchParams;
+  const src = params.get('src');
+  const saved = await readMenuBySrc(src);
+  // v3 menus print with handoff-tueswed/, older v2 menus (Past Menus) with
+  // handoff-tueswed-v2/ — see render-tueswed-server.ts. ?pkg=v3 = the editor
+  // is printing a draft it has already upgraded (its copy may not be saved yet).
+  const data = (params.get('pkg') === 'v3' && !saved.special
+    ? { ...saved, special: { label: '', title: '', price: '', desc: '' } }
+    : saved) as typeof saved;
+  const { template: templateSrc, renderSrc } = await loadTuewedPackage(data);
 
   let html = await renderTuewedMenu(data);
 
@@ -47,7 +47,7 @@ ${renderSrc}
 })();
 </script>`;
 
-  html = html.replace('</body>', printScript + '\n</body>');
+  html = html.replace('</body>', () => printScript + '\n</body>');
 
   // Pre-print warnings (missing titles / prices) — see print-warnings.ts
   html = withPrintGuard(html, request.url, printWarnings('tueswed', data));

@@ -116,6 +116,12 @@ const CHECKS: Record<PrintMenuId, (d: Data, c: Checker) => void> = {
     if (d?.pasta_addons?.enabled) c.list((d.pasta_addons.items ?? []).filter((i: Data) => i.enabled), 'pasta add-ons', (i) => [i.price], () => []);
   },
   tueswed(d, c) {
+    // v3 (Oct 2026): the Tuesdays Only box always prints — a blank one would
+    // show the designer's sample dish, so flag it.
+    if (d?.special) {
+      if (!has(d.special.title)) c.out.push('The Tuesdays Only box has no dish name (the sample dish would print)');
+      else if (!has(d.special.price)) c.out.push(`The Tuesdays Only dish ${q(d.special.title)} has no price`);
+    }
     c.prixFixe(d?.price);
     c.list(d?.courses?.map((x: Data) => ({ name: x.title, desc: x.desc })), 'the courses', () => []);
     if (has(d?.addon?.title) && !has(d?.addon?.price)) c.out.push(`The add-on ${q(d.addon.title)} has no price`);

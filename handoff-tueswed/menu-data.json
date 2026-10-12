@@ -1,20 +1,26 @@
 {
+  "special": {
+    "label": "Tuesdays Only",
+    "title": "Costata di Maiale",
+    "price": "25",
+    "desc": "Bone-in pork chop with mashed potatoes and sautéed spinach."
+  },
   "price": "45",
   "courses": [
     {
       "id": "course-1",
-      "title": "Burrata e Fichi",
-      "desc": "Hand-pulled Puglian burrata, roasted black mission figs, prosciutto di Parma, aged balsamic, wood-grilled bread."
+      "title": "Ricotta Montata",
+      "desc": "Whipped ricotta with spicy orange honey, wood-grilled bread, fresh mint and basil."
     },
     {
       "id": "course-2",
-      "title": "Risotto ai Funghi",
-      "desc": "Carnaroli rice, wild porcini and cremini mushrooms, Parmigiano Reggiano, fresh thyme, brown butter finish."
+      "title": "Zuppa di Patate Dolci",
+      "desc": "Creamy roasted sweet potato and ginger soup, brie cheese, parsley, finished with a swirl of brown butter."
     },
     {
       "id": "course-3",
-      "title": "Branzino al Forno",
-      "desc": "Whole-roasted Mediterranean branzino, lemon and herbs, Castelvetrano olives, Tuscan white beans, salsa verde."
+      "title": "Spaghetti all’Amatriciana",
+      "desc": "Classic Roman dish — guanciale, Pecorino Romano, peeled San Marzano tomatoes, cracked black pepper."
     }
   ],
   "addon": {
@@ -22,5 +28,10 @@
     "desc": "Three wines, one per course, chosen by the floor",
     "price": "25"
   },
-  "policy_line": "<strong>No split checks.</strong>&nbsp;&middot;&nbsp;<strong>Gratuity of 22% for parties of 6 or more.</strong>"
+  "weekly": [
+    { "id": "week-1", "day": "Mondays", "headline": "$26 for 26 Years", "detail": "Two-course Monday menu — soup or salad, plus a Sicilian pasta classic." },
+    { "id": "week-2", "day": "Wednesdays", "headline": "Wine Lovers Wednesday", "detail": "25% off all bottles of wine — and we mean all of them." },
+    { "id": "week-3", "day": "Thursdays", "headline": "Thirsty Thursday", "detail": "$10 signature cocktails, all night long." },
+    { "id": "week-4", "day": "Thu – Sat", "headline": "Weekend Specials", "detail": "A new set of specials every week. This is where Chef gets creative." }
+  ]
 }
