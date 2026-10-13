@@ -18,7 +18,10 @@ import { createPortal } from 'react-dom';
 
 interface Version { key: string; ts: number; data: unknown; summary: string }
 
-const TIP_KEY = 'siena-tip-earlier-versions-seen';
+// Same rule as the landing-page tips (ChefCoach): shows every time the editor
+// opens until "Don't show this again" is ticked. (Key renamed Oct 13 so an
+// early test click doesn't hide it from Chef.)
+const TIP_KEY = 'siena-chef-coach-hidden-earlier-versions';
 
 function whenLabel(ts: number): string {
   const d = new Date(ts);
@@ -65,6 +68,7 @@ export default function EarlierVersions({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [tip, setTip] = useState(false);
+  const [dontShow, setDontShow] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const [tipPos, setTipPos] = useState<{ left: number; bottom: number; arrow: number } | null>(null);
 
@@ -86,7 +90,7 @@ export default function EarlierVersions({
     return () => window.removeEventListener('resize', place);
   }, [tip]);
   function closeTip() {
-    try { localStorage.setItem(TIP_KEY, '1'); } catch { /* ignore */ }
+    if (dontShow) { try { localStorage.setItem(TIP_KEY, '1'); } catch { /* ignore */ } }
     setTip(false);
   }
 
@@ -146,7 +150,13 @@ export default function EarlierVersions({
             If something ever disappears, or you want to go back to how the menu looked before, click
             <strong> Earlier Versions</strong> to look through them and pick one to continue with.
           </div>
-          <button className="ev-tip-ok" onClick={closeTip}>Got it</button>
+          <div className="ev-tip-actions">
+            <label className="ev-tip-hide">
+              <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow(e.target.checked)} />
+              Don&rsquo;t show this again
+            </label>
+            <button className="ev-tip-ok" onClick={closeTip}>Got it</button>
+          </div>
           <span className="ev-tip-arrow" style={{ left: tipPos.arrow - 9 }} />
         </div>,
         document.body,

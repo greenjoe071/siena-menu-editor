@@ -2010,3 +2010,6 @@ a.dd-chooser-card:hover {
 .ev-note { font-size: 12px; color: #6b5a44; margin-top: 6px; }
 .ev-error { font-size: 13px; color: #a32d2d; margin-top: 6px; font-weight: 600; }
 .ev-empty { font-size: 14px; color: #6b5a44; padding: 12px; }
+.ev-tip-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ev-tip-hide { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b5a44; cursor: pointer; }
+.ev-tip-hide input { width: 15px; height: 15px; accent-color: #b8821e; cursor: pointer; }
