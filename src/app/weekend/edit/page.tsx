@@ -565,19 +565,6 @@ export default function WeekendEditorPage() {
     if (debouncedMenu && prevJsonRef.current !== '') saveAndRefresh(debouncedMenu);
   }, [debouncedMenu, saveAndRefresh]);
 
-  // ── New Week ────────────────────────────────────────────────────────────
-
-  function handleNewWeek() {
-    if (!confirm('Start a new week?\n\nThis will clear all dish names, descriptions, and prices in both sections. The weekly promotions at the bottom will stay as-is.\n\nYour draft saves as you type, even before every dish is filled in.')) return;
-    setMenu(m => {
-      if (!m) return m;
-      const clearSection = (s: WeekendSection): WeekendSection => ({
-        ...s, items: s.items.map(() => blankDish()),
-      });
-      return { ...m, sections: { starters: clearSection(m.sections.starters), entrees: clearSection(m.sections.entrees) } };
-    });
-  }
-
   // ── Mutations ───────────────────────────────────────────────────────────
 
   function handleSectionChange(id: SectionId, updated: WeekendSection) {
@@ -768,7 +755,6 @@ export default function WeekendEditorPage() {
             </div>
           )}
           <div className="editor-footer">
-            {!isFix && <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>}
             <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>
               {saveStatus === 'saved'  ? '✓ Saved' :
                saveStatus === 'saving' ? 'Saving…' :

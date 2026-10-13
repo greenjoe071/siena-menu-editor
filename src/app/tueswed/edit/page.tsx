@@ -280,21 +280,6 @@ export default function TuewedEditorPage() {
     saveToServer(debouncedMenu);
   }, [debouncedMenu, saveToServer]);
 
-  // ── New Week ────────────────────────────────────────────────────────────
-
-  function handleNewWeek() {
-    if (!confirm('Start a new week?\n\nThis clears the Tuesdays Only dish, all course names and descriptions, and the add-on. The price and the weekly specials stay as they are.')) return;
-    setMenu(m => {
-      if (!m) return m;
-      return {
-        ...m,
-        special: m.special ? { ...m.special, title: '', price: '', desc: '' } : m.special,
-        courses: m.courses.map(c => ({ ...c, title: '', desc: '' })) as TuewedMenuData['courses'],
-        addon: m.addon ? { title: '', desc: '', price: '' } : undefined,
-      };
-    });
-  }
-
   // ── Mutations ───────────────────────────────────────────────────────────
 
   function handleCourseChange(index: number, updated: TuewedCourse) {
@@ -640,7 +625,6 @@ export default function TuewedEditorPage() {
             </div>
           )}
         <div className="editor-footer">
-          {!isFix && <button className="btn-new-week" onClick={handleNewWeek}>New Week</button>}
           <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>
             {saveStatus === 'saved'  ? '✓ Saved' :
              saveStatus === 'saving' ? 'Saving…' :
