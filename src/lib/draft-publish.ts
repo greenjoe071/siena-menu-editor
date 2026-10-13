@@ -127,6 +127,60 @@ export interface DraftPublish<T> {
   updateNote:      (key: string, note: string) => Promise<void>;
   listDraftSnapshots: () => Promise<{ key: string; ts: number; label: string }[]>;
   readDraftSnapshot:  (key: string) => Promise<unknown>;
+  restoreDraftSnapshot: (key: string, editorNow: unknown) => Promise<T>;
+  /** Versions of the ACTIVE menu (used by "Make a Change"). */
+  currentSnaps: SnapshotList;
+  draftSnaps:   SnapshotList;
+}
+
+// ── Version history ("Earlier Versions", Oct 2026) ────────────────────────
+// Each save also lands in a per-minute snapshot (the last save of each minute
+// is kept), last 30 per list. Restores take an exact-time snapshot of what
+// was there first, so going back is never one-way. Drafts and the active
+// menu ("Make a Change") each have their own list.
+
+export interface Snapshot { key: string; ts: number }
+
+export interface SnapshotList {
+  prefix: string;
+  list: () => Promise<Snapshot[]>;
+  read: (key: string) => Promise<unknown>;
+  /** Save `json` as a version. `exactTs` = its own entry (never merged into a minute). */
+  snap: (json: string, exactTs?: number) => Promise<void>;
+  /** If this list has no versions yet, keep `existingRaw` as the first one. */
+  seed: (existingRaw: string | null) => Promise<void>;
+}
+
+export function makeSnapshotList(prefix: string): SnapshotList {
+  async function list(): Promise<Snapshot[]> {
+    const keys = await kvList(prefix);
+    return keys
+      .map((key) => ({ key, ts: parseInt(key.slice(prefix.length), 10) }))
+      .filter((s) => Number.isFinite(s.ts))
+      .sort((a, b) => b.ts - a.ts);
+  }
+  async function read(key: string): Promise<unknown> {
+    if (!key.startsWith(prefix) || !/^\d+$/.test(key.slice(prefix.length))) throw new Error('Not a saved version');
+    const raw = await kvRead(key);
+    if (!raw) throw new Error('Version not found');
+    return JSON.parse(raw);
+  }
+  async function snap(json: string, exactTs?: number): Promise<void> {
+    try {
+      const ts = exactTs ?? Math.floor(Date.now() / SNAPSHOT_EVERY_MS) * SNAPSHOT_EVERY_MS;
+      await kvWrite(`${prefix}${ts}`, json);
+      for (const old of (await list()).slice(MAX_DRAFT_SNAPSHOTS)) await kvDelete(old.key);
+    } catch { /* a snapshot problem must never block the real save */ }
+  }
+  async function seed(existingRaw: string | null): Promise<void> {
+    try {
+      if (!existingRaw) return;
+      if ((await kvList(prefix)).length) return;
+      // One minute back, so the first real save lands as its own, newer entry.
+      await snap(existingRaw, Math.floor(Date.now() / SNAPSHOT_EVERY_MS) * SNAPSHOT_EVERY_MS - SNAPSHOT_EVERY_MS);
+    } catch { /* ignore */ }
+  }
+  return { prefix, list, read, snap, seed };
 }
 
 // ── Factory ───────────────────────────────────────────────────────────────
@@ -163,52 +217,43 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
     return current;
   }
 
-  // Draft history (Oct 2026, after Chef's typed Tue–Wed menu was lost): every
-  // save also lands in a per-minute snapshot, the last 30 kept, and a draft
-  // is snapshotted before it's thrown away. Nothing typed is unrecoverable.
-  // Read them back via GET /api/{menu}/draft?history (see makeDraftHandlers).
-  const snapPrefix = `${draftKey}-snap-`;
-
-  async function snapshotDraft(json: string): Promise<void> {
-    try {
-      const bucket = Math.floor(Date.now() / SNAPSHOT_EVERY_MS) * SNAPSHOT_EVERY_MS;
-      await kvWrite(`${snapPrefix}${bucket}`, json);
-      const keys = await kvList(snapPrefix);
-      const sorted = keys
-        .map((k) => ({ key: k, ts: parseInt(k.slice(snapPrefix.length), 10) }))
-        .sort((a, b) => b.ts - a.ts);
-      for (const old of sorted.slice(MAX_DRAFT_SNAPSHOTS)) await kvDelete(old.key);
-    } catch { /* a snapshot problem must never block the real save */ }
-  }
+  // Draft history (Oct 2026, after Chef's typed Tue–Wed menu was lost) — see
+  // makeSnapshotList. A draft is snapshotted before it's thrown away too.
+  const draftSnaps   = makeSnapshotList(`${draftKey}-snap-`);
+  const currentSnaps = makeSnapshotList(`${currentKey}-snap-`);
 
   async function writeDraft(data: T): Promise<void> {
     draftSchema.parse(data);
     const json = JSON.stringify(data, null, 2);
+    await draftSnaps.seed(await kvRead(draftKey));
     await kvWrite(draftKey, json);
-    await snapshotDraft(json);
+    await draftSnaps.snap(json);
   }
 
   async function discardDraft(): Promise<void> {
     const raw = await kvRead(draftKey);
-    if (raw) await snapshotDraft(raw);
+    if (raw) await draftSnaps.snap(raw, Date.now());
     await kvDelete(draftKey);
   }
 
   async function listDraftSnapshots(): Promise<{ key: string; ts: number; label: string }[]> {
-    const keys = await kvList(snapPrefix);
-    return keys
-      .map((k) => {
-        const ts = parseInt(k.slice(snapPrefix.length), 10);
-        return { key: k, ts, label: new Date(ts).toLocaleString('en-US', { timeZone: RESTAURANT_TZ }) };
-      })
-      .sort((a, b) => b.ts - a.ts);
+    return (await draftSnaps.list()).map((x) => ({ ...x, label: new Date(x.ts).toLocaleString('en-US', { timeZone: RESTAURANT_TZ }) }));
   }
 
   async function readDraftSnapshot(key: string): Promise<unknown> {
-    if (!key.startsWith(snapPrefix)) throw new Error('Not a draft snapshot');
-    const raw = await kvRead(key);
-    if (!raw) throw new Error('Snapshot not found');
-    return JSON.parse(raw);
+    return draftSnaps.read(key);
+  }
+
+  /** Put an earlier draft version back. `editorNow` = what the editor had open. */
+  async function restoreDraftSnapshot(key: string, editorNow: unknown): Promise<T> {
+    const data = draftSchema.parse(await draftSnaps.read(key));
+    const now = Date.now();
+    const before = editorNow ?? JSON.parse((await kvRead(draftKey)) ?? 'null');
+    if (before) await draftSnaps.snap(JSON.stringify(before, null, 2), now);
+    const json = JSON.stringify(data, null, 2);
+    await kvWrite(draftKey, json);
+    await draftSnaps.snap(json, now + 1);
+    return data;
   }
 
   async function publishDraft(): Promise<CurrentMeta> {
@@ -234,7 +279,9 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
     }
 
     // Draft becomes the new current; stamp date; clear draft.
+    await currentSnaps.seed(currentRaw);
     await kvWrite(currentKey, JSON.stringify(draft, null, 2));
+    await currentSnaps.snap(JSON.stringify(draft, null, 2), ts);
     await kvWrite(metaKey, JSON.stringify({ publishedAt: ts }));
     await kvDelete(draftKey);
 
@@ -286,13 +333,17 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
     if (src.startsWith(publishedPrefix) && /^\d+$/.test(src.slice(publishedPrefix.length))) {
       return readPublished(src);
     }
+    // Earlier Versions previews (?src=<version key>)
+    if (src.startsWith(draftSnaps.prefix))   return draftSchema.parse(await draftSnaps.read(src));
+    if (src.startsWith(currentSnaps.prefix)) return draftSchema.parse(await currentSnaps.read(src));
     return readCurrent();
   }
 
   return {
     readCurrentMeta, hasPublished, hasDraft, readDraft, writeDraft, discardDraft,
     publishDraft, listPublished, readPublished, readMenuBySrc, updateNote,
-    listDraftSnapshots, readDraftSnapshot,
+    listDraftSnapshots, readDraftSnapshot, restoreDraftSnapshot,
+    currentSnaps, draftSnaps,
   };
 }
 
@@ -313,9 +364,13 @@ export function makeDraftHandlers<T>(dp: DraftPublish<T>) {
         return NextResponse.json({ error: 'Failed to read draft' }, { status: 500 });
       }
     },
+    // ?restore=<version key> → put that earlier version back (body = what the
+    // editor had open, kept as a version first). Plain POST saves as before.
     async POST(request: Request) {
       try {
         const body = await request.json();
+        const restore = new URL(request.url).searchParams.get('restore');
+        if (restore) return NextResponse.json(await dp.restoreDraftSnapshot(restore, body));
         await dp.writeDraft(body as T);
         return NextResponse.json({ ok: true });
       } catch (err) {
@@ -359,10 +414,22 @@ export function makePublishHandler<T>(dp: DraftPublish<T>) {
 // burn one of the 3 "Past Menus" slots). `writeCurrent` is each menu's
 // existing write{Name}Menu() — already validates via schema.parse and keeps
 // its own hidden legacy per-save backup, which is a fine safety net here.
-export function makeFixHandlers<T>(readCurrent: () => Promise<T>, writeCurrent: (data: T) => Promise<void>) {
+export function makeFixHandlers<T>(
+  readCurrent: () => Promise<T>,
+  writeCurrent: (data: T) => Promise<void>,
+  // Pass the menu's draft/publish object to keep Earlier Versions of the
+  // active menu (Monday, Tue–Wed, Weekend — Oct 2026): every save is kept as
+  // a version, GET ?history / ?snapshot=<key>, POST ?restore=<key>.
+  dp?: DraftPublish<T>,
+) {
+  const snaps = dp?.currentSnaps;
   return {
-    async GET() {
+    async GET(request: Request) {
       try {
+        const params = new URL(request.url).searchParams;
+        if (snaps && params.has('history')) return NextResponse.json(await snaps.list());
+        const key = params.get('snapshot');
+        if (snaps && key) return NextResponse.json(await snaps.read(key));
         return NextResponse.json(await readCurrent());
       } catch {
         return NextResponse.json({ error: 'Failed to read active menu' }, { status: 500 });
@@ -371,7 +438,18 @@ export function makeFixHandlers<T>(readCurrent: () => Promise<T>, writeCurrent: 
     async POST(request: Request) {
       try {
         const body = await request.json();
+        const restore = snaps ? new URL(request.url).searchParams.get('restore') : null;
+        if (snaps && restore) {
+          const data = (await snaps.read(restore)) as T;
+          const now = Date.now();
+          await snaps.snap(JSON.stringify(body, null, 2), now);        // what was open, kept first
+          await writeCurrent(data);
+          await snaps.snap(JSON.stringify(data, null, 2), now + 1);
+          return NextResponse.json(data);
+        }
+        if (snaps) await snaps.seed(JSON.stringify(await readCurrent(), null, 2));
         await writeCurrent(body as T);
+        if (snaps) await snaps.snap(JSON.stringify(body, null, 2));
         return NextResponse.json({ ok: true });
       } catch (err) {
         if (err instanceof ZodError) {

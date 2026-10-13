@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import { TUESWED_CHAR_LIMITS as L, TUESWED_DEFAULT_WEEKLY } from '@/lib/tueswed-schema';
@@ -197,6 +198,8 @@ export default function TuewedEditorPage() {
     storageKey: 'tueswed:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [previewUrl, setPreviewUrl]     = useState(`/tueswed-preview?src=${src}${pkg}`);
   const [fit, setFit]                   = useState<FitReport | null>(null);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
@@ -644,6 +647,11 @@ export default function TuewedEditorPage() {
              saveStatus === 'error'  ? `⚠ ${saveMsg}` :
              'Auto-saves as you type'}
           </span>
+          <EarlierVersions
+            apiPath={apiPath} previewBase="/tueswed-preview" isFix={isFix}
+            getEditorMenu={() => menuRef.current}
+            beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+          />
           <button
             className="btn-print"
             onClick={() => {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
@@ -499,6 +500,8 @@ export default function WeekendEditorPage() {
     storageKey: 'weekend:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [previewUrl, setPreviewUrl] = useState(`/weekend-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
@@ -772,6 +775,11 @@ export default function WeekendEditorPage() {
                saveStatus === 'error'  ? `⚠ ${saveMsg}` :
                'Auto-saves as you type'}
             </span>
+            <EarlierVersions
+              apiPath={apiPath} previewBase="/weekend-preview" isFix={isFix}
+              getEditorMenu={() => menuRef.current}
+              beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+            />
             <button
               className="btn-print"
               onClick={() => {
