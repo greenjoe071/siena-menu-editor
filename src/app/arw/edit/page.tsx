@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -238,6 +240,14 @@ export default function ArwEditorPage() {
   const [menu, setMenu]             = useState<ArwMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]       = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  // Page-fit problem shown in the footer — a warning only; saving never waits on it.
+  const [fitMsg, setFitMsg] = useState('');
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'arw:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [reports, setReports]       = useState<Record<ArwStyle, ValidateReport | null>>({ classic: null, 'left-aligned': null });
   const [cacheBust]                 = useState(() => Date.now());
   // Whether the cocktail block is shown. Kept as its own state instead of
@@ -251,7 +261,6 @@ export default function ArwEditorPage() {
     'left-aligned': useRef<HTMLIFrameElement>(null),
   };
   const prevJsonRef    = useRef<string>('');
-  const pendingSaveRef = useRef<ArwMenuData | null>(null);
   // Last non-empty cocktail values, restored when the box is re-checked
   // after being turned off, so unchecking doesn't destroy typed content.
   const lastCocktailRef = useRef<ArwCocktail>({ name: '', desc: '', price: '' });
@@ -261,7 +270,7 @@ export default function ArwEditorPage() {
       .then(r => r.json())
       .then(data => {
         setMenu(data);
-        prevJsonRef.current = JSON.stringify(data);
+        prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current);
         setCocktailOn(!!data.cocktail?.name?.trim());
         if (data.cocktail?.name?.trim()) lastCocktailRef.current = data.cocktail;
       })
@@ -298,7 +307,7 @@ export default function ArwEditorPage() {
         setSaveMsg(msg);
         return;
       }
-      setSaveStatus('saved');
+      setSaveStatus('saved'); confirmSaved(json);
       setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
@@ -311,17 +320,11 @@ export default function ArwEditorPage() {
     const activeReport = nextReports[activeStyle];
     if (!activeReport) return; // still waiting on the active style's iframe
     if (activeReport.fits) {
-      if (pendingSaveRef.current) {
-        saveToServer(pendingSaveRef.current);
-        pendingSaveRef.current = null;
-      }
-      setSaveStatus(s => (s === 'error' ? 'idle' : s));
+      setFitMsg('');
     } else {
       // fits is false only when there's an actual per-field violation now —
       // worstField is always set in that case (see ValidateReport note above).
-      pendingSaveRef.current = null;
-      setSaveStatus('error');
-      setSaveMsg(`Content overflows in ${fieldLabel(activeReport.worstField!)} — shorten the text`);
+      setFitMsg(`Content overflows in ${fieldLabel(activeReport.worstField!)} — shorten the text`);
     }
   }
 
@@ -350,7 +353,7 @@ export default function ArwEditorPage() {
   // Debounce menu edits → push to BOTH iframes for live preview + dual validation
   useEffect(() => {
     if (!debouncedMenu || prevJsonRef.current === '') return;
-    pendingSaveRef.current = debouncedMenu;
+    saveToServer(debouncedMenu);   // typing always saves; fit is only a warning
     setReports({ classic: null, 'left-aligned': null });
     (['classic', 'left-aligned'] as ArwStyle[]).forEach(s => {
       iframeRefs[s].current?.contentWindow?.postMessage(
@@ -414,7 +417,7 @@ export default function ArwEditorPage() {
     try {
       await fetch('/api/arw/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/arw/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/arw';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -452,10 +455,11 @@ export default function ArwEditorPage() {
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
     saveStatus === 'saving' ? 'save-status saving' :
-    saveStatus === 'error'  ? 'save-status error'  : 'save-status';
+    (saveStatus === 'error' || fitMsg) ? 'save-status error'  : 'save-status';
 
   return (
     <div className="app">
+      {recoveryBanner}
 
       {/* ── Editor pane ──────────────────────────────────────────── */}
       <div className="editor-pane">
@@ -602,6 +606,7 @@ export default function ArwEditorPage() {
             {saveStatus === 'saved'  ? '✓ Saved' :
              saveStatus === 'saving' ? 'Saving…' :
              saveStatus === 'error'  ? `⚠ ${saveMsg}` :
+             fitMsg ? `⚠ ${fitMsg} (your changes are saved)` :
              'Auto-saves as you type'}
           </span>
           <button

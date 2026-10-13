@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -77,6 +79,17 @@ export default function PrivateDiningEditorPage() {
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety<DefaultMenu | Alternate>({
+    storageKey: `privatedining:${menuId}:${mode === 'default' ? 'draft' : 'alt-' + altId}`,
+    url: mode === 'default' ? `/api/privatedining/${menuId}/draft` : `/api/privatedining/${menuId}/alternates/${altId}`,
+    method: mode === 'default' ? 'POST' : 'PATCH',
+    payload: mode === 'default' ? defaultMenu : alternate,
+    loadedJson,
+    setSaveStatus, setSaveMsg,
+    onRestore: (d) => (mode === 'default' ? setDefaultMenu(d as DefaultMenu) : setAlternate(d as Alternate)),
+  });
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [publishing, setPublishing] = useState(false);
 
@@ -97,13 +110,13 @@ export default function PrivateDiningEditorPage() {
         const draftRes = await fetch(`/api/privatedining/${menuId}/draft`);
         const draft = await draftRes.json();
         setDefaultMenu(draft);
-        prevJsonRef.current = JSON.stringify(draft);
+        prevJsonRef.current = JSON.stringify(draft); setLoadedJson(prevJsonRef.current);
       } else {
         const altsRes = await fetch(`/api/privatedining/${menuId}/alternates`);
         const alts: Alternate[] = await altsRes.json();
         const found = alts.find((a) => a.id === altId) ?? null;
         setAlternate(found);
-        prevJsonRef.current = JSON.stringify(found);
+        prevJsonRef.current = JSON.stringify(found); setLoadedJson(prevJsonRef.current);
       }
       setLoading(false);
     }
@@ -150,7 +163,7 @@ export default function PrivateDiningEditorPage() {
         const body = await res.json().catch(() => ({}));
         setSaveStatus('error'); setSaveMsg(body.error || 'Save failed'); return;
       }
-      setSaveStatus('saved'); setSaveMsg(mode === 'default' ? 'Draft saved' : 'Alternate saved');
+      setSaveStatus('saved'); confirmSaved(json); setSaveMsg(mode === 'default' ? 'Draft saved' : 'Alternate saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -227,7 +240,7 @@ export default function PrivateDiningEditorPage() {
     try {
       await fetch(`/api/privatedining/${menuId}/draft`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(defaultMenu) });
       const res = await fetch(`/api/privatedining/${menuId}/publish`, { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       router.push(`/privatedining/${menuId}`);
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -265,6 +278,7 @@ export default function PrivateDiningEditorPage() {
 
   return (
     <div className="app">
+      {recoveryBanner}
       <div className="editor-pane">
         <div className="editor-header">
           <Link href={`/privatedining/${menuId}`} className="btn-back">← Back</Link>

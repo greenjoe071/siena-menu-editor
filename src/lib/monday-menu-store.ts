@@ -3,6 +3,10 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { MondayMenuSchema, type MondayMenuData } from './monday-schema';
 import { menuBlobStore } from './blob-store';
+import { allowBlanks } from './allow-blanks';
+// Saves (drafts, "Make a Change") and reads allow blank text fields so typing
+// always saves; only publishing checks required fields (see allow-blanks.ts).
+const SaveMondayMenuSchema = allowBlanks(MondayMenuSchema);
 
 const DATA_PATH   = join(process.cwd(), 'monday-menu-data.json');
 const BACKUP_DIR  = join(process.cwd(), 'monday-backups');
@@ -72,13 +76,13 @@ function formatLabel(ts: number): string {
 export async function readMondayMenu(): Promise<MondayMenuData> {
   const raw = await blobsRead(BLOB_CURRENT);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    return MondayMenuSchema.parse(JSON.parse(raw));
+    return SaveMondayMenuSchema.parse(JSON.parse(raw));
   }
-  return MondayMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
+  return SaveMondayMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
 }
 
 export async function writeMondayMenu(data: MondayMenuData): Promise<void> {
-  MondayMenuSchema.parse(data);
+  SaveMondayMenuSchema.parse(data);
   const ts   = Date.now();
   const json = JSON.stringify(data, null, 2);
 
@@ -134,12 +138,12 @@ export async function listMondayBackups(): Promise<BackupEntry[]> {
 export async function restoreMondayBackup(key: string): Promise<MondayMenuData> {
   const raw = await blobsRead(key);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    const data = MondayMenuSchema.parse(JSON.parse(raw));
+    const data = SaveMondayMenuSchema.parse(JSON.parse(raw));
     await writeMondayMenu(data);
     return data;
   }
   const fileRaw = await readFile(join(BACKUP_DIR, key), 'utf8');
-  const data    = MondayMenuSchema.parse(JSON.parse(fileRaw));
+  const data    = SaveMondayMenuSchema.parse(JSON.parse(fileRaw));
   await writeMondayMenu(data);
   return data;
 }
@@ -154,6 +158,7 @@ export const mondayDP = createDraftPublish<MondayMenuData>({
   metaKey:         'monday-menu-meta',
   publishedPrefix: 'monday-published-',
   schema:          MondayMenuSchema,
+  draftSchema: SaveMondayMenuSchema,
   readCurrent:     readMondayMenu,
 });
 

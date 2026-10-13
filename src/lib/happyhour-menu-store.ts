@@ -3,6 +3,10 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { HappyhourMenuSchema, type HappyhourMenuData } from './happyhour-schema';
 import { menuBlobStore } from './blob-store';
+import { allowBlanks } from './allow-blanks';
+// Saves (drafts, "Make a Change") and reads allow blank text fields so typing
+// always saves; only publishing checks required fields (see allow-blanks.ts).
+const SaveHappyhourMenuSchema = allowBlanks(HappyhourMenuSchema);
 
 const DATA_PATH   = join(process.cwd(), 'happyhour-menu-data.json');
 const BACKUP_DIR  = join(process.cwd(), 'happyhour-backups');
@@ -64,13 +68,13 @@ function formatLabel(ts: number): string {
 export async function readHappyhourMenu(): Promise<HappyhourMenuData> {
   const raw = await blobsRead(BLOB_CURRENT);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    return HappyhourMenuSchema.parse(JSON.parse(raw));
+    return SaveHappyhourMenuSchema.parse(JSON.parse(raw));
   }
-  return HappyhourMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
+  return SaveHappyhourMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
 }
 
 export async function writeHappyhourMenu(data: HappyhourMenuData): Promise<void> {
-  HappyhourMenuSchema.parse(data);
+  SaveHappyhourMenuSchema.parse(data);
   const ts   = Date.now();
   const json = JSON.stringify(data, null, 2);
 
@@ -125,12 +129,12 @@ export async function listHappyhourBackups(): Promise<BackupEntry[]> {
 export async function restoreHappyhourBackup(key: string): Promise<HappyhourMenuData> {
   const raw = await blobsRead(key);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    const data = HappyhourMenuSchema.parse(JSON.parse(raw));
+    const data = SaveHappyhourMenuSchema.parse(JSON.parse(raw));
     await writeHappyhourMenu(data);
     return data;
   }
   const fileRaw = await readFile(join(BACKUP_DIR, key), 'utf8');
-  const data    = HappyhourMenuSchema.parse(JSON.parse(fileRaw));
+  const data    = SaveHappyhourMenuSchema.parse(JSON.parse(fileRaw));
   await writeHappyhourMenu(data);
   return data;
 }
@@ -145,6 +149,7 @@ export const happyhourDP = createDraftPublish<HappyhourMenuData>({
   metaKey:         'happyhour-menu-meta',
   publishedPrefix: 'happyhour-published-',
   schema:          HappyhourMenuSchema,
+  draftSchema: SaveHappyhourMenuSchema,
   readCurrent:     readHappyhourMenu,
 });
 

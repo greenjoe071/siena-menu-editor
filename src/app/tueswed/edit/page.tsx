@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import { TUESWED_CHAR_LIMITS as L, TUESWED_DEFAULT_WEEKLY } from '@/lib/tueswed-schema';
 
@@ -189,13 +191,16 @@ export default function TuewedEditorPage() {
   const [menu, setMenu]                 = useState<TuewedMenuData | null>(null);
   const [saveStatus, setSaveStatus]     = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]           = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'tueswed:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [previewUrl, setPreviewUrl]     = useState(`/tueswed-preview?src=${src}${pkg}`);
   const [fit, setFit]                   = useState<FitReport | null>(null);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
-  const latestRef    = useRef<TuewedMenuData | null>(null);
-  latestRef.current  = menu;
-  const retryRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch(apiPath)
@@ -205,7 +210,7 @@ export default function TuewedEditorPage() {
         // (Oct 2026: an automatic save-on-open could write an older copy of the
         // draft over newer work.) An upgraded v2 draft is saved on the first edit.
         const loaded = isFix ? data : upgradeToV3(data);
-        prevJsonRef.current = JSON.stringify(loaded);
+        prevJsonRef.current = JSON.stringify(loaded); setLoadedJson(prevJsonRef.current);
         setMenu(loaded);
       })
       .catch(() => setSaveStatus('error'));
@@ -235,27 +240,20 @@ export default function TuewedEditorPage() {
         saveFailed(msg);
         return;
       }
-      setSaveStatus('saved');
+      setSaveStatus('saved'); confirmSaved(json);
       setSaveMsg('Saved');
       setTimeout(() => setSaveStatus(st => (st === 'saved' ? 'idle' : st)), 3000);
     } catch {
-      saveFailed('Network error — not saved yet, retrying…');
+      saveFailed('Not saved yet — no connection. Retrying…');
     }
 
-    // A failed save must not count as saved: forget it and retry the LATEST
-    // menu in a few seconds (never an older copy).
+    // A failed save must not count as saved (the safety net retries it).
     function saveFailed(msg: string) {
       prevJsonRef.current = '__unsaved__';
       setSaveStatus('error');
       setSaveMsg(msg);
-      if (retryRef.current) clearTimeout(retryRef.current);
-      retryRef.current = setTimeout(() => {
-        if (latestRef.current) saveToServerRef.current?.(latestRef.current);
-      }, 5000);
     }
-  }, [apiPath]);
-  const saveToServerRef = useRef<typeof saveToServer | null>(null);
-  saveToServerRef.current = saveToServer;
+  }, [apiPath, confirmSaved]);
 
   // ── Fit check from the preview ──────────────────────────────────────────
   useEffect(() => {
@@ -361,7 +359,7 @@ export default function TuewedEditorPage() {
     try {
       await fetch('/api/tueswed/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/tueswed/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/tueswed';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -392,6 +390,7 @@ export default function TuewedEditorPage() {
 
   return (
     <div className="app">
+      {recoveryBanner}
 
       {/* ── Editor pane ──────────────────────────────────────────── */}
       <div className="editor-pane">

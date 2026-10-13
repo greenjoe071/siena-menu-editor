@@ -3,6 +3,10 @@ import { join } from 'node:path';
 import { menuBlobStore } from './blob-store';
 import { DessertMenuSchema, type DessertMenuData } from './dessert-schema';
 import { createDraftPublish } from './draft-publish';
+import { allowBlanks } from './allow-blanks';
+// Saves (drafts, "Make a Change") and reads allow blank text fields so typing
+// always saves; only publishing checks required fields (see allow-blanks.ts).
+const SaveDessertMenuSchema = allowBlanks(DessertMenuSchema);
 
 const DATA_PATH    = join(process.cwd(), 'dessert-menu-data.json');
 const BLOB_STORE   = 'menu-editor';
@@ -26,14 +30,14 @@ async function blobsWrite(key: string, value: string): Promise<typeof BLOBS_UNAV
 export async function readDessertMenu(): Promise<DessertMenuData> {
   const raw = await blobsRead(BLOB_CURRENT);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    return DessertMenuSchema.parse(JSON.parse(raw));
+    return SaveDessertMenuSchema.parse(JSON.parse(raw));
   }
-  return DessertMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
+  return SaveDessertMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
 }
 
 // Seed helper (used to push initial data to production). Not used by the UI.
 export async function writeDessertMenu(data: DessertMenuData): Promise<void> {
-  DessertMenuSchema.parse(data);
+  SaveDessertMenuSchema.parse(data);
   const json = JSON.stringify(data, null, 2);
   const res = await blobsWrite(BLOB_CURRENT, json);
   if (res === BLOBS_UNAVAILABLE) {
@@ -49,6 +53,7 @@ export const dessertDP = createDraftPublish<DessertMenuData>({
   metaKey:         'dessert-menu-meta',
   publishedPrefix: 'dessert-published-',
   schema:          DessertMenuSchema,
+  draftSchema: SaveDessertMenuSchema,
   readCurrent:     readDessertMenu,
 });
 

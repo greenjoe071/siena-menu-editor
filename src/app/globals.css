@@ -1955,3 +1955,17 @@ a.dd-chooser-card:hover {
 }
 .btn-add-dish:hover:not(:disabled) { background: #24643f; }
 .btn-add-dish:disabled { background: #cfcabd; color: #6b6456; cursor: not-allowed; }
+
+/* ── Unsaved-changes recovery card (use-save-safety.tsx, Oct 2026) ── */
+.save-recovery {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+  z-index: 10000; width: min(460px, calc(100vw - 32px));
+  background: #fffaf0; color: #2a1a0e; border: 2px solid #b8821e; border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.35); padding: 18px 20px; font-family: system-ui, -apple-system, sans-serif;
+}
+.save-recovery-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; color: #7a1712; }
+.save-recovery-body { font-size: 14px; line-height: 1.45; margin-bottom: 14px; }
+.save-recovery-actions { display: flex; gap: 10px; }
+.save-recovery-yes { background: #2f7d32; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.save-recovery-yes:hover { background: #256528; }
+.save-recovery-no { background: transparent; color: #6b5a44; border: 1px solid #c9b79a; border-radius: 8px; padding: 10px 16px; font-size: 14px; cursor: pointer; }

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
@@ -510,6 +512,12 @@ export default function MondayEditorPage() {
   const [menu, setMenu]           = useState<MondayMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]     = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'monday:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [previewUrl, setPreviewUrl] = useState(`/monday-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
@@ -520,7 +528,7 @@ export default function MondayEditorPage() {
       .then(r => r.json())
       .then(data => {
         setMenu(data);
-        prevJsonRef.current = JSON.stringify(data);
+        prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current);
       })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
@@ -556,7 +564,7 @@ export default function MondayEditorPage() {
         setSaveMsg(msg);
         return;
       }
-      setSaveStatus('saved');
+      setSaveStatus('saved'); confirmSaved(json);
       setSaveMsg('Saved');
       iframeRef.current?.contentWindow?.postMessage(
         { type: 'SIENA_MONDAY_UPDATE', payload: data }, '*'
@@ -641,7 +649,7 @@ export default function MondayEditorPage() {
     try {
       await fetch('/api/monday/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/monday/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/monday';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -662,6 +670,7 @@ export default function MondayEditorPage() {
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="app">
+      {recoveryBanner}
 
         {/* ── Editor pane ──────────────────────────────────────────── */}
         <div className="editor-pane">

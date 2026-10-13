@@ -12,6 +12,11 @@ import {
   type PrivateDiningAlternatesList,
 } from './privatedining-schema';
 import { createDraftPublish, type DraftPublish } from './draft-publish';
+import { allowBlanks } from './allow-blanks';
+// Saves (drafts, "Make a Change") and reads allow blank text fields so typing
+// always saves; only publishing checks required fields (see allow-blanks.ts).
+const SavePrivateDiningMenuSchema = allowBlanks(PrivateDiningMenuSchema);
+const SaveAlternatesListSchema = allowBlanks(AlternatesListSchema);
 
 const DATA_PATH  = join(process.cwd(), 'privatedining-menu-data.json');
 const BLOB_STORE = 'menu-editor';
@@ -72,9 +77,9 @@ function seedMenu(seed: SeedFile, id: PrivateDiningMenuId) {
 
 export async function readPrivateDiningMenu(id: PrivateDiningMenuId): Promise<PrivateDiningMenuData> {
   const raw = await kvRead(currentKey(id));
-  if (raw) return PrivateDiningMenuSchema.parse(JSON.parse(raw));
+  if (raw) return SavePrivateDiningMenuSchema.parse(JSON.parse(raw));
   const seed = seedMenu(await readSeed(), id);
-  return PrivateDiningMenuSchema.parse({
+  return SavePrivateDiningMenuSchema.parse({
     label: seed.label,
     internalPriceRef: seed.internalPriceRef,
     courses: seed.courses,
@@ -83,7 +88,7 @@ export async function readPrivateDiningMenu(id: PrivateDiningMenuId): Promise<Pr
 
 // Seed helper (used to push initial/updated data to production). Not used by the UI.
 export async function writePrivateDiningMenu(id: PrivateDiningMenuId, data: PrivateDiningMenuData): Promise<void> {
-  PrivateDiningMenuSchema.parse(data);
+  SavePrivateDiningMenuSchema.parse(data);
   await kvWrite(currentKey(id), JSON.stringify(data, null, 2));
 }
 
@@ -103,6 +108,7 @@ for (const id of PRIVATEDINING_MENU_IDS) {
     metaKey:         metaKey(id),
     publishedPrefix: publishedPrefix(id),
     schema:          PrivateDiningMenuSchema,
+    draftSchema: SavePrivateDiningMenuSchema,
     readCurrent:     () => readPrivateDiningMenu(id),
   });
 }
@@ -116,13 +122,13 @@ export function getMenuDraftPublish(id: PrivateDiningMenuId): DraftPublish<Priva
 
 export async function readAlternates(id: PrivateDiningMenuId): Promise<PrivateDiningAlternatesList> {
   const raw = await kvRead(alternatesKey(id));
-  if (raw) return AlternatesListSchema.parse(JSON.parse(raw));
+  if (raw) return SaveAlternatesListSchema.parse(JSON.parse(raw));
   const seed = seedMenu(await readSeed(), id);
-  return AlternatesListSchema.parse(seed.alternates);
+  return SaveAlternatesListSchema.parse(seed.alternates);
 }
 
 async function writeAlternates(id: PrivateDiningMenuId, list: PrivateDiningAlternatesList): Promise<void> {
-  AlternatesListSchema.parse(list);
+  SaveAlternatesListSchema.parse(list);
   await kvWrite(alternatesKey(id), JSON.stringify(list, null, 2));
 }
 

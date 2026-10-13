@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // Generic 2–4 course menu editor (handoff-coursemenu). Same flow as Tue–Wed:
@@ -175,6 +177,14 @@ export default function CourseMenuEditorPage() {
   const [menu, setMenu]             = useState<CourseMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]       = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  // Page-fit problem shown in the footer — a warning only; saving never waits on it.
+  const [fitMsg, setFitMsg] = useState('');
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'coursemenu:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [previewUrl, setPreviewUrl] = useState(`/coursemenu-preview?src=${src}`);
   const [report, setReport]         = useState<ValidateReport | null>(null);
   // Add-on is "on" when it has a title; this keeps the fields open while the
@@ -183,14 +193,13 @@ export default function CourseMenuEditorPage() {
   const [everPublished, setEverPublished] = useState(true);
   const iframeRef      = useRef<HTMLIFrameElement>(null);
   const prevJsonRef    = useRef<string>('');
-  const pendingSaveRef = useRef<CourseMenuData | null>(null);
 
   useEffect(() => {
     fetch(apiPath)
       .then(r => r.json())
       .then((data: CourseMenuData) => {
         setMenu(data);
-        prevJsonRef.current = JSON.stringify(data);
+        prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current);
       })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
@@ -223,7 +232,7 @@ export default function CourseMenuEditorPage() {
         setSaveMsg(msg);
         return;
       }
-      setSaveStatus('saved');
+      setSaveStatus('saved'); confirmSaved(json);
       setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
@@ -238,16 +247,7 @@ export default function CourseMenuEditorPage() {
       if (!e.data || e.data.type !== 'SIENA_COURSEMENU_VALIDATE_RESULT') return;
       const r = e.data.report as ValidateReport;
       setReport(r);
-      if (r.fits) {
-        if (pendingSaveRef.current) {
-          saveToServer(pendingSaveRef.current);
-          pendingSaveRef.current = null;
-        }
-      } else {
-        pendingSaveRef.current = null;
-        setSaveStatus('error');
-        setSaveMsg('Not saved — fix the highlighted problem first');
-      }
+      setFitMsg(r.fits ? '' : 'Doesn’t fit the page yet — fix the highlighted problem before printing');
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -256,7 +256,7 @@ export default function CourseMenuEditorPage() {
   // Debounce edits → send to iframe for live preview + validation
   useEffect(() => {
     if (!debouncedMenu || prevJsonRef.current === '') return;
-    pendingSaveRef.current = debouncedMenu;
+    saveToServer(debouncedMenu);   // typing always saves; fit is only a warning
     iframeRef.current?.contentWindow?.postMessage(
       { type: 'SIENA_COURSEMENU_UPDATE', payload: debouncedMenu },
       '*'
@@ -343,7 +343,7 @@ export default function CourseMenuEditorPage() {
     try {
       await fetch('/api/coursemenu/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/coursemenu/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/coursemenu';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -364,13 +364,14 @@ export default function CourseMenuEditorPage() {
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
     saveStatus === 'saving' ? 'save-status saving' :
-    saveStatus === 'error'  ? 'save-status error'  : 'save-status';
+    (saveStatus === 'error' || fitMsg) ? 'save-status error'  : 'save-status';
 
   const flagStyle = (section: string) =>
     flagged.has(section) ? { outline: '2px solid #c0392b', outlineOffset: '2px' } : undefined;
 
   return (
     <div className="app">
+      {recoveryBanner}
 
       {/* ── Editor pane ──────────────────────────────────────────── */}
       <div className="editor-pane">
@@ -592,6 +593,7 @@ export default function CourseMenuEditorPage() {
             {saveStatus === 'saved'  ? '✓ Saved' :
              saveStatus === 'saving' ? 'Saving…' :
              saveStatus === 'error'  ? `⚠ ${saveMsg}` :
+             fitMsg ? `⚠ ${fitMsg} (your changes are saved)` :
              'Auto-saves as you type'}
           </span>
           <button

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
@@ -519,6 +521,12 @@ export default function DinnerDraftEditorPage() {
   const [menu, setMenu] = useState<MenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'dinner:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [publishing, setPublishing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(`/preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -541,7 +549,7 @@ export default function DinnerDraftEditorPage() {
       .then((r) => r.json())
       .then((data) => {
         setMenu(data);
-        prevJsonRef.current = JSON.stringify(data);
+        prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current);
       })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
@@ -570,7 +578,7 @@ export default function DinnerDraftEditorPage() {
         setSaveMsg(msg);
         return;
       }
-      setSaveStatus('saved');
+      setSaveStatus('saved'); confirmSaved(json);
       setSaveMsg(isFix ? 'Saved' : 'Draft saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
@@ -644,7 +652,7 @@ export default function DinnerDraftEditorPage() {
       if (!res.ok) {
         setPublishing(false);
         setSaveStatus('error');
-        setSaveMsg('Publish failed — try again');
+        setSaveMsg(await publishErrorMessage(res));
         return;
       }
       window.location.href = '/dinner';
@@ -731,6 +739,7 @@ export default function DinnerDraftEditorPage() {
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="app">
+      {recoveryBanner}
         {/* ── Editor pane ─────────────────────────────────────────── */}
         <div className="editor-pane">
           <div className="editor-header">

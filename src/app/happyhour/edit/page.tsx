@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -345,6 +347,14 @@ export default function HappyhourEditorPage() {
   const [menu, setMenu] = useState<MenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  // Page-fit problem shown in the footer — a warning only; saving never waits on it.
+  const [fitMsg, setFitMsg] = useState('');
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'happyhour:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   // null = not yet validated; true = fits; false = overflow
   const [validationFits, setValidationFits] = useState<boolean | null>(null);
   const [worstSection, setWorstSection] = useState<string | null>(null);
@@ -352,13 +362,12 @@ export default function HappyhourEditorPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
   // Queue: when user edits, we stash the data here; save fires after validation confirms fit
-  const pendingSaveRef = useRef<MenuData | null>(null);
 
   // Load initial data
   useEffect(() => {
     fetch(apiPath)
       .then(r => r.json())
-      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
+      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current); })
       .catch(() => { setSaveStatus('error'); setSaveMsg('Failed to load menu data'); });
   }, [apiPath]);
 
@@ -381,7 +390,7 @@ export default function HappyhourEditorPage() {
           : (body.error || 'Save failed');
         setSaveStatus('error'); setSaveMsg(msg); return;
       }
-      setSaveStatus('saved'); setSaveMsg('Saved');
+      setSaveStatus('saved'); confirmSaved(json); setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
   }, [apiPath]);
@@ -394,17 +403,11 @@ export default function HappyhourEditorPage() {
       setValidationFits(result.fits);
       if (result.fits) {
         setWorstSection(null);
-        // If there's a pending save, fire it now that we know the page fits
-        if (pendingSaveRef.current) {
-          saveToServer(pendingSaveRef.current);
-          pendingSaveRef.current = null;
-        }
+        setFitMsg('');
       } else {
         setWorstSection(result.worstSection ?? null);
-        pendingSaveRef.current = null;
-        setSaveStatus('error');
         const section = result.worstSection ? sectionLabel(result.worstSection) : 'the page';
-        setSaveMsg(`Content overflows in "${section}" — try shortening a description`);
+        setFitMsg(`Content overflows in "${section}" — try shortening a description`);
       }
     }
     window.addEventListener('message', onMessage);
@@ -416,8 +419,8 @@ export default function HappyhourEditorPage() {
   useEffect(() => {
     if (!debouncedMenu || prevJsonRef.current === '') return;
     const json = JSON.stringify(debouncedMenu);
-    // Queue the save; it will fire once validation result comes back as fits=true
-    pendingSaveRef.current = debouncedMenu;
+    // Typing always saves; the fit check below is only a warning.
+    saveToServer(debouncedMenu);
     // Trigger live preview + validation in the iframe
     iframeRef.current?.contentWindow?.postMessage(
       { type: 'SIENA_HAPPYHOUR_UPDATE', payload: debouncedMenu },
@@ -448,7 +451,7 @@ export default function HappyhourEditorPage() {
     try {
       await fetch('/api/happyhour/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/happyhour/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/happyhour';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -460,12 +463,13 @@ export default function HappyhourEditorPage() {
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
     saveStatus === 'saving' ? 'save-status saving' :
-    saveStatus === 'error'  ? 'save-status error'  : 'save-status';
+    (saveStatus === 'error' || fitMsg) ? 'save-status error'  : 'save-status';
 
   const overflowSection = validationFits === false && worstSection ? sectionLabel(worstSection) : null;
 
   return (
     <div className="app">
+      {recoveryBanner}
       {/* ── Editor pane ───────────────────────────────────────────── */}
       <div className="editor-pane">
         <div className="editor-header">
@@ -480,7 +484,7 @@ export default function HappyhourEditorPage() {
             background: '#7f1d1d', color: '#fecaca', fontSize: '13px',
             padding: '8px 16px', borderBottom: '1px solid #991b1b',
           }}>
-            ⚠ Content overflows in <strong>{overflowSection}</strong> — try shortening a description. Save is paused until it fits.
+            ⚠ Content overflows in <strong>{overflowSection}</strong> — try shortening a description. Your changes are saved — it just won’t print right until it fits.
           </div>
         )}
 
@@ -573,7 +577,7 @@ export default function HappyhourEditorPage() {
             </div>
           )}
         <div className="editor-footer">
-          <span className={saveStatusClass}>{saveMsg || 'Auto-saves as you type'}</span>
+          <span className={saveStatusClass}>{saveStatus !== 'error' && fitMsg ? `⚠ ${fitMsg} (your changes are saved)` : (saveMsg || 'Auto-saves as you type')}</span>
           <button
             className="btn-print"
             disabled={validationFits === false}

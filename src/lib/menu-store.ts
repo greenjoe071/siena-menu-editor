@@ -23,6 +23,10 @@ export interface BackupEntry {
 // netlify dev CLI). We catch those and fall back to the file system.
 
 import { menuBlobStore } from './blob-store';
+import { allowBlanks } from './allow-blanks';
+// Saves (drafts, "Make a Change") and reads allow blank text fields so typing
+// always saves; only publishing checks required fields (see allow-blanks.ts).
+const SaveMenuSchema = allowBlanks(MenuSchema);
 
 function store() {
   return menuBlobStore(BLOB_STORE);
@@ -92,14 +96,14 @@ function formatLabel(ts: number): string {
 export async function readMenu(): Promise<MenuData> {
   const raw = await blobsRead(BLOB_CURRENT);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    return MenuSchema.parse(JSON.parse(raw));
+    return SaveMenuSchema.parse(JSON.parse(raw));
   }
   // Local dev fallback
-  return MenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
+  return SaveMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
 }
 
 export async function writeMenu(data: MenuData): Promise<void> {
-  MenuSchema.parse(data);
+  SaveMenuSchema.parse(data);
   const ts = Date.now();
   const json = JSON.stringify(data, null, 2);
 
@@ -158,13 +162,13 @@ export async function listBackups(): Promise<BackupEntry[]> {
 export async function restoreBackup(key: string): Promise<MenuData> {
   const raw = await blobsRead(key);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    const data = MenuSchema.parse(JSON.parse(raw));
+    const data = SaveMenuSchema.parse(JSON.parse(raw));
     await writeMenu(data);
     return data;
   }
   // Local dev fallback
   const fileRaw = await readFile(join(BACKUP_DIR, key), 'utf8');
-  const data = MenuSchema.parse(JSON.parse(fileRaw));
+  const data = SaveMenuSchema.parse(JSON.parse(fileRaw));
   await writeMenu(data);
   return data;
 }
@@ -179,6 +183,7 @@ export const dinnerDP = createDraftPublish<MenuData>({
   metaKey:         'menu-meta',
   publishedPrefix: 'published-',
   schema:          MenuSchema,
+  draftSchema: SaveMenuSchema,
   readCurrent:     readMenu,
 });
 

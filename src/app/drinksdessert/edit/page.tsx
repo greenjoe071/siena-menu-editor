@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
@@ -404,17 +405,24 @@ export default function DrinksDessertEditorPage() {
   const [menu, setMenu] = useState<DrinksDessertMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg] = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  // Page-fit problem shown in the footer — a warning only; saving never waits on it.
+  const [fitMsg, setFitMsg] = useState('');
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'drinksdessert:fix', url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [previewUrl, setPreviewUrl] = useState('/drinksdessert-preview?src=current');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
-  const pendingSaveRef = useRef<DrinksDessertMenuData | null>(null);
   const printSelectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     fetch(apiPath)
       .then(r => r.json())
-      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
+      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current); })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
 
@@ -434,7 +442,7 @@ export default function DrinksDessertEditorPage() {
         const msg = body.issues ? body.issues.map((i: { message: string }) => i.message).join('; ') : (body.error || 'Save failed');
         setSaveStatus('error'); setSaveMsg(msg); return;
       }
-      setSaveStatus('saved'); setSaveMsg('Saved');
+      setSaveStatus('saved'); confirmSaved(json); setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch { setSaveStatus('error'); setSaveMsg('Network error'); }
   }, [apiPath]);
@@ -447,21 +455,19 @@ export default function DrinksDessertEditorPage() {
       const rep = e.data.report as ValidateReport;
       setReport(rep);
       if (rep.fits) {
-        if (pendingSaveRef.current) { saveToServer(pendingSaveRef.current); pendingSaveRef.current = null; }
+        setFitMsg('');
       } else {
-        pendingSaveRef.current = null;
         const bad = rep.pages.find(p => !p.fits);
         const card = bad ? (CARD_LABELS[bad.id] ?? bad.id) : 'A card';
-        setSaveStatus('error');
         if (bad?.id === 'cocktails' && bad.itemCountOk === false) {
-          setSaveMsg(`${card} holds at most ${bad.maxItems} drinks — remove one to add another.`);
+          setFitMsg(`${card} holds at most ${bad.maxItems} drinks — remove one to add another.`);
         } else if (bad?.id === 'cocktails' && bad.lineBudgetOk === false) {
-          setSaveMsg(`${card} is out of room (${bad.lines} of ${bad.lineBudget} lines). Shorten a name, description, or note.`);
+          setFitMsg(`${card} is out of room (${bad.lines} of ${bad.lineBudget} lines). Shorten a name, description, or note.`);
         } else if (bad?.worstList === 'spritz-tagline') {
-          setSaveMsg(`${card} — the tagline line is too long to fit on one line. Shorten it.`);
+          setFitMsg(`${card} — the tagline line is too long to fit on one line. Shorten it.`);
         } else {
           const worst = bad?.worstList ? LIST_LABELS[bad.worstList] ?? bad.worstList : null;
-          setSaveMsg(worst
+          setFitMsg(worst
             ? `${card} is too long — ${worst} is the largest section. Remove an item there, or shorten/remove a description.`
             : `${card} is too long — remove an item or shorten a description.`);
         }
@@ -474,7 +480,7 @@ export default function DrinksDessertEditorPage() {
   // Debounced edits → push to preview iframe for render + validate.
   useEffect(() => {
     if (!debouncedMenu || prevJsonRef.current === '') return;
-    pendingSaveRef.current = debouncedMenu;
+    saveToServer(debouncedMenu);   // typing always saves; fit is only a warning
     iframeRef.current?.contentWindow?.postMessage(
       { type: 'SIENA_DRINKSDESSERT_UPDATE', payload: debouncedMenu }, '*'
     );
@@ -534,7 +540,7 @@ export default function DrinksDessertEditorPage() {
   const saveStatusClass =
     saveStatus === 'saved' ? 'save-status saved' :
     saveStatus === 'saving' ? 'save-status saving' :
-    saveStatus === 'error' ? 'save-status error' : 'save-status';
+    (saveStatus === 'error' || fitMsg) ? 'save-status error' : 'save-status';
 
   const anyOverflow = report ? !report.fits : false;
   const taglineWrapped = report?.pages.find(p => p.id === 'spritz')?.worstList === 'spritz-tagline';
@@ -542,6 +548,7 @@ export default function DrinksDessertEditorPage() {
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="app">
+      {recoveryBanner}
         {/* ── Editor pane ─────────────────────────────────────────── */}
         <div className="editor-pane">
           <div className="editor-header">
@@ -668,7 +675,7 @@ export default function DrinksDessertEditorPage() {
           {/* Save status + print control */}
           <div className="editor-footer">
             <span className={saveStatusClass} style={{ flex: 1 }}>
-              {saveStatus === 'error' ? `⚠ ${saveMsg}` : (saveMsg || 'Auto-saves as you type')}
+              {saveStatus === 'error' ? `⚠ ${saveMsg}` : fitMsg ? `⚠ ${fitMsg} (your changes are saved)` : (saveMsg || 'Auto-saves as you type')}
             </span>
             <span className="dd-print-label">Print:</span>
             <select ref={printSelectRef} className="dd-print-select" disabled={anyOverflow} defaultValue="">

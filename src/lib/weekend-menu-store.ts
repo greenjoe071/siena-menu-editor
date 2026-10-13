@@ -3,6 +3,10 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { WeekendMenuSchema, WeekendDraftSchema, type WeekendMenuData } from './weekend-schema';
 import { menuBlobStore } from './blob-store';
+import { allowBlanks } from './allow-blanks';
+// Saves (drafts, "Make a Change") and reads allow blank text fields so typing
+// always saves; only publishing checks required fields (see allow-blanks.ts).
+const SaveWeekendMenuSchema = allowBlanks(WeekendMenuSchema);
 
 const DATA_PATH   = join(process.cwd(), 'weekend-menu-data.json');
 const BACKUP_DIR  = join(process.cwd(), 'weekend-backups');
@@ -72,13 +76,13 @@ function formatLabel(ts: number): string {
 export async function readWeekendMenu(): Promise<WeekendMenuData> {
   const raw = await blobsRead(BLOB_CURRENT);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    return WeekendMenuSchema.parse(JSON.parse(raw));
+    return SaveWeekendMenuSchema.parse(JSON.parse(raw));
   }
-  return WeekendMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
+  return SaveWeekendMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
 }
 
 export async function writeWeekendMenu(data: WeekendMenuData): Promise<void> {
-  WeekendMenuSchema.parse(data);
+  SaveWeekendMenuSchema.parse(data);
   const ts   = Date.now();
   const json = JSON.stringify(data, null, 2);
 
@@ -134,12 +138,12 @@ export async function listWeekendBackups(): Promise<BackupEntry[]> {
 export async function restoreWeekendBackup(key: string): Promise<WeekendMenuData> {
   const raw = await blobsRead(key);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    const data = WeekendMenuSchema.parse(JSON.parse(raw));
+    const data = SaveWeekendMenuSchema.parse(JSON.parse(raw));
     await writeWeekendMenu(data);
     return data;
   }
   const fileRaw = await readFile(join(BACKUP_DIR, key), 'utf8');
-  const data    = WeekendMenuSchema.parse(JSON.parse(fileRaw));
+  const data    = SaveWeekendMenuSchema.parse(JSON.parse(fileRaw));
   await writeWeekendMenu(data);
   return data;
 }

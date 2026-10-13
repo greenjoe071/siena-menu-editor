@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSaveSafety } from '@/lib/use-save-safety';
+import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
@@ -491,6 +493,12 @@ export default function WeekendEditorPage() {
   const [menu, setMenu]             = useState<WeekendMenuData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMsg, setSaveMsg]       = useState('');
+  // Safety net: browser copy, retries, save-on-leave (see use-save-safety.tsx).
+  const [loadedJson, setLoadedJson] = useState<string | null>(null);
+  const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
+    storageKey: 'weekend:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
+    setSaveStatus, setSaveMsg, onRestore: setMenu,
+  });
   const [previewUrl, setPreviewUrl] = useState(`/weekend-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
@@ -498,7 +506,7 @@ export default function WeekendEditorPage() {
   useEffect(() => {
     fetch(apiPath)
       .then(r => r.json())
-      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); })
+      .then(data => { setMenu(data); prevJsonRef.current = JSON.stringify(data); setLoadedJson(prevJsonRef.current); })
       .catch(() => setSaveStatus('error'));
   }, [apiPath]);
 
@@ -541,7 +549,7 @@ export default function WeekendEditorPage() {
         setSaveMsg(msg);
         return;
       }
-      setSaveStatus('saved');
+      setSaveStatus('saved'); confirmSaved(json);
       setSaveMsg('Saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch {
@@ -658,7 +666,7 @@ export default function WeekendEditorPage() {
     try {
       await fetch('/api/weekend/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(menu) });
       const res = await fetch('/api/weekend/publish', { method: 'POST' });
-      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg('Publish failed — try again'); return; }
+      if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/weekend';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
@@ -679,6 +687,7 @@ export default function WeekendEditorPage() {
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="app">
+      {recoveryBanner}
 
         {/* ── Editor pane ──────────────────────────────────────────── */}
         <div className="editor-pane">
