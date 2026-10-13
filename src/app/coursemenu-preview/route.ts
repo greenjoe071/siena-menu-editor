@@ -23,6 +23,36 @@ export async function GET(request: Request) {
   // removed course back (BUILD-SPEC §4).
   const safeTemplate = JSON.stringify(templateSrc).replace(/<\/script/gi, '<\\/script');
 
+  // The green Print button is for the preview opened on its own. Its CSS must
+  // live in <head>: live updates replace <body>, and without the CSS the
+  // button fell into the layout as a squished column beside the menu. Inside
+  // the editor it's hidden — the editor has its own Print Menu button.
+  html = html.replace('</head>', () => `<script>if (window.top !== window) document.documentElement.classList.add('in-editor');</script>
+<style>
+  .preview-print-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: #059669;
+    color: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px 26px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(5,150,105,0.45);
+    transition: background 0.15s, transform 0.1s;
+    z-index: 999;
+  }
+  .preview-print-btn:hover { background: #047857; transform: translateY(-1px); }
+  .preview-print-btn:active { transform: translateY(0); }
+  @media print { .preview-print-btn { display: none; } }
+  .in-editor .preview-print-btn { display: none; }
+</style>
+</head>`);
+
   const liveScript = `<script>
 ${renderSrc}
 ${validateSrc}
@@ -55,28 +85,6 @@ window.addEventListener('message', function(e) {
 });
 document.fonts.ready.then(function() { _cmRunValidate(); });
 </script>
-<style>
-  .preview-print-btn {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    background: #059669;
-    color: #fff;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    padding: 13px 26px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(5,150,105,0.45);
-    transition: background 0.15s, transform 0.1s;
-    z-index: 999;
-  }
-  .preview-print-btn:hover { background: #047857; transform: translateY(-1px); }
-  .preview-print-btn:active { transform: translateY(0); }
-  @media print { .preview-print-btn { display: none; } }
-</style>
 <button class="preview-print-btn" onclick="window.print()">🖨 Print Menu</button>`;
 
   html = html.replace('</body>', liveScript + '\n</body>');
