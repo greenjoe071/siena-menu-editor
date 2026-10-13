@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
@@ -527,6 +528,8 @@ export default function DinnerDraftEditorPage() {
     storageKey: 'dinner:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [publishing, setPublishing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(`/preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -856,6 +859,11 @@ export default function DinnerDraftEditorPage() {
 
           <div className="editor-footer editor-footer--draft">
             <span className={saveStatusClass} style={{ flex: 1, marginLeft: '8px' }}>{saveMsg || 'Auto-saves as you type'}</span>
+            <EarlierVersions
+              apiPath={apiPath} previewBase="/preview" isFix={isFix}
+              getEditorMenu={() => menuRef.current}
+              beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+            />
             <button
               className="btn-print"
               onClick={() => {
