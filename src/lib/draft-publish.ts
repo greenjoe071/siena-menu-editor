@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { getStore } from '@netlify/blobs';
+import { menuBlobStore } from './blob-store';
 
 // Minimal schema shape we depend on — any Zod schema satisfies this, and it
 // sidesteps ZodObject's stricter input-type variance under a generic <T>.
@@ -23,13 +23,15 @@ type Parser<T> = { parse: (data: unknown) => T };
 const BLOB_STORE = 'menu-editor';
 const KV_DIR     = join(process.cwd(), '.menu-kv');
 const MAX_PUBLISHED = 3;
+const MAX_DRAFT_SNAPSHOTS = 30;
+const SNAPSHOT_EVERY_MS = 60_000;
 
 // "Current as of July 9, 2026" — seed date shown until the first publish.
 export const DEFAULT_PUBLISHED_AT = Date.parse('2026-07-09T12:00:00Z');
 
 const BLOBS_UNAVAILABLE = Symbol();
 
-function store() { return getStore(BLOB_STORE); }
+function store() { return menuBlobStore(BLOB_STORE); }
 
 async function blobsRead(key: string): Promise<string | null | typeof BLOBS_UNAVAILABLE> {
   try { return await store().get(key, { type: 'text' }); }
@@ -123,6 +125,8 @@ export interface DraftPublish<T> {
   readPublished:   (key: string) => Promise<T>;
   readMenuBySrc:   (src: string | null) => Promise<T>;
   updateNote:      (key: string, note: string) => Promise<void>;
+  listDraftSnapshots: () => Promise<{ key: string; ts: number; label: string }[]>;
+  readDraftSnapshot:  (key: string) => Promise<unknown>;
 }
 
 // ── Factory ───────────────────────────────────────────────────────────────
@@ -159,13 +163,52 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
     return current;
   }
 
+  // Draft history (Oct 2026, after Chef's typed Tue–Wed menu was lost): every
+  // save also lands in a per-minute snapshot, the last 30 kept, and a draft
+  // is snapshotted before it's thrown away. Nothing typed is unrecoverable.
+  // Read them back via GET /api/{menu}/draft?history (see makeDraftHandlers).
+  const snapPrefix = `${draftKey}-snap-`;
+
+  async function snapshotDraft(json: string): Promise<void> {
+    try {
+      const bucket = Math.floor(Date.now() / SNAPSHOT_EVERY_MS) * SNAPSHOT_EVERY_MS;
+      await kvWrite(`${snapPrefix}${bucket}`, json);
+      const keys = await kvList(snapPrefix);
+      const sorted = keys
+        .map((k) => ({ key: k, ts: parseInt(k.slice(snapPrefix.length), 10) }))
+        .sort((a, b) => b.ts - a.ts);
+      for (const old of sorted.slice(MAX_DRAFT_SNAPSHOTS)) await kvDelete(old.key);
+    } catch { /* a snapshot problem must never block the real save */ }
+  }
+
   async function writeDraft(data: T): Promise<void> {
     draftSchema.parse(data);
-    await kvWrite(draftKey, JSON.stringify(data, null, 2));
+    const json = JSON.stringify(data, null, 2);
+    await kvWrite(draftKey, json);
+    await snapshotDraft(json);
   }
 
   async function discardDraft(): Promise<void> {
+    const raw = await kvRead(draftKey);
+    if (raw) await snapshotDraft(raw);
     await kvDelete(draftKey);
+  }
+
+  async function listDraftSnapshots(): Promise<{ key: string; ts: number; label: string }[]> {
+    const keys = await kvList(snapPrefix);
+    return keys
+      .map((k) => {
+        const ts = parseInt(k.slice(snapPrefix.length), 10);
+        return { key: k, ts, label: new Date(ts).toLocaleString('en-US', { timeZone: RESTAURANT_TZ }) };
+      })
+      .sort((a, b) => b.ts - a.ts);
+  }
+
+  async function readDraftSnapshot(key: string): Promise<unknown> {
+    if (!key.startsWith(snapPrefix)) throw new Error('Not a draft snapshot');
+    const raw = await kvRead(key);
+    if (!raw) throw new Error('Snapshot not found');
+    return JSON.parse(raw);
   }
 
   async function publishDraft(): Promise<CurrentMeta> {
@@ -249,6 +292,7 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
   return {
     readCurrentMeta, hasPublished, hasDraft, readDraft, writeDraft, discardDraft,
     publishDraft, listPublished, readPublished, readMenuBySrc, updateNote,
+    listDraftSnapshots, readDraftSnapshot,
   };
 }
 
@@ -256,8 +300,14 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
 
 export function makeDraftHandlers<T>(dp: DraftPublish<T>) {
   return {
-    async GET() {
+    // ?history → list of draft snapshots; ?snapshot=<key> → one snapshot.
+    // Read-only recovery tools; plain GET still opens the draft as before.
+    async GET(request: Request) {
       try {
+        const params = new URL(request.url).searchParams;
+        if (params.has('history')) return NextResponse.json(await dp.listDraftSnapshots());
+        const snap = params.get('snapshot');
+        if (snap) return NextResponse.json(await dp.readDraftSnapshot(snap));
         return NextResponse.json(await dp.readDraft());
       } catch {
         return NextResponse.json({ error: 'Failed to read draft' }, { status: 500 });

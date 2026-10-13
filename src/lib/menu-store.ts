@@ -22,10 +22,10 @@ export interface BackupEntry {
 // when the Netlify runtime context isn't present (i.e. local dev without
 // netlify dev CLI). We catch those and fall back to the file system.
 
-import { getStore } from '@netlify/blobs';
+import { menuBlobStore } from './blob-store';
 
 function store() {
-  return getStore(BLOB_STORE);
+  return menuBlobStore(BLOB_STORE);
 }
 
 const BLOBS_UNAVAILABLE = Symbol();

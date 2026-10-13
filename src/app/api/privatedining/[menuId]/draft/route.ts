@@ -13,7 +13,7 @@ export async function GET(request: Request, ctx: { params: { menuId: string } })
   if (!isValidMenuId(ctx.params.menuId)) {
     return NextResponse.json({ error: 'Unknown private dining menu' }, { status: 404 });
   }
-  return makeDraftHandlers(getMenuDraftPublish(ctx.params.menuId)).GET();
+  return makeDraftHandlers(getMenuDraftPublish(ctx.params.menuId)).GET(request);
 }
 
 export async function POST(request: Request, ctx: { params: { menuId: string } }) {

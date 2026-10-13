@@ -208,6 +208,19 @@ export const FIT_WARNING = 'This menu doesn’t seem to fit the page, double che
  * unless the editor already asked (&warned=1). Asks once; skipped inside
  * the editor's preview iframe.
  */
+// One-sheet menus must NEVER print a second page (Oct 2026: Chef's Tue–Wed
+// printed a near-blank page 2). The sheet is exactly the paper height, so a
+// printer that reports its paper a hair short, or any rounding, spills a
+// sliver onto page 2. When the document has exactly one sheet, clip the
+// printed document to one page height (100vh = the printed page in print
+// layout). Multi-sheet menus (Dinner, Drinks, Desserts) are left alone.
+const ONE_SHEET_CLAMP = `<script>(function(){var id='siena-one-sheet';function apply(){` +
+  `var n=document.querySelectorAll('.page,.menu-page').length,el=document.getElementById(id);` +
+  `if(n===1&&!el){el=document.createElement('style');el.id=id;` +
+  `el.textContent='@media print{html,body{height:100vh!important;max-height:100vh!important;overflow:hidden!important}}';` +
+  `document.head.appendChild(el);}else if(n!==1&&el){el.remove();}}` +
+  `document.addEventListener('DOMContentLoaded',apply);window.addEventListener('load',apply);window.addEventListener('beforeprint',apply);})();</script>`;
+
 export function withPrintGuard(html: string, requestUrl: string, warnings: string[]): string {
   const warned = new URL(requestUrl).searchParams.get('warned') === '1';
   const data = JSON.stringify(warned ? [] : warnings).replace(/<\/script/gi, '<\\/script');
@@ -218,5 +231,5 @@ export function withPrintGuard(html: string, requestUrl: string, warnings: strin
     `for(var j=0;j<els.length;j++){var r=els[j].getBoundingClientRect();if(r.height&&r.width&&r.bottom>pr.bottom+1)return true;}}return false;}` +
     `window.print=function(){if(ok===null){var w=W.slice();try{if(overflows())w.unshift(${fit});}catch(_){}` +
     `ok=!w.length||window.confirm('Heads up before printing:\\n\\n\\u2022 '+w.join('\\n\\u2022 ')+'\\n\\nPrint anyway?');}if(ok)p();};})();</script>`;
-  return html.replace(/<body[^>]*>/i, (m) => m + guard);
+  return html.replace(/<body[^>]*>/i, (m) => m + ONE_SHEET_CLAMP + guard);
 }

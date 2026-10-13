@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { HappyhourMenuSchema, type HappyhourMenuData } from './happyhour-schema';
-import { getStore } from '@netlify/blobs';
+import { menuBlobStore } from './blob-store';
 
 const DATA_PATH   = join(process.cwd(), 'happyhour-menu-data.json');
 const BACKUP_DIR  = join(process.cwd(), 'happyhour-backups');
@@ -18,7 +18,7 @@ export interface BackupEntry {
   label: string;
 }
 
-function store() { return getStore(BLOB_STORE); }
+function store() { return menuBlobStore(BLOB_STORE); }
 
 const BLOBS_UNAVAILABLE = Symbol();
 

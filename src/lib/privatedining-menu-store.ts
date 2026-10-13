@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { getStore } from '@netlify/blobs';
+import { menuBlobStore } from './blob-store';
 import {
   PrivateDiningMenuSchema,
   AlternatesListSchema,
@@ -17,7 +17,7 @@ const DATA_PATH  = join(process.cwd(), 'privatedining-menu-data.json');
 const BLOB_STORE = 'menu-editor';
 const KV_DIR     = join(process.cwd(), '.menu-kv');
 
-function store() { return getStore(BLOB_STORE); }
+function store() { return menuBlobStore(BLOB_STORE); }
 
 const BLOBS_UNAVAILABLE = Symbol();
 

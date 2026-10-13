@@ -193,14 +193,20 @@ export default function TuewedEditorPage() {
   const [fit, setFit]                   = useState<FitReport | null>(null);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
+  const latestRef    = useRef<TuewedMenuData | null>(null);
+  latestRef.current  = menu;
+  const retryRef     = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch(apiPath)
       .then(r => r.json())
       .then((data: TuewedMenuData) => {
-        // Remember what's SAVED, so an upgraded draft gets saved right away.
-        prevJsonRef.current = JSON.stringify(data);
-        setMenu(isFix ? data : upgradeToV3(data));
+        // Opening the editor never saves by itself — only Chef's typing does.
+        // (Oct 2026: an automatic save-on-open could write an older copy of the
+        // draft over newer work.) An upgraded v2 draft is saved on the first edit.
+        const loaded = isFix ? data : upgradeToV3(data);
+        prevJsonRef.current = JSON.stringify(loaded);
+        setMenu(loaded);
       })
       .catch(() => setSaveStatus('error'));
   }, [apiPath, isFix]);
@@ -226,18 +232,30 @@ export default function TuewedEditorPage() {
         const msg  = body.issues
           ? body.issues.map((i: { message: string }) => i.message).join('; ')
           : (body.error || 'Save failed');
-        setSaveStatus('error');
-        setSaveMsg(msg);
+        saveFailed(msg);
         return;
       }
       setSaveStatus('saved');
       setSaveMsg('Saved');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      setTimeout(() => setSaveStatus(st => (st === 'saved' ? 'idle' : st)), 3000);
     } catch {
+      saveFailed('Network error — not saved yet, retrying…');
+    }
+
+    // A failed save must not count as saved: forget it and retry the LATEST
+    // menu in a few seconds (never an older copy).
+    function saveFailed(msg: string) {
+      prevJsonRef.current = '__unsaved__';
       setSaveStatus('error');
-      setSaveMsg('Network error');
+      setSaveMsg(msg);
+      if (retryRef.current) clearTimeout(retryRef.current);
+      retryRef.current = setTimeout(() => {
+        if (latestRef.current) saveToServerRef.current?.(latestRef.current);
+      }, 5000);
     }
   }, [apiPath]);
+  const saveToServerRef = useRef<typeof saveToServer | null>(null);
+  saveToServerRef.current = saveToServer;
 
   // ── Fit check from the preview ──────────────────────────────────────────
   useEffect(() => {

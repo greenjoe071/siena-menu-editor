@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getStore } from '@netlify/blobs';
+import { menuBlobStore } from './blob-store';
 import { ArwMenuSchema, type ArwMenuData } from './arw-schema';
 import { createDraftPublish } from './draft-publish';
 
@@ -8,7 +8,7 @@ const DATA_PATH    = join(process.cwd(), 'arw-menu-data.json');
 const BLOB_STORE   = 'menu-editor';
 const BLOB_CURRENT = 'arw-menu-data';
 
-function store() { return getStore(BLOB_STORE); }
+function store() { return menuBlobStore(BLOB_STORE); }
 
 const BLOBS_UNAVAILABLE = Symbol();
 
