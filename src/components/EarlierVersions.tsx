@@ -57,7 +57,7 @@ export default function EarlierVersions({
   apiPath, previewBase, isFix, getEditorMenu, beforeReload,
 }: {
   apiPath: string;                 // '/api/monday/draft' or '/api/monday/fix'
-  previewBase: string;             // '/monday-preview'
+  previewBase: string;             // '/monday-preview' (may already carry ?menu=…)
   isFix: boolean;
   getEditorMenu: () => unknown;    // what's open right now (kept as a version on restore)
   beforeReload: () => void;        // mark the editor saved so the reload doesn't warn
@@ -191,7 +191,7 @@ export default function EarlierVersions({
                 {v ? (
                   <>
                     <div className="ev-frame-wrap">
-                      <iframe key={v.key} className="ev-frame" src={`${previewBase}?src=${encodeURIComponent(v.key)}`} title={`Version from ${whenLabel(v.ts)}`} />
+                      <iframe key={v.key} className="ev-frame" src={`${previewBase}${previewBase.includes('?') ? '&' : '?'}src=${encodeURIComponent(v.key)}`} title={`Version from ${whenLabel(v.ts)}`} />
                     </div>
                     <div className="ev-actions">
                       <button className="ev-use" onClick={() => useVersion(v)} disabled={busy}>

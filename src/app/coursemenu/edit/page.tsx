@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
@@ -185,6 +186,8 @@ export default function CourseMenuEditorPage() {
     storageKey: 'coursemenu:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [previewUrl, setPreviewUrl] = useState(`/coursemenu-preview?src=${src}`);
   const [report, setReport]         = useState<ValidateReport | null>(null);
   // Add-on is "on" when it has a title; this keeps the fields open while the
@@ -245,6 +248,8 @@ export default function CourseMenuEditorPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_COURSEMENU_VALIDATE_RESULT') return;
+      // Only the editor's own preview — not an Earlier Versions preview.
+      if (e.source !== iframeRef.current?.contentWindow) return;
       const r = e.data.report as ValidateReport;
       setReport(r);
       setFitMsg(r.fits ? '' : 'Doesn’t fit the page yet — fix the highlighted problem before printing');
@@ -596,6 +601,11 @@ export default function CourseMenuEditorPage() {
              fitMsg ? `⚠ ${fitMsg} (your changes are saved)` :
              'Auto-saves as you type'}
           </span>
+          <EarlierVersions
+            apiPath={apiPath} previewBase="/coursemenu-preview" isFix={isFix}
+            getEditorMenu={() => menuRef.current}
+            beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+          />
           <button
             className="btn-print"
             disabled={issues.length > 0}

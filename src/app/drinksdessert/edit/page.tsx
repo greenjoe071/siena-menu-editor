@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
@@ -413,6 +414,8 @@ export default function DrinksDessertEditorPage() {
     storageKey: 'drinksdessert:fix', url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [previewUrl, setPreviewUrl] = useState('/drinksdessert-preview?src=current');
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -693,6 +696,11 @@ export default function DrinksDessertEditorPage() {
                 <option value="&page=liquori">Liquori only</option>
               </optgroup>
             </select>
+            <EarlierVersions
+              apiPath={apiPath} previewBase="/drinksdessert-preview" isFix={true}
+              getEditorMenu={() => menuRef.current}
+              beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+            />
             <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : undefined} onClick={handlePrint}>Print</button>
           </div>
         </div>

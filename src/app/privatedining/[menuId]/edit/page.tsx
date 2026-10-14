@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
@@ -90,6 +91,8 @@ export default function PrivateDiningEditorPage() {
     setSaveStatus, setSaveMsg,
     onRestore: (d) => (mode === 'default' ? setDefaultMenu(d as DefaultMenu) : setAlternate(d as Alternate)),
   });
+  const menuRef = useRef(defaultMenu);
+  menuRef.current = defaultMenu;
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [publishing, setPublishing] = useState(false);
 
@@ -179,6 +182,8 @@ export default function PrivateDiningEditorPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_PRIVATEDINING_VALIDATE_RESULT') return;
+      // Only the editor's own preview — not an Earlier Versions preview.
+      if (e.source !== iframeRef.current?.contentWindow) return;
       setReport(e.data.report as ValidateReport);
     }
     window.addEventListener('message', onMessage);
@@ -407,6 +412,13 @@ export default function PrivateDiningEditorPage() {
           <span className={`save-status ${saveStatus}`} style={{ flex: 1 }}>
             {saveStatus === 'error' ? `⚠ ${saveMsg}` : (saveMsg || 'Auto-saves as you type')}
           </span>
+          {mode === 'default' && (
+            <EarlierVersions
+              apiPath={`/api/privatedining/${menuId}/draft`} previewBase={`/privatedining-preview?menu=${menuId}`} isFix={false}
+              getEditorMenu={() => menuRef.current}
+              beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+            />
+          )}
           <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : undefined} onClick={handlePrint}>Print</button>
         </div>
       </div>

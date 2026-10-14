@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
@@ -248,6 +249,8 @@ export default function ArwEditorPage() {
     storageKey: 'arw:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [reports, setReports]       = useState<Record<ArwStyle, ValidateReport | null>>({ classic: null, 'left-aligned': null });
   const [cacheBust]                 = useState(() => Date.now());
   // Whether the cocktail block is shown. Kept as its own state instead of
@@ -609,6 +612,11 @@ export default function ArwEditorPage() {
              fitMsg ? `⚠ ${fitMsg} (your changes are saved)` :
              'Auto-saves as you type'}
           </span>
+          <EarlierVersions
+            apiPath={apiPath} previewBase="/arw-preview" isFix={isFix}
+            getEditorMenu={() => menuRef.current}
+            beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+          />
           <button
             className="btn-print"
             disabled={activeOverflow}

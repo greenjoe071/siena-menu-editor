@@ -1,6 +1,6 @@
-import { readHappyhourMenu, writeHappyhourMenu } from '@/lib/happyhour-menu-store';
+import { readHappyhourMenu, writeHappyhourMenu, happyhourDP } from '@/lib/happyhour-menu-store';
 import { makeFixHandlers } from '@/lib/draft-publish';
 
 export const dynamic = 'force-dynamic';
 
-export const { GET, POST } = makeFixHandlers(readHappyhourMenu, writeHappyhourMenu);
+export const { GET, POST } = makeFixHandlers(readHappyhourMenu, writeHappyhourMenu, happyhourDP);

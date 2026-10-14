@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
@@ -322,6 +323,8 @@ export default function DessertEditorPage() {
     storageKey: 'dessert:fix', url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   const [report, setReport] = useState<ValidateReport | null>(null);
   const [previewUrl, setPreviewUrl] = useState('/dessert-preview?src=current');
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -484,6 +487,11 @@ export default function DessertEditorPage() {
             <span className={saveStatusClass} style={{ flex: 1 }}>
               {saveStatus === 'error' ? `⚠ ${saveMsg}` : fitMsg ? `⚠ ${fitMsg} (your changes are saved)` : (saveMsg || 'Auto-saves as you type')}
             </span>
+            <EarlierVersions
+              apiPath={apiPath} previewBase="/dessert-preview" isFix={true}
+              getEditorMenu={() => menuRef.current}
+              beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+            />
             <button className="btn-print" disabled={anyOverflow} title={anyOverflow ? 'Fix overflow first' : undefined} onClick={handlePrint}>Print</button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
+import EarlierVersions from '@/components/EarlierVersions';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
@@ -355,6 +356,8 @@ export default function HappyhourEditorPage() {
     storageKey: 'happyhour:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
   });
+  const menuRef = useRef(menu);
+  menuRef.current = menu;
   // null = not yet validated; true = fits; false = overflow
   const [validationFits, setValidationFits] = useState<boolean | null>(null);
   const [worstSection, setWorstSection] = useState<string | null>(null);
@@ -399,6 +402,8 @@ export default function HappyhourEditorPage() {
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (!e.data || e.data.type !== 'SIENA_HAPPYHOUR_VALIDATE_RESULT') return;
+      // Only the editor's own preview — not an Earlier Versions preview.
+      if (e.source !== iframeRef.current?.contentWindow) return;
       const result = e.data.result as { fits: boolean; worstSection?: string | null; overflowPx?: number };
       setValidationFits(result.fits);
       if (result.fits) {
@@ -578,6 +583,11 @@ export default function HappyhourEditorPage() {
           )}
         <div className="editor-footer">
           <span className={saveStatusClass}>{saveStatus !== 'error' && fitMsg ? `⚠ ${fitMsg} (your changes are saved)` : (saveMsg || 'Auto-saves as you type')}</span>
+          <EarlierVersions
+            apiPath={apiPath} previewBase="/happyhour-preview" isFix={isFix}
+            getEditorMenu={() => menuRef.current}
+            beforeReload={() => confirmSaved(JSON.stringify(menuRef.current))}
+          />
           <button
             className="btn-print"
             disabled={validationFits === false}
