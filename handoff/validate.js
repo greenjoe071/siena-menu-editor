@@ -16,8 +16,10 @@
  *      width. (The pasta block's "— or ask your server…" tail is allowed to sit
  *      on its own line below, as it does in the current design.) Measured from
  *      rendered geometry, never by character count.
- *   3. data rules (validateData) — Pasta may have at most 8 visible dishes;
- *      dishes may only be ADDED to Pasta.
+ *   3. data rules (validateData) — Pasta may have at most 8 visible dishes,
+ *      Contorni at most 7; dishes may only be ADDED to Pasta and Contorni.
+ *      If page 2 overflows while Contorni has more than its 6 template
+ *      dishes, the message says to hide the added Contorni dish.
  *
  * Needs a real layout engine (browser / editor iframe / Playwright).
  * JSDOM has no layout — do not run validate() under JSDOM.
@@ -35,7 +37,9 @@
   const PT = 96 / 72;
   const SAFETY_PT = 6;
   const PASTA_MAX = 8;
-  const ADDABLE = { pasta: true };
+  const CONTORNI_MAX = 7;
+  const MAX_VISIBLE = { pasta: PASTA_MAX, contorni: CONTORNI_MAX };
+  const ADDABLE = { pasta: true, contorni: true };
 
   const PAGE_SECTIONS = [
     ['antipasti', 'zuppa-insalate', 'salad-addons'],
@@ -137,14 +141,15 @@
   function validateData(data) {
     const problems = [];
     if (!data || !data.sections) return problems;
-    const pasta = data.sections.pasta;
-    if (pasta) {
-      const visible = (pasta.items || []).filter(d => d.enabled !== false).length;
-      if (visible > PASTA_MAX) {
-        problems.push({ type: 'pasta-count', section: 'pasta',
-          message: 'Pasta can show at most ' + PASTA_MAX + ' dishes. Hide one to save.' });
+    Object.keys(MAX_VISIBLE).forEach(sid => {
+      const sec = data.sections[sid];
+      if (!sec) return;
+      const visible = (sec.items || []).filter(d => d.enabled !== false).length;
+      if (visible > MAX_VISIBLE[sid]) {
+        problems.push({ type: sid + '-count', section: sid,
+          message: LABELS[sid] + ' can show at most ' + MAX_VISIBLE[sid] + ' dishes. Hide one to save.' });
       }
-    }
+    });
     return problems;
   }
 
@@ -158,8 +163,8 @@
         if (d.enabled === false) return;
         if (!doc.querySelector('[data-dish-id="' + d.id + '"]')) {
           problems.push({ type: 'add-not-allowed', section: sid,
-            message: 'New dishes can only be added to Pasta. "' + (d.name || 'New dish') +
-              '" can\u2019t be added to ' + (LABELS[sid] || sid) + '.' });
+            message: 'New dishes can only be added to Pasta and Contorni. "' + (d.name || 'New dish') +
+              '" can’t be added to ' + (LABELS[sid] || sid) + '.' });
         }
       });
     });
@@ -180,10 +185,14 @@
           ' is too long to fit on one line. Shorten a name, or hide or remove an item.' });
     });
     const pages = checkPages(doc, safetyPt);
+    const contorniVisible = doc.querySelectorAll('[data-section-id="contorni"] > [data-dish-id]').length;
     pages.forEach(p => {
       if (!p.fits) problems.push({ type: 'page-overflow', page: p.page, section: p.worstSection,
-        message: 'Page ' + p.page + ' is too full. Shorten something on this page' +
-          (p.worstSection ? ' \u2014 ' + LABELS[p.worstSection] + ' is the largest section there' : '') + '.' });
+        message: 'Page ' + p.page + ' is too full. ' +
+          (p.page === 2 && contorniVisible > 6
+            ? 'The 7th Contorni dish doesn’t fit — hide a Contorni dish or shorten something on this page.'
+            : 'Shorten something on this page' +
+              (p.worstSection ? ' — ' + LABELS[p.worstSection] + ' is the largest section there' : '') + '.') });
     });
     if (opts.data) {
       problems.push.apply(problems, validateData(opts.data));
@@ -197,5 +206,5 @@
     return waitForLayout(doc).then(() => validate(doc, Object.assign({ data }, opts || {})));
   }
 
-  return { validate, validateData, waitForLayout, renderAndValidate, PASTA_MAX, SAFETY_PT };
+  return { validate, validateData, waitForLayout, renderAndValidate, PASTA_MAX, CONTORNI_MAX, SAFETY_PT };
 });

@@ -116,6 +116,12 @@ interface FitReport {
 }
 
 const PASTA_MAX_VISIBLE = 8;
+const CONTORNI_MAX_VISIBLE = 7;   // Nov 2026 designer handoff
+// Sections Chef can add a dish to, with how many may show and the button wording.
+const ADDABLE: Partial<Record<SectionId, { max: number; label: string; button: string }>> = {
+  pasta:    { max: PASTA_MAX_VISIBLE,    label: 'Pasta',    button: '+ Add a pasta dish' },
+  contorni: { max: CONTORNI_MAX_VISIBLE, label: 'Contorni', button: '+ Add a contorno' },
+};
 
 const isShown = (d: Dish) => d.enabled !== false;
 
@@ -437,7 +443,7 @@ function SectionBlock({
   defaultOpen: boolean;
   onChange: (sectionId: SectionId, updated: Section) => void;
   onDishChange: (sectionId: SectionId, index: number, updated: Dish) => void;
-  onAddDish?: () => void;   // Pasta only (Oct 2026)
+  onAddDish?: () => void;   // Pasta (Oct 2026) and Contorni (Nov 2026)
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const titleLen = section.title.length;
@@ -493,16 +499,19 @@ function SectionBlock({
             )}
           </Droppable>
 
-          {onAddDish && (
-            <div style={{ marginTop: '10px' }}>
-              <button className="btn-add-dish" onClick={onAddDish} disabled={shown >= PASTA_MAX_VISIBLE}>+ Add a pasta dish</button>
-              <div className="field-hint" style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px' }}>
-                {shown >= PASTA_MAX_VISIBLE
-                  ? `Pasta is full (${PASTA_MAX_VISIBLE} dishes showing). Hide one to add another.`
-                  : `Pasta can show up to ${PASTA_MAX_VISIBLE} dishes. Other sections can hide dishes but not add them.`}
+          {onAddDish && ADDABLE[sectionId] && (() => {
+            const a = ADDABLE[sectionId]!;
+            return (
+              <div style={{ marginTop: '10px' }}>
+                <button className="btn-add-dish" onClick={onAddDish} disabled={shown >= a.max}>{a.button}</button>
+                <div className="field-hint" style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px' }}>
+                  {shown >= a.max
+                    ? `${a.label} is full (${a.max} dishes showing). Hide one to add another.`
+                    : `${a.label} can show up to ${a.max} dishes. Pasta and Contorni can add dishes; other sections can hide dishes but not add them.`}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -616,8 +625,10 @@ export default function DinnerDraftEditorPage() {
         if (blanks.length) out.push(`${where}: ${blanks.join(', ')}`);
       });
     }
-    const pastaShown = m.sections.pasta.items.filter(isShown).length;
-    if (pastaShown > PASTA_MAX_VISIBLE) out.push(`Pasta has ${pastaShown} dishes showing — hide ${pastaShown - PASTA_MAX_VISIBLE}`);
+    for (const [sid, a] of Object.entries(ADDABLE) as [SectionId, { max: number; label: string }][]) {
+      const n = m.sections[sid].items.filter(isShown).length;
+      if (n > a.max) out.push(`${a.label} has ${n} dishes showing — hide ${n - a.max}`);
+    }
     for (const key of ['salad_addons', 'pasta_addons', 'steak_addons'] as const) {
       const b = m[key];
       if (!b.enabled) continue;
@@ -697,13 +708,13 @@ export default function DinnerDraftEditorPage() {
     });
   }
 
-  function handleAddPastaDish() {
+  function handleAddDish(sid: SectionId) {
     setMenu((m) => {
       if (!m) return m;
       const taken = new Set(Object.values(m.sections).flatMap((s) => s.items.map((d) => d.id)));
       const dish: Dish = { id: freshId('d', taken), enabled: true, name: '', desc: '', price_format: 'single', price: '' };
-      const pasta = m.sections.pasta;
-      return { ...m, sections: { ...m.sections, pasta: { ...pasta, items: [...pasta.items, dish] } } };
+      const sec = m.sections[sid];
+      return { ...m, sections: { ...m.sections, [sid]: { ...sec, items: [...sec.items, dish] } } };
     });
   }
 
@@ -810,7 +821,7 @@ export default function DinnerDraftEditorPage() {
                         defaultOpen={false}
                         onChange={handleSectionChange}
                         onDishChange={handleDishChange}
-                        onAddDish={sid === 'pasta' ? handleAddPastaDish : undefined}
+                        onAddDish={ADDABLE[sid] ? () => handleAddDish(sid) : undefined}
                       />
                       {group.addonKey && group.addonAfter === sid && (
                         <AddonBlockEditor

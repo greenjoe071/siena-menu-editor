@@ -48,6 +48,8 @@ export const SECTION_IDS = [
 // one section that can grow (Oct 2026): at least its 7 template dishes, and
 // at most 8 VISIBLE — that limit is checked at publish, not on save.
 export const PASTA_MAX_VISIBLE = 8;
+// Nov 2026 (designer handoff): Contorni can show up to 7 (one added dish).
+export const CONTORNI_MAX_VISIBLE = 7;
 export const SECTION_COUNTS: Record<string, number> = {
   antipasti: 10,
   'zuppa-insalate': 4,
@@ -108,12 +110,14 @@ export const MenuSchema = z.object({
   for (const [id, count] of Object.entries(SECTION_COUNTS)) {
     const section = data.sections[id as keyof typeof data.sections];
     if (!section) continue;
-    if (id === 'pasta' ? section.items.length < count : section.items.length !== count) {
+    // Pasta and Contorni can gain dishes (never lose them — hide instead).
+    const growable = id === 'pasta' || id === 'contorni';
+    if (growable ? section.items.length < count : section.items.length !== count) {
       ctx.addIssue({
         code: 'custom',
         path: ['sections', id, 'items'],
-        message: id === 'pasta'
-          ? `Pasta must keep at least ${count} dishes (hide one instead of removing it)`
+        message: growable
+          ? `${id === 'pasta' ? 'Pasta' : 'Contorni'} must keep at least ${count} dishes (hide one instead of removing it)`
           : `Section "${id}" must have exactly ${count} items (dishes can be hidden, not removed)`,
       });
     }

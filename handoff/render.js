@@ -28,10 +28,23 @@
  *     Mocktails `.subsection-head` before it); a section with no visible
  *     dishes loses its heading too. Only-one-dish centering is pure CSS.
  *
- *   - Adding dishes — ONLY the `pasta` section accepts dish ids that are not
- *     in the template (max 8 visible, enforced by validate.js). The renderer
- *     builds the new slot from a blank dish shape. Unknown ids in any other
- *     section are ignored.
+ *   - Column order (Oct 2026) — when the data has top-level
+ *     `"column_order": true`, every `.two-col` section reads TOP TO BOTTOM:
+ *     with N visible dishes, the first ceil(N/2) (data order) fill the left
+ *     column, the rest fill the right column. The CSS grid is unchanged; only
+ *     the append order changes: els[0], els[rows], els[1], els[rows+1], …
+ *     Hidden dishes are skipped before counting. `.two-col-flow` sections
+ *     already flow down columns and are untouched. Without the flag (older
+ *     saved menus, the seed) the legacy row-by-row order is kept.
+ *
+ *   - Adding dishes — ONLY `pasta` (max 8 visible) and `contorni` (max 7
+ *     visible) accept dish ids that are not in the template; the caps and
+ *     page fit are enforced by validate.js. The renderer builds the new slot
+ *     from a blank dish shape. Unknown ids in any other section are ignored.
+ *     A 7th Contorni dish adds one grid row; the page illustration below it
+ *     (.page-art, margin:auto 0, fixed 1.3in) re-centers itself between the
+ *     bottom of Contorni and the footnote rule — it never shrinks, and the
+ *     footnotes stay pinned to the bottom of the page.
  *
  *   - Add-on blocks (pasta / salad / steak) — each block is a single line
  *     under its section. The renderer rebuilds the `.addons-items` innerHTML
@@ -164,7 +177,7 @@
   }
 
   // Sections that may contain dishes not present in the template.
-  const ADDABLE_SECTIONS = { pasta: true };
+  const ADDABLE_SECTIONS = { pasta: true, contorni: true };
 
   function blankDish(doc, id) {
     const el = doc.createElement('div');
@@ -196,7 +209,7 @@
     }
 
     const placed = {};
-    const queued = new Map(); // container → dish elements, in data order
+    const queued = containers.map(() => []);
     for (const dish of sectionData.items || []) {
       if (dish.enabled === false) continue;
       let el = dishEl[dish.id];
@@ -207,31 +220,24 @@
       }
       if (!el || !container) continue;
       renderDish(doc, el, dish);
-      if (!queued.has(container)) queued.set(container, []);
-      queued.get(container).push(el);
+      queued[containers.indexOf(container)].push(el);
       placed[dish.id] = true;
     }
 
-    // Column order (Oct 2026, owner request — local Claude Code change): when
-    // the data says `column_order: true`, a `.two-col` grid reads TOP TO
-    // BOTTOM — the first half of the visible dishes (rounded up) fill the
-    // left column, the rest the right. The grid itself fills row by row, so
-    // the elements are appended interleaved (left row 1, right row 1, …).
-    // Without the flag (older saved menus / Past Menus) the original
-    // row-by-row order is kept, so those print exactly as before.
-    // `.two-col-flow` sections already flow down each column.
-    for (const [container, els] of queued) {
-      let order = els;
-      if (columnOrder && container.classList.contains('two-col')) {
+    // Append each container's visible dishes. `.two-col` + column_order →
+    // interleave so the grid reads down the left column, then the right.
+    containers.forEach((c, ci) => {
+      const els = queued[ci];
+      if (columnOrder && c.classList.contains('two-col')) {
         const rows = Math.ceil(els.length / 2);
-        order = [];
         for (let r = 0; r < rows; r++) {
-          order.push(els[r]);
-          if (r + rows < els.length) order.push(els[r + rows]);
+          c.appendChild(els[r]);
+          if (r + rows < els.length) c.appendChild(els[r + rows]);
         }
+      } else {
+        for (const el of els) c.appendChild(el);
       }
-      for (const el of order) container.appendChild(el);
-    }
+    });
 
     // Remove hidden dishes and dishes no longer in the data.
     for (const id of Object.keys(dishEl)) {
