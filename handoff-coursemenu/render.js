@@ -82,7 +82,10 @@
   function render(doc, data) {
     if (!data) return;
     setText(doc, 'header', isFilled(data.header) ? data.header : '');
+    // Blank price -> show no price at all. (Without this, the template's sample
+    // "$75" stayed on the page. Local fix, Oct 27 2026 - pass to the designer.)
     if (isFilled(data.price)) setText(doc, 'price', data.price);
+    else removeAll(doc, '.prices');
     if (isFilled(data.description)) setText(doc, 'description', data.description);
     else removeAll(doc, '[data-hero-desc]');
     renderCourses(doc, data.courses);
