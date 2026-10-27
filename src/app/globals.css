@@ -2013,3 +2013,21 @@ a.dd-chooser-card:hover {
 .ev-tip-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ev-tip-hide { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b5a44; cursor: pointer; }
 .ev-tip-hide input { width: 15px; height: 15px; accent-color: #b8821e; cursor: pointer; }
+
+/* -- Problem pop-up (ProblemPopup.tsx, Oct 2026) -- */
+.pp-overlay { position: fixed; inset: 0; z-index: 10002; background: rgba(20,12,6,.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.pp-box { background: #fff; color: #2a1a0e; border-radius: 16px; border-top: 8px solid #c0392b; width: min(520px, 100%);
+  padding: 28px 32px 26px; text-align: center; font-family: system-ui, -apple-system, sans-serif; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+.pp-icon { font-size: 44px; line-height: 1; margin-bottom: 10px; }
+.pp-title { font-size: 24px; font-weight: 800; margin: 0 0 10px; color: #7a1712; line-height: 1.25; }
+.pp-body { font-size: 19px; line-height: 1.5; margin: 0 0 14px; }
+.pp-list { text-align: left; font-size: 17px; line-height: 1.5; margin: 0 0 14px; padding-left: 22px; }
+.pp-list li { margin-bottom: 8px; }
+.pp-saved { font-size: 16px; color: #2f7d32; font-weight: 700; margin: 0 0 20px; }
+.pp-actions { display: flex; gap: 12px; justify-content: center; }
+.pp-primary { background: #2f7d32; color: #fff; border: none; border-radius: 10px; padding: 14px 30px; font-size: 18px; font-weight: 800; cursor: pointer; }
+.pp-primary:hover { background: #256528; }
+.pp-secondary { background: #fff; color: #4a3a26; border: 2px solid #c9b79a; border-radius: 10px; padding: 12px 26px; font-size: 17px; font-weight: 700; cursor: pointer; }
+.pp-note { margin-top: 10px; background: #fdecea; color: #7a1712; border: 2px solid #c0392b; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+@keyframes pp-flash-kf { 0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0); } 25%, 75% { box-shadow: 0 0 0 8px rgba(192,57,43,.55); } }
+.pp-flash { animation: pp-flash-kf 1.6s ease-in-out 1; border-radius: 8px; }

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
 import EarlierVersions from '@/components/EarlierVersions';
+import ProblemPopup, { ProblemNote, type Problem, type PopupRequest } from '@/components/ProblemPopup';
 import { publishErrorMessage } from '@/lib/publish-error';
 import { confirmPrintWarnings } from '@/lib/print-warnings';
 
@@ -107,16 +108,38 @@ const toggleBoxStyle = { width: '16px', height: '16px', cursor: 'pointer', accen
 
 // ── CourseCard ────────────────────────────────────────────────────────────
 
-function CourseCard({ course, index, count, flagged, onChange, onMove }: {
+// Validator issues -> plain words (Oct 2026: one big pop-up, child-simple).
+function plainProblems(issues: ValidateIssue[]): Problem[] {
+  return issues.map((i): Problem => {
+    const course = /^course-(\d)$/.exec(i.section ?? '');
+    switch (i.code) {
+      case 'header-wrap':
+        return { key: i.code, target: 'hero', title: 'The menu name is too long.', body: 'It has to fit on one line next to the price. Make it shorter.' };
+      case 'desc-overflow':
+        return { key: i.code, target: 'description', title: 'The line under the menu name is too long.', body: 'It has to fit on one line. Make it shorter.' };
+      case 'course-count':
+        return { key: i.code, title: 'A menu needs 2 to 4 courses.', body: 'Pick 2, 3, or 4 at the top.' };
+      case 'page-overflow':
+        return course
+          ? { key: i.code, target: i.section!, title: 'The menu is too long for the page.', body: `Make Course ${ROMAN[+course[1] - 1]}’s description shorter.` }
+          : { key: i.code, target: i.section ?? undefined, title: 'The menu is too long for the page.', body: 'Make a description shorter.' };
+      default:
+        return { key: i.code, target: i.section ?? undefined, title: 'Something doesn’t fit on the menu.', body: i.message };
+    }
+  });
+}
+
+function CourseCard({ course, index, count, flagged, problem, onChange, onMove }: {
   course: Course;
   index: number;
   count: number;
   flagged: boolean;
+  problem?: Problem;
   onChange: (index: number, updated: Course) => void;
   onMove: (index: number, dir: -1 | 1) => void;
 }) {
   return (
-    <div className="dish-row" style={flagged ? { outline: '2px solid #c0392b', outlineOffset: '2px' } : undefined}>
+    <div className="dish-row" data-problem={course.id} style={flagged ? { outline: '3px solid #c0392b', outlineOffset: '2px' } : undefined}>
       <div className="dish-row-header">
         <span className="dish-name-preview">
           {ROMAN[index]} — {course.title || 'Course ' + ROMAN[index]}
@@ -162,6 +185,7 @@ function CourseCard({ course, index, count, flagged, onChange, onMove }: {
             placeholder="Ingredients and preparation"
           />
         </div>
+        <ProblemNote problem={problem} />
       </div>
     </div>
   );
@@ -182,6 +206,7 @@ export default function CourseMenuEditorPage() {
   const [loadedJson, setLoadedJson] = useState<string | null>(null);
   // Page-fit problem shown in the footer — a warning only; saving never waits on it.
   const [fitMsg, setFitMsg] = useState('');
+  const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
   const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
     storageKey: 'coursemenu:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
@@ -342,7 +367,7 @@ export default function CourseMenuEditorPage() {
     if (!menu) return;
     const missing = missingRequired(menu);
     if (missing.length) { setSaveStatus('error'); setSaveMsg(`Before publishing, fill in ${missing.join(', ')}.`); return; }
-    if (report && !report.fits) { setSaveStatus('error'); setSaveMsg('The menu doesn’t fit on the page yet — fix the problem shown at the top first.'); return; }
+    if (report && !report.fits) { setPopupReq({ kind: 'publish', n: Date.now() }); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -363,16 +388,24 @@ export default function CourseMenuEditorPage() {
 
   const issues = report && !report.fits ? report.issues ?? [] : [];
   const flagged = new Set(issues.map(i => i.section));
+  const problems = plainProblems(issues);
+  const problemFor = (target: string) => problems.find(p => p.target === target);
   const showAddon = menu.addon.title !== '' || addonOpen;
   const n = menu.courses.length;
 
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
     saveStatus === 'saving' ? 'save-status saving' :
-    (saveStatus === 'error' || fitMsg) ? 'save-status error'  : 'save-status';
+    saveStatus === 'error' ? 'save-status error'  : 'save-status';
 
   const flagStyle = (section: string) =>
-    flagged.has(section) ? { outline: '2px solid #c0392b', outlineOffset: '2px' } : undefined;
+    flagged.has(section) ? { outline: '3px solid #c0392b', outlineOffset: '2px' } : undefined;
+
+  function doPrint() {
+    if (menu && !confirmPrintWarnings('coursemenu', menu, saveStatus === 'error')) return;
+    localStorage.setItem('siena-coursemenu-print-data', JSON.stringify(menu));
+    window.open(`/coursemenu-print?src=${src}&warned=1`, '_blank');
+  }
 
   return (
     <div className="app">
@@ -386,11 +419,7 @@ export default function CourseMenuEditorPage() {
           <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
-        {issues.length > 0 && (
-          <div className="overflow-banner">
-            {issues.map(i => <div key={i.code}>⚠ {i.message}</div>)}
-          </div>
-        )}
+        <ProblemPopup problems={problems} request={popupReq} onPrintAnyway={doPrint} />
 
         {isFix && (
           <div className="draft-banner fix-banner">
@@ -425,7 +454,7 @@ export default function CourseMenuEditorPage() {
             <div className="dish-row" style={flagStyle('hero') ?? flagStyle('description')}>
               <div className="dish-fields">
                 <div className="dish-field-row" style={{ alignItems: 'flex-end', marginBottom: '10px' }}>
-                  <div className="field-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <div className="field-group" data-problem="hero" style={{ flex: 1, marginBottom: 0 }}>
                     <div className="field-label-row">
                       <label>Header</label>
                       <CharCount value={menu.header} max={L.header} />
@@ -448,7 +477,8 @@ export default function CourseMenuEditorPage() {
                     />
                   </div>
                 </div>
-                <div className="field-group" style={{ marginBottom: 0 }}>
+                <ProblemNote problem={problemFor('hero')} />
+                <div className="field-group" data-problem="description" style={{ marginBottom: 0 }}>
                   <div className="field-label-row">
                     <label>One-line description (optional)</label>
                     <CharCount value={menu.description} max={L.description} />
@@ -460,6 +490,7 @@ export default function CourseMenuEditorPage() {
                     placeholder="e.g. Available for a limited time"
                   />
                 </div>
+                <ProblemNote problem={problemFor('description')} />
               </div>
             </div>
           </div>
@@ -475,6 +506,7 @@ export default function CourseMenuEditorPage() {
                   index={i}
                   count={n}
                   flagged={flagged.has(course.id)}
+                  problem={problemFor(course.id)}
                   onChange={handleCourseChange}
                   onMove={handleMoveCourse}
                 />
@@ -598,7 +630,6 @@ export default function CourseMenuEditorPage() {
             {saveStatus === 'saved'  ? '✓ Saved' :
              saveStatus === 'saving' ? 'Saving…' :
              saveStatus === 'error'  ? `⚠ ${saveMsg}` :
-             fitMsg ? `⚠ ${fitMsg} (your changes are saved)` :
              'Auto-saves as you type'}
           </span>
           <EarlierVersions
@@ -608,12 +639,9 @@ export default function CourseMenuEditorPage() {
           />
           <button
             className="btn-print"
-            disabled={issues.length > 0}
-            title={issues.length > 0 ? 'Fix the problem shown at the top before printing' : undefined}
             onClick={() => {
-              if (menu && !confirmPrintWarnings('coursemenu', menu, saveStatus === 'error')) return;
-              localStorage.setItem('siena-coursemenu-print-data', JSON.stringify(menu));
-              window.open(`/coursemenu-print?src=${src}&warned=1`, '_blank');
+              if (problems.length) { setPopupReq({ kind: 'print', n: Date.now() }); return; }
+              doPrint();
             }}
           >
             Print Menu
