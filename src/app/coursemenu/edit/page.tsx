@@ -128,6 +128,34 @@ function plainProblems(issues: ValidateIssue[]): Problem[] {
   });
 }
 
+// Words sent to the AI spelling check (Oct 2026), each labelled so Claude
+// knows what it's reading. ids match setSpellField below.
+interface SpellSuggestion { fieldId: string; original: string; suggestion: string; kind: 'misspelled' | 'style'; why: string }
+function spellFields(m: CourseMenuData): { id: string; label: string; text: string }[] {
+  const out = [
+    { id: 'header', label: 'Menu name at the top', text: m.header },
+    { id: 'description', label: 'One-line description under the menu name', text: m.description },
+  ];
+  m.courses.forEach((c, i) => {
+    out.push({ id: `${c.id}.title`, label: `Course ${ROMAN[i]} dish name`, text: c.title });
+    out.push({ id: `${c.id}.desc`, label: `Course ${ROMAN[i]} description`, text: c.desc });
+  });
+  out.push({ id: 'addon.title', label: 'Add-on name', text: m.addon.title });
+  out.push({ id: 'addon.desc', label: 'Add-on note', text: m.addon.desc });
+  return out.filter((f) => f.text.trim());
+}
+function spellTarget(fieldId: string): string {
+  if (fieldId === 'header') return 'hero';
+  if (fieldId === 'description') return 'description';
+  if (fieldId.startsWith('addon')) return 'addon';
+  return fieldId.split('.')[0];
+}
+function spellFieldName(fieldId: string): string {
+  const course = /^course-(\d)\.(title|desc)$/.exec(fieldId);
+  if (course) return `Course ${ROMAN[+course[1] - 1]}${course[2] === 'desc' ? ' description' : ''}`;
+  return ({ header: 'the menu name', description: 'the line under the menu name', 'addon.title': 'the add-on', 'addon.desc': 'the add-on note' } as Record<string, string>)[fieldId] ?? 'the menu';
+}
+
 // Things worth a second look at Print / Make Active (Oct 2026). Nothing is
 // ever blocked — the pop-up asks "Is this on purpose?". serious = red.
 function menuChecks(m: CourseMenuData): Problem[] {
@@ -234,6 +262,10 @@ export default function CourseMenuEditorPage() {
   const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
   // Things Chef already answered "yes, on purpose" — not asked again until they change.
   const [okd, setOkd] = useState<Set<string>>(new Set());
+  const [spellBusy, setSpellBusy] = useState(false);
+  // Show Check Spelling only once the AI key is set up on the server.
+  const [spellOn, setSpellOn] = useState(false);
+  useEffect(() => { fetch('/api/spellcheck').then(r => r.json()).then(d => setSpellOn(!!d.configured)).catch(() => {}); }, []);
   const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
     storageKey: 'coursemenu:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
@@ -401,7 +433,7 @@ export default function CourseMenuEditorPage() {
     const fit = report && !report.fits ? (report.issues ?? []).map(i => 'fit-' + i.code) : [];
     const keys = new Set([...fit, ...menuChecks(menu).map(p => p.key)]);
     setOkd(prev => {
-      const next = new Set([...prev].filter(k => keys.has(k.slice(k.indexOf(':') + 1))));
+      const next = new Set([...prev].filter(k => { const key = k.slice(k.indexOf(':') + 1); return keys.has(key) || key.startsWith('spell-'); }));
       return next.size === prev.size ? prev : next;
     });
   }, [menu, report]);
@@ -425,11 +457,63 @@ export default function CourseMenuEditorPage() {
   ];
   const askKeys = askItems.map(p => p.key).join('|');
 
-  function askOrGo(kind: 'print' | 'publish') {
+  // ── AI spelling check (Oct 2026) ─────────────────────────────────────────
+  function setSpellField(fieldId: string, original: string, suggestion: string) {
+    const fix = (t: string) => t.replace(original, suggestion);
+    setMenu(m => {
+      if (!m) return m;
+      if (fieldId === 'header') return { ...m, header: fix(m.header) };
+      if (fieldId === 'description') return { ...m, description: fix(m.description) };
+      if (fieldId === 'addon.title') return { ...m, addon: { ...m.addon, title: fix(m.addon.title) } };
+      if (fieldId === 'addon.desc') return { ...m, addon: { ...m.addon, desc: fix(m.addon.desc) } };
+      const [cid, part] = fieldId.split('.');
+      return { ...m, courses: m.courses.map(c => c.id === cid ? { ...c, [part]: fix(c[part as 'title' | 'desc']) } : c) };
+    });
+  }
+  /** Ask the AI. null = not available right now (not set up, slow, offline) — skip it. */
+  async function spellItems(): Promise<Problem[] | null> {
+    if (!menu) return [];
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const res = await fetch('/api/spellcheck', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal,
+        body: JSON.stringify({ menu: 'Generic course menu', fields: spellFields(menu) }),
+      });
+      if (!res.ok) return null;
+      const { suggestions } = await res.json() as { suggestions: SpellSuggestion[] };
+      return suggestions.map((sg): Problem => ({
+        key: `spell-${sg.fieldId}-${sg.original}`,
+        target: spellTarget(sg.fieldId),
+        title: sg.kind === 'misspelled'
+          ? `Spelling: \u201c${sg.original}\u201d \u2192 \u201c${sg.suggestion}\u201d?`
+          : `Usually written as \u201c${sg.suggestion}\u201d (you have \u201c${sg.original}\u201d).`,
+        body: `${sg.why} (In ${spellFieldName(sg.fieldId)}.)`,
+        use: { label: `Use \u201c${sg.suggestion}\u201d`, run: () => setSpellField(sg.fieldId, sg.original, sg.suggestion) },
+        keep: () => { fetch('/api/spellcheck/words', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word: sg.original }) }).catch(() => {}); },
+      }));
+    } catch { return null; }
+    finally { clearTimeout(timer); }
+  }
+
+  async function askOrGo(kind: 'print' | 'publish') {
+    if (spellBusy) return;
+    setSpellBusy(true);
+    const spelling = await spellItems();   // skipped quietly if unavailable
+    setSpellBusy(false);
     // Answers are per action: "yes" for Print doesn't count for Make Active.
-    const pending = askItems.filter(p => !okd.has(kind + ':' + p.key));
+    const pending = [...askItems, ...(spelling ?? [])].filter(p => !okd.has(kind + ':' + p.key));
     if (pending.length) { setPopupReq({ kind, n: Date.now(), items: pending }); return; }
     if (kind === 'print') doPrint(); else doPublish();
+  }
+  async function checkSpelling() {
+    if (spellBusy) return;
+    setSpellBusy(true);
+    const spelling = await spellItems();
+    setSpellBusy(false);
+    setPopupReq({ kind: 'spell', n: Date.now(), items: spelling ?? [{
+      key: 'spell-unavailable', title: 'The spelling check isn\u2019t available right now.', body: 'Try again in a minute.',
+    }] });
   }
   function confirmed(kind: 'print' | 'publish', items: Problem[]) {
     setOkd(prev => new Set([...prev, ...items.map(p => kind + ':' + p.key)]));
@@ -667,7 +751,7 @@ export default function CourseMenuEditorPage() {
         {!isFix && (
           <div className="editor-footer editor-footer--publish">
             <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={() => askOrGo('publish')} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
+            <button className="btn-publish" onClick={() => askOrGo('publish')} disabled={publishing}>{publishing ? 'Publishing…' : spellBusy ? 'Checking spelling…' : 'Make This the Active Menu'}</button>
           </div>
         )}
         <div className="editor-footer">
@@ -678,6 +762,9 @@ export default function CourseMenuEditorPage() {
              saveStatus === 'error'  ? `⚠ ${saveMsg}` :
              'Auto-saves as you type'}
           </span>
+          {spellOn && <button className="btn-spell" onClick={checkSpelling} disabled={spellBusy} title="Check spelling with AI (English, Italian, Spanish)">
+            {spellBusy ? 'Checking\u2026' : '\u{1F524} Check Spelling'}
+          </button>}
           <EarlierVersions
             apiPath={apiPath} previewBase="/coursemenu-preview" isFix={isFix}
             getEditorMenu={() => menuRef.current}
@@ -686,8 +773,9 @@ export default function CourseMenuEditorPage() {
           <button
             className="btn-print"
             onClick={() => askOrGo('print')}
+            disabled={spellBusy}
           >
-            Print Menu
+            {spellBusy ? 'Checking spelling…' : 'Print Menu'}
           </button>
         </div>
       </div>

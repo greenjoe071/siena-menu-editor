@@ -25,9 +25,14 @@ export interface Problem {
   body: string;       // "Add one, or leave it off if that's on purpose."
   target?: string;    // data-problem="…" of the field to jump to
   serious?: boolean;  // shown in red
+  /** One-click fix shown on the item, e.g. spelling "Use \u201cSautéed\u201d". */
+  use?: { label: string; run: () => void };
+  /** "Keep mine" — the restaurant spells it this way on purpose. */
+  keep?: () => void;
 }
 
-export interface PopupRequest { kind: 'print' | 'publish'; n: number; items: Problem[] }
+/** 'spell' = the stand-alone Check Spelling button (no print / publish after). */
+export interface PopupRequest { kind: 'print' | 'publish' | 'spell'; n: number; items: Problem[] }
 
 const QUIET_MS = 1200;   // wait this long after the last change before popping up
 
@@ -75,6 +80,7 @@ export default function ProblemPopup({ problems, request, onConfirm }: {
 }) {
   const [auto, setAuto] = useState(false);
   const [ask, setAsk] = useState<PopupRequest | null>(null);
+  const [resolved, setResolved] = useState<Set<string>>(new Set());   // items fixed / kept in this pop-up
   const [mounted, setMounted] = useState(false);
   const shownFor = useRef<string>('');   // fit problems already shown (don't nag)
   useEffect(() => setMounted(true), []);
@@ -90,34 +96,60 @@ export default function ProblemPopup({ problems, request, onConfirm }: {
   }, [sig]);
 
   useEffect(() => {
-    if (request) { shownFor.current = sig; setAuto(false); setAsk(request); }
+    if (request) { shownFor.current = sig; setAuto(false); setResolved(new Set()); setAsk(request); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request?.n]);
 
   if (!mounted) return null;
 
-  // ── Print / Make Active: "Is this on purpose?" ──────────────────────────
-  if (ask && ask.items.length) {
-    const items = [...ask.items].sort((a, b) => Number(!!b.serious) - Number(!!a.serious));
+  // ── Print / Make Active: "Is this on purpose?" — or Check Spelling ───────
+  if (ask) {
+    const items = ask.items
+      .filter((p) => !resolved.has(p.key))
+      .sort((a, b) => Number(!!b.serious) - Number(!!a.serious));
     const close = () => setAsk(null);
+    const done = (key: string) => {
+      const next = new Set(resolved).add(key);
+      setResolved(next);
+      // Everything handled from a Print / Make Active pop-up → carry on.
+      if (ask.kind !== 'spell' && ask.items.every((p) => next.has(p.key))) { close(); onConfirm?.(ask.kind, []); }
+    };
+    const spell = ask.kind === 'spell';
+    if (!items.length && !spell) return null;
     return createPortal(
       <div className="pp-overlay" role="alertdialog" aria-modal="true" aria-labelledby="pp-title">
         <div className="pp-box">
-          <div className="pp-icon" aria-hidden="true">✋</div>
-          <h2 id="pp-title" className="pp-title">Is this on purpose?</h2>
-          <ul className="pp-list">
-            {items.map((p) => (
-              <li key={p.key} className={p.serious ? 'pp-serious' : undefined}>
-                <strong>{p.title}</strong> {p.body}
-              </li>
-            ))}
-          </ul>
+          <div className="pp-icon" aria-hidden="true">{spell ? (items.length ? '\u{1F4DD}' : '\u2705') : '\u270B'}</div>
+          <h2 id="pp-title" className="pp-title">
+            {spell ? (items.length ? 'Spelling check' : ask.items.length ? 'All done' : 'No spelling problems found') : 'Is this on purpose?'}
+          </h2>
+          {items.length > 0 && (
+            <ul className="pp-list">
+              {items.map((p) => (
+                <li key={p.key} className={p.serious ? 'pp-serious' : undefined}>
+                  <strong>{p.title}</strong> {p.body}
+                  {(p.use || p.keep) && (
+                    <span className="pp-item-actions">
+                      {p.use && <button className="pp-item-use" onClick={() => { p.use!.run(); done(p.key); }}>{p.use.label}</button>}
+                      {p.keep && <button className="pp-item-keep" onClick={() => { p.keep!(); done(p.key); }}>Keep mine</button>}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="pp-saved">✓ Don’t worry — your work is saved.</p>
           <div className="pp-actions">
-            <button className="pp-primary" autoFocus onClick={() => { close(); flashTarget(items[0].target); }}>Fix It</button>
-            <button className="pp-secondary" onClick={() => { close(); onConfirm?.(ask.kind, ask.items); }}>
-              {ask.kind === 'print' ? 'Yes, Print Anyway' : 'Yes, Make It Active'}
-            </button>
+            {spell ? (
+              <button className="pp-primary" autoFocus onClick={close}>Done</button>
+            ) : (
+              <>
+                <button className="pp-primary" autoFocus onClick={() => { close(); flashTarget(items[0].target); }}>Fix It</button>
+                <button className="pp-secondary" onClick={() => { close(); onConfirm?.(ask.kind as 'print' | 'publish', ask.items); }}>
+                  {ask.kind === 'print' ? 'Yes, Print Anyway' : 'Yes, Make It Active'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>,

@@ -2035,3 +2035,11 @@ a.dd-chooser-card:hover {
 .pp-list li.pp-serious::marker { color: #b3261e; }
 .btn-show-dish:disabled { opacity: .45; cursor: not-allowed; }
 .dish-hidden-full { font-size: 12px; color: #7a1712; font-weight: 600; margin-left: 8px; }
+.pp-box { max-height: 90vh; overflow-y: auto; }
+.pp-item-actions { display: flex; gap: 8px; margin: 6px 0 2px; }
+.pp-item-use { background: #2f7d32; color: #fff; border: none; border-radius: 7px; padding: 6px 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.pp-item-keep { background: #fff; color: #4a3a26; border: 1.5px solid #c9b79a; border-radius: 7px; padding: 5px 11px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-spell { background: #fffaf0; color: #6b4510; border: 1px solid #b8821e; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; margin-right: 8px; }
+.btn-spell:disabled { opacity: .6; cursor: progress; }
+/* Crowded bottom bars wrap instead of pushing Print off the edge (Oct 2026). */
+.editor-footer { flex-wrap: wrap; row-gap: 8px; }
