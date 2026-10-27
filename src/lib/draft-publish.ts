@@ -349,6 +349,16 @@ export function createDraftPublish<T>(cfg: DraftPublishConfig<T>): DraftPublish<
 
 // ── Route-handler factories (keep per-menu API routes to two lines each) ───
 
+// ?keep=<ms> — file a copy away as an Earlier Version WITHOUT changing the
+// menu (Oct 27 2026). The editor uses it for an old browser copy that's
+// older than what's saved, instead of offering to put it back.
+function keepTs(request: Request): number | null {
+  const v = new URL(request.url).searchParams.get('keep');
+  if (v == null) return null;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 1_500_000_000_000 && n < Date.now() + 86_400_000 ? n : Date.now();
+}
+
 export function makeDraftHandlers<T>(dp: DraftPublish<T>) {
   return {
     // ?history → list of draft snapshots; ?snapshot=<key> → one snapshot.
@@ -371,6 +381,8 @@ export function makeDraftHandlers<T>(dp: DraftPublish<T>) {
         const body = await request.json();
         const restore = new URL(request.url).searchParams.get('restore');
         if (restore) return NextResponse.json(await dp.restoreDraftSnapshot(restore, body));
+        const keep = keepTs(request);
+        if (keep != null) { await dp.draftSnaps.snap(JSON.stringify(body, null, 2), keep); return NextResponse.json({ ok: true, kept: true }); }
         await dp.writeDraft(body as T);
         return NextResponse.json({ ok: true });
       } catch (err) {
@@ -438,6 +450,9 @@ export function makeFixHandlers<T>(
     async POST(request: Request) {
       try {
         const body = await request.json();
+        const keep = keepTs(request);
+        if (keep != null && !snaps) return NextResponse.json({ error: 'No version history here' }, { status: 400 });
+        if (snaps && keep != null) { await snaps.snap(JSON.stringify(body, null, 2), keep); return NextResponse.json({ ok: true, kept: true }); }
         const restore = snaps ? new URL(request.url).searchParams.get('restore') : null;
         if (snaps && restore) {
           const data = (await snaps.read(restore)) as T;

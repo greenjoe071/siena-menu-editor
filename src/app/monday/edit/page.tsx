@@ -544,11 +544,9 @@ export default function MondayEditorPage() {
     if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
 
-    if (menuHasOverLimit(data)) {
-      setSaveStatus('error');
-      setSaveMsg('Fix fields shown in red before saving');
-      return;
-    }
+    // Oct 27 2026: a too-long field no longer stops the save (Weekend lost
+    // Chef's fixes this way on Oct 22). The field stays red as the warning;
+    // only "Make This the Active Menu" requires it to be shortened.
 
     setSaveStatus('saving');
     setSaveMsg('Saving…');
@@ -647,6 +645,7 @@ export default function MondayEditorPage() {
 
   async function handlePublish() {
     if (!menu) return;
+    if (menuHasOverLimit(menu)) { setSaveStatus('error'); setSaveMsg('Something is too long (shown in red). Shorten it, then try again — your work is saved.'); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {

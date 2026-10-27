@@ -10,8 +10,13 @@ import { createPortal } from 'react-dom';
 // types). This hook sits next to it and makes sure nothing typed is lost:
 //
 //  1. Browser copy — any change the server hasn't confirmed is also kept in
-//     this browser (localStorage). Next time the editor opens, if the server
-//     doesn't have it, a card offers "Bring It Back".
+//     this browser (localStorage), together with the server copy it was
+//     based on. Next time the editor opens:
+//       • server unchanged since → a card offers "Bring It Back";
+//       • server has NEWER saves since (someone kept working, maybe on
+//         another computer) → the old copy is NEVER offered back; it's
+//         quietly filed away as an Earlier Version instead (Oct 27 2026 —
+//         on Oct 24 an old Weekend copy came back over Chef's later fixes).
 //  2. Retry — a change that still isn't on the server a few seconds later
 //     (Wi-Fi blip, server hiccup) is re-sent, every few seconds, until it is.
 //  3. Leaving — closing the tab, the browser, or clicking Back sends any
@@ -39,7 +44,9 @@ interface Options<T> {
   onRestore: (data: T) => void;
 }
 
-interface Stored { json: string; url: string; at: number }
+// base = the server copy this change was made on top of (missing on copies
+// saved before Oct 27 2026 — those are treated as old).
+interface Stored { json: string; url: string; at: number; base?: string | null }
 
 const PREFIX = 'siena-unsaved:';
 const RETRY_AFTER_MS = 4000;
@@ -91,7 +98,12 @@ export function useSaveSafety<T>(o: Options<T>) {
     const stored = readStored(storageKey);
     if (!stored) return;
     if (stored.json === loadedJson || stored.url !== url) { clearStored(storageKey); return; }
-    setRecovery(stored);
+    if (stored.base != null && stored.base === loadedJson) { setRecovery(stored); return; }
+    // The server moved on since this copy was made — don't offer it back
+    // over newer work. Keep it as an Earlier Version so nothing is lost.
+    fetch(`${url}?keep=${stored.at}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: stored.json })
+      .then((r) => { if (r.ok) clearStored(storageKey); })
+      .catch(() => { /* leave it in this browser; try again next time */ });
   }, [loadedJson, storageKey, url]);
 
   // Every change: remember it in this browser until the server confirms it.
@@ -101,7 +113,7 @@ export function useSaveSafety<T>(o: Options<T>) {
     lastChangeRef.current = Date.now();
     if (confirmedRef.current == null || latestJson == null) return;
     if (latestJson === confirmedRef.current) clearStored(storageKey);
-    else writeStored(storageKey, { json: latestJson, url, at: Date.now() });
+    else writeStored(storageKey, { json: latestJson, url, at: Date.now(), base: confirmedRef.current });
   }, [latestJson, storageKey, url]);
 
   const confirmSaved = useCallback((json: string) => {

@@ -158,7 +158,7 @@ export const weekendDP = createDraftPublish<WeekendMenuData>({
   metaKey:         'weekend-menu-meta',
   publishedPrefix: 'weekend-published-',
   schema:          WeekendMenuSchema,
-  draftSchema:     WeekendDraftSchema,   // half-typed drafts must always save
+  draftSchema:     allowBlanks(WeekendDraftSchema),   // half-typed / too-long drafts must always save
   readCurrent:     readWeekendMenu,
 });
 

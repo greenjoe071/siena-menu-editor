@@ -3,14 +3,21 @@ import { z, type ZodTypeAny } from 'zod';
 // ══════════════════════════════════════════════════════════════════════════
 // "Typing always saves" (Joe's rule, Oct 2026).
 // ══════════════════════════════════════════════════════════════════════════
-// Returns a copy of a menu schema where required text fields may be BLANK —
-// every other rule (max lengths, ids, shapes) stays exactly the same. Used
-// for saving drafts and "Make a Change" edits, so a field Chef clears to
-// retype never blocks the save. Publishing still uses the full schema, so a
-// blank required field can't become the active menu.
+// Returns a copy of a menu schema where required text fields may be BLANK
+// and text may run past its letter limit — ids, shapes and patterns stay
+// the same. Used for saving drafts and "Make a Change" edits, so a field
+// Chef clears to retype, or a name that's a few letters too long, never
+// blocks the save. Publishing still uses the full schema, so a blank or
+// too-long field can't become the active menu.
+//
+// Oct 27 2026: letter limits added here. Weekend refused to save a 30-letter
+// dish name (limit 26) on Oct 22; the stuck copy later came back over newer
+// fixes. A generous ceiling (SAVE_MAX) stays as paste protection.
 //
 // Handles the zod pieces our schemas use: object, array, tuple, optional,
 // nullable, default, effects (refine), string. Anything else is returned unchanged.
+
+const SAVE_MAX = 2000;
 
 export function allowBlanks<T extends ZodTypeAny>(schema: T): T {
   return loosen(schema) as T;
@@ -20,8 +27,14 @@ function loosen(s: ZodTypeAny): ZodTypeAny {
   if (s instanceof z.ZodString) {
     const checks = s._def.checks;
     const required = checks.some((c) => c.kind === 'min');
-    if (!required) return s;
-    const rest = new z.ZodString({ ...s._def, checks: checks.filter((c) => c.kind !== 'min') });
+    const limited = checks.some((c) => c.kind === 'max' && c.value < SAVE_MAX);
+    if (!required && !limited) return s;
+    const rest = new z.ZodString({
+      ...s._def,
+      checks: checks
+        .filter((c) => c.kind !== 'min')
+        .map((c) => (c.kind === 'max' ? { ...c, value: Math.max(c.value, SAVE_MAX) } : c)),
+    });
     // A pattern (e.g. "digits only") would still reject a blank — allow '' explicitly.
     return checks.some((c) => c.kind === 'regex') ? z.union([z.literal(''), rest]) : rest;
   }

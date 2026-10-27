@@ -529,11 +529,9 @@ export default function WeekendEditorPage() {
     if (json === prevJsonRef.current) return;
     prevJsonRef.current = json;
 
-    if (menuHasHardLimitViolation(data)) {
-      setSaveStatus('error');
-      setSaveMsg('Fix fields shown in red before saving');
-      return;
-    }
+    // Oct 27 2026: a too-long field no longer stops the save (that's how
+    // Chef's fixes were lost on Oct 22). The field stays red as the warning;
+    // only "Make This the Active Menu" requires it to be shortened.
 
     setSaveStatus('saving');
     setSaveMsg('Saving…');
@@ -643,6 +641,7 @@ export default function WeekendEditorPage() {
 
   async function handlePublish() {
     if (!menu) return;
+    if (menuHasHardLimitViolation(menu)) { setSaveStatus('error'); setSaveMsg('Something is too long (shown in red). Shorten it, then try again — your work is saved.'); return; }
     const missing: string[] = [];
     const sec: [SectionId, string][] = [['starters', menu.sections.starters.title || 'Starters'], ['entrees', menu.sections.entrees.title || 'Entrees']];
     for (const [sid, label] of sec) menu.sections[sid].items.forEach((d, n) => {
