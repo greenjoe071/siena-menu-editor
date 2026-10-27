@@ -35,12 +35,34 @@ export function flashTarget(target?: string) {
   if (!target) return;
   const el = document.querySelector(`[data-problem="${target}"]`) as HTMLElement | null;
   if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  el.classList.remove('pp-flash');
-  void el.offsetWidth;          // restart the animation
-  el.classList.add('pp-flash');
-  const input = el.querySelector('input, textarea') as HTMLElement | null;
-  setTimeout(() => input?.focus({ preventScroll: true }), 400);
+  // Inside a collapsed section (Dinner)? Ask it to open first. A container
+  // marked data-reveal listens for 'pp-reveal' and opens itself.
+  const holders = [] as HTMLElement[];
+  for (let h = el.closest('[data-reveal]') as HTMLElement | null; h; h = h.parentElement?.closest('[data-reveal]') as HTMLElement | null) holders.push(h);
+  holders.forEach((h) => h.dispatchEvent(new CustomEvent('pp-reveal')));
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.remove('pp-flash');
+    void el.offsetWidth;          // restart the animation
+    el.classList.add('pp-flash');
+    const input = el.querySelector('input, textarea') as HTMLElement | null;
+    setTimeout(() => input?.focus({ preventScroll: true }), 400);
+  }, holders.length ? 350 : 0);
+}
+
+/** For a collapsible container: open when Fix It points inside it. */
+export function useReveal(onReveal: () => void) {
+  const ref = useRef<HTMLDivElement>(null);
+  const cb = useRef(onReveal);
+  cb.current = onReveal;
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const h = () => cb.current();
+    el.addEventListener('pp-reveal', h);
+    return () => el.removeEventListener('pp-reveal', h);
+  }, []);
+  return ref;
 }
 
 export default function ProblemPopup({ problems, request, onConfirm }: {

@@ -182,7 +182,9 @@ export const dinnerDP = createDraftPublish<MenuData>({
   draftKey:        'menu-draft',
   metaKey:         'menu-meta',
   publishedPrefix: 'published-',
-  schema:          MenuSchema,
+  // Oct 27 2026 (Joe): nothing is ever blocked — the editor asks "Is this on
+  // purpose?" and Chef can say yes, so publishing accepts what drafts accept.
+  schema:          SaveMenuSchema,
   draftSchema: SaveMenuSchema,
   readCurrent:     readMenu,
 });

@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
 import EarlierVersions from '@/components/EarlierVersions';
+import ProblemPopup, { useReveal, type Problem, type PopupRequest } from '@/components/ProblemPopup';
+import { listChecks, duplicateChecks, untitledCheck } from '@/lib/menu-checks';
 import { publishErrorMessage } from '@/lib/publish-error';
-import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -112,11 +113,61 @@ function useDebounce<T>(value: T, ms: number): T {
 // Fit report posted back by the preview iframe (handoff/validate.js).
 interface FitReport {
   fits: boolean;
-  problems: { type: string; message: string }[];
+  problems: { type: string; message: string; page?: number; section?: string | null; block?: string }[];
 }
 
 const PASTA_MAX_VISIBLE = 8;
 const CONTORNI_MAX_VISIBLE = 7;   // Nov 2026 designer handoff
+
+// ── Problem pop-up (Oct 2026): fit problems + "Is this on purpose?" ───────
+// Where Fix It / Show Me should jump for a validator section id.
+function fitTarget(id?: string | null): string | undefined {
+  if (!id) return undefined;
+  if (id.endsWith('-addons')) return id.replace('-addons', '_addons');
+  return `section-${id}`;
+}
+function fitProblems(fit: FitReport | null): Problem[] {
+  if (!fit || fit.fits) return [];
+  return fit.problems.map((p, i): Problem => {
+    const key = `fit-${p.type}-${p.page ?? p.block ?? p.section ?? i}`;
+    if (p.type === 'page-overflow') {
+      const sid = p.section ?? null;
+      const label = sid ? (SECTION_LABELS[sid as SectionId] ?? ADDON_LABELS[sid.replace('-addons', '_addons')] ?? sid) : '';
+      return /7th Contorni/.test(p.message)
+        ? { key, target: 'section-contorni', title: `Page ${p.page} is too full.`, body: 'The 7th Contorni dish doesn\u2019t fit. Hide a Contorni dish or shorten something on page 2.' }
+        : { key, target: fitTarget(sid), title: `Page ${p.page} is too full.`, body: `Make something shorter on that page${label ? ` \u2014 ${label} is the biggest part` : ''}.` };
+    }
+    if (p.type === 'addon-wrap') {
+      const k = `${p.block}_addons`;
+      return { key, target: k, title: `The ${ADDON_LABELS[k] ?? 'add-on'} line is too long.`, body: 'It has to fit on one line. Shorten a name, or hide an item.' };
+    }
+    return { key, target: fitTarget(p.section), title: 'Something doesn\u2019t fit on the menu.', body: p.message };
+  });
+}
+function dinnerChecks(m: MenuData): Problem[] {
+  const out: Problem[] = [];
+  const names: { name: string; target?: string }[] = [];
+  for (const sid of Object.keys(m.sections) as SectionId[]) {
+    const sec = m.sections[sid];
+    const shown = sec.items.filter(isShown);   // hidden dishes don't print
+    out.push(...untitledCheck(sec.title, shown.some((d) => d.name.trim()), SECTION_LABELS[sid], `sec-${sid}`, `section-${sid}`));
+    out.push(...listChecks(shown.map((d) => ({
+      id: d.id, name: d.name, desc: d.desc, wantDesc: true, target: `dish-${d.id}`,
+      prices: d.price_format === 'dual'
+        ? [d.price_a ?? d.bowl_price ?? '', d.price_b ?? d.cup_price ?? '']
+        : [d.price ?? ''],
+    })), sec.title || SECTION_LABELS[sid], `sec-${sid}`));
+    shown.forEach((d) => names.push({ name: d.name, target: `dish-${d.id}` }));
+  }
+  for (const key of ['salad_addons', 'pasta_addons', 'steak_addons'] as const) {
+    const b = m[key];
+    if (!b.enabled) continue;
+    out.push(...listChecks(b.items.filter((i) => i.enabled).map((i) => ({ id: i.id, name: i.name, prices: [i.price], target: key })),
+      `the ${b.label || ADDON_LABELS[key]} line`, key));
+  }
+  out.push(...duplicateChecks(names));
+  return out;
+}
 // Sections Chef can add a dish to, with how many may show and the button wording.
 const ADDABLE: Partial<Record<SectionId, { max: number; label: string; button: string }>> = {
   pasta:    { max: PASTA_MAX_VISIBLE,    label: 'Pasta',    button: '+ Add a pasta dish' },
@@ -186,8 +237,10 @@ function AddonBlockEditor({
     onChange({ ...block, items });
   }
 
+  const revealRef = useReveal(() => setOpen(true));
+
   return (
-    <div className="section-block addon-block">
+    <div className="section-block addon-block" ref={revealRef} data-reveal data-problem={blockKey}>
       <div className="section-block-header" onClick={() => setOpen((o) => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{ADDON_LABELS[blockKey]}</span>
@@ -285,11 +338,14 @@ function DishRow({
   index,
   sectionId,
   onChange,
+  showBlocked,
 }: {
   dish: Dish;
   index: number;
   sectionId: SectionId;
   onChange: (sectionId: SectionId, index: number, updated: Dish) => void;
+  /** Set when the section is already full — "Show on menu" is greyed out (Oct 2026). */
+  showBlocked?: string;
 }) {
   const isDual = dish.price_format === 'dual';
   const descLen = dish.desc.length;
@@ -308,6 +364,7 @@ function DishRow({
             ref={provided.innerRef}
             {...provided.draggableProps}
             className="dish-hidden-strip"
+            data-problem={`dish-${dish.id}`}
             style={{
               ...provided.draggableProps.style,
               boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : undefined,
@@ -321,10 +378,13 @@ function DishRow({
             <button
               type="button"
               className="btn-show-dish"
+              disabled={!!showBlocked}
+              title={showBlocked}
               onClick={() => onChange(sectionId, index, { ...dish, enabled: true })}
             >
               Show on menu
             </button>
+            {showBlocked && <span className="dish-hidden-full">{showBlocked}</span>}
           </div>
         )}
       </Draggable>
@@ -338,6 +398,7 @@ function DishRow({
           ref={provided.innerRef}
           {...provided.draggableProps}
           className="dish-row"
+          data-problem={`dish-${dish.id}`}
           style={{
             ...provided.draggableProps.style,
             opacity: snapshot.isDragging ? 0.85 : 1,
@@ -449,9 +510,12 @@ function SectionBlock({
   const titleLen = section.title.length;
   const shown = section.items.filter(isShown).length;
   const hidden = section.items.length - shown;
+  const revealRef = useReveal(() => setOpen(true));
+  const cap = ADDABLE[sectionId];
+  const showBlocked = cap && shown >= cap.max ? `${cap.label} is full (${cap.max} showing). Hide another dish first.` : undefined;
 
   return (
-    <div className="section-block">
+    <div className="section-block" ref={revealRef} data-reveal data-problem={`section-${sectionId}`}>
       <div className="section-block-header" onClick={() => setOpen((o) => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{section.title}</span>
@@ -492,6 +556,7 @@ function SectionBlock({
                     index={i}
                     sectionId={sectionId}
                     onChange={onDishChange}
+                    showBlocked={showBlocked}
                   />
                 ))}
                 {provided.placeholder}
@@ -546,6 +611,24 @@ export default function DinnerDraftEditorPage() {
   // Fit check from the preview (validate.js). Joe, Oct 2026: typing ALWAYS
   // saves; a menu that doesn't fit only blocks "Make This the Active Menu".
   const [fit, setFit] = useState<FitReport | null>(null);
+  const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
+  // "Yes, on purpose" answers, per action ('print:key' / 'publish:key').
+  const [okd, setOkd] = useState<Set<string>>(new Set());
+
+  // An "on purpose" answer lasts only while that problem is still there.
+  useEffect(() => {
+    if (!menu) return;
+    const keys = new Set(dinnerChecks(menu).map((p) => p.key));
+    const fitKnown = fit !== null;
+    fitProblems(fit).forEach((p) => keys.add(p.key));
+    setOkd((prev) => {
+      const next = new Set([...prev].filter((k) => {
+        const key = k.slice(k.indexOf(':') + 1);
+        return keys.has(key) || (!fitKnown && key.startsWith('fit-'));
+      }));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [menu, fit]);
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
@@ -611,48 +694,8 @@ export default function DinnerDraftEditorPage() {
 
   // ── Publish / discard ──────────────────────────────────────────────────
 
-  function publishBlockers(m: MenuData): string[] {
-    const out: string[] = [];
-    for (const sid of Object.keys(m.sections) as SectionId[]) {
-      m.sections[sid].items.forEach((d, n) => {
-        if (!isShown(d)) return;
-        const where = `${SECTION_LABELS[sid]} dish ${n + 1}${d.name.trim() ? ` (${d.name.trim()})` : ''}`;
-        const prices = d.price_format === 'dual'
-          ? [d.price_a ?? d.bowl_price, d.price_b ?? d.cup_price]
-          : [d.price];
-        const blanks = [!d.name.trim() && 'name', !d.desc.trim() && 'description',
-          prices.some((p) => !p || !p.trim()) && 'price'].filter(Boolean);
-        if (blanks.length) out.push(`${where}: ${blanks.join(', ')}`);
-      });
-    }
-    for (const [sid, a] of Object.entries(ADDABLE) as [SectionId, { max: number; label: string }][]) {
-      const n = m.sections[sid].items.filter(isShown).length;
-      if (n > a.max) out.push(`${a.label} has ${n} dishes showing — hide ${n - a.max}`);
-    }
-    for (const key of ['salad_addons', 'pasta_addons', 'steak_addons'] as const) {
-      const b = m[key];
-      if (!b.enabled) continue;
-      b.items.forEach((it, n) => {
-        if (it.enabled && (!it.name.trim() || !it.price.trim())) out.push(`${ADDON_LABELS[key]} item ${n + 1}: name or price`);
-      });
-    }
-    return out;
-  }
-
-  async function handlePublish() {
+  async function doPublish() {
     if (!menu) return;
-    const blanks = publishBlockers(menu);
-    if (blanks.length) {
-      setSaveStatus('error');
-      setSaveMsg('Before making this the active menu, fill in: ' + blanks.join('; ') + ' — or hide what you are not using.');
-      return;
-    }
-    if (!fit || !fit.fits) {
-      setSaveStatus('error');
-      setSaveMsg(fit ? 'This menu doesn\u2019t fit the page yet — see the red note at the top. Your draft is saved.' : 'Still checking the page fit — try again in a second.');
-      return;
-    }
-
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -733,6 +776,24 @@ export default function DinnerDraftEditorPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  // Print / Make Active → ask about anything worth a second look (never blocks).
+  function askOrGo(kind: 'print' | 'publish') {
+    if (!menu) return;
+    const items = [...fitProblems(fit).map((p) => ({ ...p, serious: true })), ...dinnerChecks(menu)];
+    const pending = items.filter((p) => !okd.has(kind + ':' + p.key));
+    if (pending.length) { setPopupReq({ kind, n: Date.now(), items: pending }); return; }
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function confirmed(kind: 'print' | 'publish', items: Problem[]) {
+    setOkd((prev) => new Set([...prev, ...items.map((p) => kind + ':' + p.key)]));
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function doPrint() {
+    if (menu) localStorage.setItem('siena-print-data', JSON.stringify(menu));
+    // The pop-up already asked (fit included) — the print page shouldn't ask again.
+    window.open(`/print?src=${isFix ? 'current' : 'draft'}&warned=1&fitwarned=1`, '_blank');
+  }
+
   if (!menu) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
@@ -768,16 +829,7 @@ export default function DinnerDraftEditorPage() {
             </div>
           )}
 
-          {fit && !fit.fits && (
-            <div className="overflow-banner">
-              ⚠ {isFix
-                ? 'This menu no longer fits the printed page — your changes ARE saved, but shorten or hide something before printing.'
-                : 'This menu doesn\u2019t fit the printed page yet — your draft IS saved, but it can\u2019t become the active menu until it fits.'}
-              <ul style={{ margin: '6px 0 0 18px' }}>
-                {fit.problems.map((p, i) => <li key={i}>{p.message}</li>)}
-              </ul>
-            </div>
-          )}
+          <ProblemPopup problems={fitProblems(fit)} request={popupReq} onConfirm={confirmed} />
 
           <div className="editor-scroll">
             {/* Restaurant header */}
@@ -877,20 +929,15 @@ export default function DinnerDraftEditorPage() {
             />
             <button
               className="btn-print"
-              onClick={() => {
-                if (menu && !confirmPrintWarnings('dinner', menu, saveStatus === 'error')) return;
-                if (menu) localStorage.setItem('siena-print-data', JSON.stringify(menu));
-                window.open(`/print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
-              }}
+              onClick={() => askOrGo('print')}
             >
               {isFix ? 'Print Menu' : 'Print Draft'}
             </button>
             {!isFix && (
               <button
                 className="btn-publish"
-                onClick={handlePublish}
-                disabled={publishing || (!!fit && !fit.fits)}
-                title={fit && !fit.fits ? 'The menu doesn\u2019t fit the page yet — see the red note at the top' : undefined}
+                onClick={() => askOrGo('publish')}
+                disabled={publishing}
               >
                 {publishing ? 'Publishing…' : 'Make This the Active Menu'}
               </button>
