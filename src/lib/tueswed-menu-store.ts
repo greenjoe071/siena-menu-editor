@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { TuewedMenuSchema, type TuewedMenuData } from './tueswed-schema';
 import { menuBlobStore } from './blob-store';
+import { allowBlanks } from './allow-blanks';
+// Saves, reads and publishing allow blanks and too-long text (see allow-blanks.ts).
+const SaveTuewedMenuSchema = allowBlanks(TuewedMenuSchema);
 
 const DATA_PATH   = join(process.cwd(), 'tueswed-menu-data.json');
 const BACKUP_DIR  = join(process.cwd(), 'tueswed-backups');
@@ -72,13 +75,13 @@ function formatLabel(ts: number): string {
 export async function readTuewedMenu(): Promise<TuewedMenuData> {
   const raw = await blobsRead(BLOB_CURRENT);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    return TuewedMenuSchema.parse(JSON.parse(raw));
+    return SaveTuewedMenuSchema.parse(JSON.parse(raw));
   }
-  return TuewedMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
+  return SaveTuewedMenuSchema.parse(JSON.parse(await readFile(DATA_PATH, 'utf8')));
 }
 
 export async function writeTuewedMenu(data: TuewedMenuData): Promise<void> {
-  TuewedMenuSchema.parse(data);
+  SaveTuewedMenuSchema.parse(data);
   const ts   = Date.now();
   const json = JSON.stringify(data, null, 2);
 
@@ -134,12 +137,12 @@ export async function listTuewedBackups(): Promise<BackupEntry[]> {
 export async function restoreTuewedBackup(key: string): Promise<TuewedMenuData> {
   const raw = await blobsRead(key);
   if (raw !== BLOBS_UNAVAILABLE && raw) {
-    const data = TuewedMenuSchema.parse(JSON.parse(raw));
+    const data = SaveTuewedMenuSchema.parse(JSON.parse(raw));
     await writeTuewedMenu(data);
     return data;
   }
   const fileRaw = await readFile(join(BACKUP_DIR, key), 'utf8');
-  const data    = TuewedMenuSchema.parse(JSON.parse(fileRaw));
+  const data    = SaveTuewedMenuSchema.parse(JSON.parse(fileRaw));
   await writeTuewedMenu(data);
   return data;
 }
@@ -153,7 +156,10 @@ export const tueswedDP = createDraftPublish<TuewedMenuData>({
   draftKey:        'tueswed-menu-draft',
   metaKey:         'tueswed-menu-meta',
   publishedPrefix: 'tueswed-published-',
-  schema:          TuewedMenuSchema,
+  // Oct 28 2026 (Joe): nothing is ever blocked — the editor asks "Is this on
+  // purpose?" and Chef can say yes, so publishing accepts what drafts accept.
+  schema:          SaveTuewedMenuSchema,
+  draftSchema:     SaveTuewedMenuSchema,
   readCurrent:     readTuewedMenu,
 });
 

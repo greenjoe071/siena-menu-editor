@@ -157,7 +157,9 @@ export const weekendDP = createDraftPublish<WeekendMenuData>({
   draftKey:        'weekend-menu-draft',
   metaKey:         'weekend-menu-meta',
   publishedPrefix: 'weekend-published-',
-  schema:          WeekendMenuSchema,
+  // Oct 28 2026 (Joe): nothing is ever blocked — the editor asks "Is this on
+  // purpose?" and Chef can say yes, so publishing accepts what drafts accept.
+  schema:          SaveWeekendMenuSchema,
   draftSchema:     allowBlanks(WeekendDraftSchema),   // half-typed / too-long drafts must always save
   readCurrent:     readWeekendMenu,
 });

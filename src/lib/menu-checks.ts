@@ -92,3 +92,13 @@ export function untitledCheck(title: string, hasDishes: boolean, label: string, 
     title: `The ${label} section has dishes but no title.`, body: 'Its heading will print blank.',
   }] : [];
 }
+
+/** A field past its letter limit (red) — Monday/Weekend have no page-fit check. */
+export function tooLongCheck(value: string | undefined, max: number, label: string, key: string, target?: string): Problem[] {
+  const n = (value ?? '').length;
+  return n > max ? [{
+    key: `${key}-toolong`, target, serious: true,
+    title: `${label} is too long.`,
+    body: `It has ${n} letters but only ${max} fit. Make it shorter.`,
+  }] : [];
+}

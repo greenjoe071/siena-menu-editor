@@ -157,7 +157,9 @@ export const mondayDP = createDraftPublish<MondayMenuData>({
   draftKey:        'monday-menu-draft',
   metaKey:         'monday-menu-meta',
   publishedPrefix: 'monday-published-',
-  schema:          MondayMenuSchema,
+  // Oct 28 2026 (Joe): nothing is ever blocked — the editor asks "Is this on
+  // purpose?" and Chef can say yes, so publishing accepts what drafts accept.
+  schema:          SaveMondayMenuSchema,
   draftSchema: SaveMondayMenuSchema,
   readCurrent:     readMondayMenu,
 });

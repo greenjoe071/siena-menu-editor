@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
 import EarlierVersions from '@/components/EarlierVersions';
+import ProblemPopup, { useReveal, type Problem, type PopupRequest } from '@/components/ProblemPopup';
+import { listChecks, duplicateChecks, untitledCheck, tooLongCheck } from '@/lib/menu-checks';
 import { publishErrorMessage } from '@/lib/publish-error';
-import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -103,6 +104,58 @@ function useDebounce<T>(value: T, ms: number): T {
   return debounced;
 }
 
+// "Is this on purpose?" items (Oct 2026). Monday has no page-fit check, so a
+// field past its letter limit is the red "won't fit" item. Nothing blocks.
+const has = (v: string | undefined) => !!v && v.trim() !== '';
+function mondayChecks(m: MondayMenuData): Problem[] {
+  const out: Problem[] = [];
+  const h = m.hero;
+  out.push(...tooLongCheck(h.eyebrow_left, L.heroEyebrowLeft, 'The left line at the top', 'hero-left', 'hero'));
+  out.push(...tooLongCheck(h.eyebrow_right, L.heroEyebrowRight, 'The right line at the top', 'hero-right', 'hero'));
+  out.push(...tooLongCheck(h.tagline, L.heroTagline, 'The tagline under the price', 'hero-tagline', 'hero'));
+  if (!has(h.price)) out.push({ key: 'no-price', target: 'hero', title: 'There\u2019s no price at the top.', body: 'The big price will print blank.' });
+  const names: { name: string; target?: string }[] = [];
+  for (const sid of ['course-1', 'course-2'] as const) {
+    const sec = m.sections[sid];
+    const label = sid === 'course-1' ? 'Course 1' : 'Course 2';
+    const tgt = `section-${sid}`;
+    out.push(...untitledCheck(sec.title, sec.items.some((d) => has(d.name)), label, sid, tgt));
+    out.push(...tooLongCheck(sec.title, L.sectionTitle, `The ${label} title`, `${sid}-title`, tgt));
+    out.push(...tooLongCheck(sec.subtitle, L.sectionSubtitle, `The ${label} subtitle`, `${sid}-subtitle`, tgt));
+    for (const d of sec.items) {
+      const t = `dish-${d.id}`, nm = has(d.name) ? `\u201c${d.name.trim()}\u201d` : `A ${label} dish`;
+      out.push(...tooLongCheck(d.name, L.dishName, `The dish name ${nm}`, `${d.id}-name`, t));
+      out.push(...tooLongCheck(d.desc, L.dishDesc, `The description of ${nm}`, `${d.id}-desc`, t));
+      out.push(...tooLongCheck(d.price, L.dishPrice, `The price of ${nm}`, `${d.id}-price`, t));
+      names.push({ name: d.name, target: t });
+    }
+    // Course dish prices are optional on Monday (prix fixe) — only checked if typed.
+    out.push(...listChecks(sec.items.map((d) => ({
+      id: d.id, name: d.name, desc: d.desc, wantDesc: true, target: `dish-${d.id}`,
+      prices: has(d.price) ? [d.price ?? ''] : [],
+    })), sec.title || label, sid));
+  }
+  const a = m.pasta_addons;
+  if (a.enabled) {
+    out.push(...tooLongCheck(a.label, L.addonsLabel, 'The pasta add-ons label', 'addons-label', 'pasta-addons'));
+    out.push(...tooLongCheck(a.tail, L.addonsTail, 'The pasta add-ons note', 'addons-tail', 'pasta-addons'));
+    for (const it of a.items) {
+      out.push(...tooLongCheck(it.name, L.addonsItemName, `The add-on \u201c${it.name.trim() || 'item'}\u201d`, `${it.id}-name`, 'pasta-addons'));
+      out.push(...tooLongCheck(it.price, L.addonsItemPrice, `The price of add-on \u201c${it.name.trim() || 'item'}\u201d`, `${it.id}-price`, 'pasta-addons'));
+    }
+    out.push(...listChecks(a.items.filter((i) => i.enabled).map((i) => ({ id: i.id, name: i.name, prices: [i.price], target: 'pasta-addons' })), 'pasta add-ons', 'addons'));
+  }
+  m.weekly.rows.forEach((r, i) => {
+    const t = `weekly-${r.id}`, lab = `weekly special ${i + 1}`;
+    out.push(...tooLongCheck(r.day_label, L.weeklyDayLabel, `The day on ${lab}`, `${r.id}-day`, t));
+    out.push(...tooLongCheck(r.headline, L.weeklyHeadline, `The headline of ${lab}`, `${r.id}-head`, t));
+    out.push(...tooLongCheck(r.detail, L.weeklyDetail, `The details of ${lab}`, `${r.id}-detail`, t));
+  });
+  out.push(...tooLongCheck(m.policy_line, L.policyLine, 'The footer line', 'policy', 'footer'));
+  out.push(...duplicateChecks(names));
+  return out;
+}
+
 function menuHasOverLimit(m: MondayMenuData): boolean {
   if (m.hero.eyebrow_left.length  > L.heroEyebrowLeft)  return true;
   if (m.hero.eyebrow_right.length > L.heroEyebrowRight) return true;
@@ -166,6 +219,7 @@ function MondayDishRow({
           ref={provided.innerRef}
           {...provided.draggableProps}
           className="dish-row"
+          data-problem={`dish-${dish.id}`}
           style={{
             ...provided.draggableProps.style,
             opacity: snapshot.isDragging ? 0.85 : 1,
@@ -225,9 +279,10 @@ function CourseSectionBlock({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const label = sectionId === 'course-1' ? 'Course 1' : 'Course 2';
+  const revealRef = useReveal(() => setOpen(true));
 
   return (
-    <div className="section-block">
+    <div className="section-block" ref={revealRef} data-reveal data-problem={`section-${sectionId}`}>
       <div className="section-block-header" onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{label} — {section.title}</span>
@@ -336,8 +391,10 @@ function PastaAddonsBlock({
     onChange({ ...addons, items });
   }
 
+  const revealRef = useReveal(() => setOpen(true));
+
   return (
-    <div className="section-block">
+    <div className="section-block" ref={revealRef} data-reveal data-problem="pasta-addons">
       <div className="section-block-header" onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">Pasta Add-Ons</span>
@@ -406,6 +463,7 @@ function WeeklyRowItem({
           ref={provided.innerRef}
           {...provided.draggableProps}
           className="dish-row"
+          data-problem={`weekly-${row.id}`}
           style={{
             ...provided.draggableProps.style,
             opacity: snapshot.isDragging ? 0.85 : 1,
@@ -474,8 +532,10 @@ function WeeklyBlock({
 }) {
   const [open, setOpen] = useState(true);
 
+  const revealRef = useReveal(() => setOpen(true));
+
   return (
-    <div className="section-block">
+    <div className="section-block" ref={revealRef} data-reveal>
       <div className="section-block-header" onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">Throughout the Week</span>
@@ -521,6 +581,18 @@ export default function MondayEditorPage() {
   });
   const menuRef = useRef(menu);
   menuRef.current = menu;
+  const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
+  // "Yes, on purpose" answers, per action ('print:key' / 'publish:key'),
+  // forgotten once that problem goes away.
+  const [okd, setOkd] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!menu) return;
+    const keys = new Set(mondayChecks(menu).map((p) => p.key));
+    setOkd((prev) => {
+      const next = new Set([...prev].filter((k) => keys.has(k.slice(k.indexOf(':') + 1))));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [menu]);
   const [previewUrl, setPreviewUrl] = useState(`/monday-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef   = useRef<HTMLIFrameElement>(null);
   const prevJsonRef = useRef<string>('');
@@ -643,9 +715,8 @@ export default function MondayEditorPage() {
   // ── Publish / discard ──────────────────────────────────────────────────
   const [publishing, setPublishing] = useState(false);
 
-  async function handlePublish() {
+  async function doPublish() {
     if (!menu) return;
-    if (menuHasOverLimit(menu)) { setSaveStatus('error'); setSaveMsg('Something is too long (shown in red). Shorten it, then try again — your work is saved.'); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -654,6 +725,22 @@ export default function MondayEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/monday';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
+  }
+
+  // Print / Make Active → "Is this on purpose?" (never blocks).
+  function askOrGo(kind: 'print' | 'publish') {
+    if (!menu) return;
+    const pending = mondayChecks(menu).filter((p) => !okd.has(kind + ':' + p.key));
+    if (pending.length) { setPopupReq({ kind, n: Date.now(), items: pending }); return; }
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function confirmed(kind: 'print' | 'publish', items: Problem[]) {
+    setOkd((prev) => new Set([...prev, ...items.map((p) => kind + ':' + p.key)]));
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function doPrint() {
+    if (menu) localStorage.setItem('siena-monday-print-data', JSON.stringify(menu));
+    window.open(`/monday-print?src=${isFix ? 'current' : 'draft'}&warned=1&fitwarned=1`, '_blank');
   }
 
   if (!menu) {
@@ -673,6 +760,7 @@ export default function MondayEditorPage() {
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="app">
       {recoveryBanner}
+      <ProblemPopup problems={[]} request={popupReq} onConfirm={confirmed} />
 
         {/* ── Editor pane ──────────────────────────────────────────── */}
         <div className="editor-pane">
@@ -690,7 +778,7 @@ export default function MondayEditorPage() {
           <div className="editor-scroll chef-mode">
 
             {/* Hero */}
-            <div className="page-group">
+            <div className="page-group" data-problem="hero">
               <div className="page-group-label">Hero — top of page</div>
 
               <div className="dish-field-row">
@@ -766,7 +854,7 @@ export default function MondayEditorPage() {
             </div>
 
             {/* Policy line */}
-            <div className="page-group">
+            <div className="page-group" data-problem="footer">
               <div className="page-group-label">Footer</div>
               <div className="field-group">
                 <div className="field-label-row">
@@ -787,7 +875,7 @@ export default function MondayEditorPage() {
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
               <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
+              <button className="btn-publish" onClick={() => askOrGo('publish')} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
             </div>
           )}
           <div className="editor-footer">
@@ -799,11 +887,7 @@ export default function MondayEditorPage() {
             />
             <button
               className="btn-print"
-              onClick={() => {
-                if (menu && !confirmPrintWarnings('monday', menu, saveStatus === 'error')) return;
-                if (menu) localStorage.setItem('siena-monday-print-data', JSON.stringify(menu));
-                window.open(`/monday-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
-              }}
+              onClick={() => askOrGo('print')}
             >
               Print Menu
             </button>

@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
 import EarlierVersions from '@/components/EarlierVersions';
+import ProblemPopup, { type Problem, type PopupRequest } from '@/components/ProblemPopup';
+import { listChecks, duplicateChecks } from '@/lib/menu-checks';
 import { publishErrorMessage } from '@/lib/publish-error';
-import { confirmPrintWarnings } from '@/lib/print-warnings';
 import { TUESWED_CHAR_LIMITS as L, TUESWED_DEFAULT_WEEKLY } from '@/lib/tueswed-schema';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -124,6 +125,70 @@ function PriceInput({ value, onChange, placeholder = '45', prefix = '$' }: {
   );
 }
 
+// ── Problem pop-up (Oct 2026): fit + "Is this on purpose?" — never blocks ──
+const SECTION_TARGET: Record<string, string> = {
+  special: 'special', header: 'price', 'course-1': 'course-1', 'course-2': 'course-2', 'course-3': 'course-3',
+  addon: 'addon', 'week-1': 'weekly', 'week-2': 'weekly', 'week-3': 'weekly', 'week-4': 'weekly', weekly: 'weekly',
+};
+function tueswedFitProblems(fit: FitReport | null): Problem[] {
+  if (!fit || fit.fits) return [];
+  const out: Problem[] = [];
+  const probs = fit.problems ?? [];
+  if (probs.some((p) => p.code === 'label-overflow')) out.push({
+    key: 'fit-label', target: 'special', title: 'The \u201cTuesdays Only\u201d label is too wide.',
+    body: 'It has to fit in the gap on the box border. Make it shorter.',
+  });
+  if (probs.some((p) => p.code === 'page-overflow') || !probs.length) {
+    const ws = fit.worstSection ?? '';
+    out.push({
+      key: 'fit-page', target: SECTION_TARGET[ws], title: 'The menu is too long for the page.',
+      body: `Make something shorter${ws && SECTION_NAMES[ws] ? ` \u2014 ${SECTION_NAMES[ws]} is the biggest part` : ''}.`,
+    });
+  }
+  return out;
+}
+function tueswedChecks(m: TuewedMenuData): Problem[] {
+  const out: Problem[] = [];
+  const has = (v?: string) => !!v && v.trim() !== '';
+  const names: { name: string; target?: string }[] = [];
+  if (m.special) {
+    const sp = m.special;
+    if (!has(sp.title)) out.push({ key: 'special-noname', target: 'special', serious: true,
+      title: 'The Tuesdays Only box has no dish name.', body: 'The sample dish (Costata di Maiale) would print instead.' });
+    else {
+      if (!has(sp.price)) out.push({ key: 'special-noprice', target: 'special',
+        title: `The Tuesdays Only dish \u201c${sp.title.trim()}\u201d has no price.`, body: 'It will print without one.' });
+      names.push({ name: sp.title, target: 'special' });
+    }
+    if (!has(sp.label)) out.push({ key: 'special-nolabel', target: 'special',
+      title: 'The Tuesdays Only box has no label.', body: 'The words on the box border will be blank.' });
+  }
+  if (!has(m.price)) out.push({ key: 'no-price', target: 'price',
+    title: 'There\u2019s no price for the three-course menu.', body: 'No price will print next to the title.' });
+  m.courses.forEach((c, i) => {
+    const n = ROMAN[i];
+    if (!has(c.title) && !has(c.desc)) out.push({ key: `${c.id}-empty`, target: c.id, serious: true,
+      title: `Course ${n} is empty.`, body: `It will print as a lonely \u201c${n}\u201d with nothing under it.` });
+    else if (!has(c.title)) out.push({ key: `${c.id}-noname`, target: c.id, serious: true,
+      title: `Course ${n} has a description but no dish name.`, body: 'The description will print with no name above it.' });
+    else {
+      if (!has(c.desc)) out.push({ key: `${c.id}-nodesc`, target: c.id,
+        title: `Course ${n} (${c.title.trim()}) has no description.`, body: 'Only the dish name will print.' });
+      names.push({ name: c.title, target: c.id });
+    }
+  });
+  const a = m.addon;
+  if (a) {
+    if (has(a.title) && !has(a.price)) out.push({ key: 'addon-noprice', target: 'addon',
+      title: `The add-on \u201c${a.title.trim()}\u201d has no price.`, body: 'It will print without one.' });
+    if (!has(a.title) && (has(a.price) || has(a.desc))) out.push({ key: 'addon-noname', target: 'addon',
+      title: 'The add-on has no name.', body: 'Without a name, the add-on won\u2019t print at all.' });
+  }
+  if (m.weekly) out.push(...listChecks(m.weekly.map((w) => ({ id: w.id, name: w.headline, desc: w.detail, prices: [], target: 'weekly' })), 'the weekly specials', 'weekly'));
+  out.push(...duplicateChecks(names));
+  return out;
+}
+
 // ── CourseCard ─────────────────────────────────────────────────────────────
 
 const ROMAN = ['I', 'II', 'III'] as const;
@@ -135,7 +200,7 @@ function CourseCard({ course, index, onChange }: {
   onChange: (index: number, updated: TuewedCourse) => void;
 }) {
   return (
-    <div className="dish-row">
+    <div className="dish-row" data-problem={course.id}>
       <div className="dish-row-header">
         <span className="dish-name-preview">
           {ROMAN[index]} — {COURSE_LABELS[index]}
@@ -200,6 +265,9 @@ export default function TuewedEditorPage() {
   });
   const menuRef = useRef(menu);
   menuRef.current = menu;
+  const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
+  // "Yes, on purpose" answers per action, forgotten once that problem goes away.
+  const [okd, setOkd] = useState<Set<string>>(new Set());
   const [previewUrl, setPreviewUrl]     = useState(`/tueswed-preview?src=${src}${pkg}`);
   const [fit, setFit]                   = useState<FitReport | null>(null);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
@@ -314,34 +382,8 @@ export default function TuewedEditorPage() {
   // ── Publish ─────────────────────────────────────────────────────────────
   const [publishing, setPublishing] = useState(false);
 
-  function publishBlockers(m: TuewedMenuData): string[] {
-    const out: string[] = [];
-    if (m.special) {
-      if (!m.special.title.trim()) out.push('the Tuesdays Only dish name');
-      if (!m.special.price.trim()) out.push('the Tuesdays Only price');
-      if (!m.special.label.trim()) out.push('the Tuesdays Only label');
-    }
-    if (!m.price.trim()) out.push('the prix-fixe price');
-    m.courses.forEach((c, i) => {
-      if (!c.title.trim()) out.push(`Course ${ROMAN[i]} name`);
-      if (!c.desc.trim()) out.push(`Course ${ROMAN[i]} description`);
-    });
-    return out;
-  }
-
-  async function handlePublish() {
+  async function doPublish() {
     if (!menu) return;
-    const blanks = publishBlockers(menu);
-    if (blanks.length) {
-      setSaveStatus('error');
-      setSaveMsg('Before making this the active menu, fill in: ' + blanks.join(', ') + '.');
-      return;
-    }
-    if (!fit || !fit.fits) {
-      setSaveStatus('error');
-      setSaveMsg(fit ? 'This menu doesn’t fit the page yet — see the red note at the top. Your draft is saved.' : 'Still checking the page fit — try again in a second.');
-      return;
-    }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -350,6 +392,37 @@ export default function TuewedEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/tueswed';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
+  }
+
+  useEffect(() => {
+    if (!menu) return;
+    const keys = new Set(tueswedChecks(menu).map((p) => p.key));
+    const fitKnown = fit !== null;
+    tueswedFitProblems(fit).forEach((p) => keys.add(p.key));
+    setOkd((prev) => {
+      const next = new Set([...prev].filter((k) => {
+        const key = k.slice(k.indexOf(':') + 1);
+        return keys.has(key) || (!fitKnown && key.startsWith('fit-'));
+      }));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [menu, fit]);
+
+  // Print / Make Active → "Is this on purpose?" (never blocks).
+  function askOrGo(kind: 'print' | 'publish') {
+    if (!menu) return;
+    const items = [...tueswedFitProblems(fit).map((p) => ({ ...p, serious: true })), ...tueswedChecks(menu)];
+    const pending = items.filter((p) => !okd.has(kind + ':' + p.key));
+    if (pending.length) { setPopupReq({ kind, n: Date.now(), items: pending }); return; }
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function confirmed(kind: 'print' | 'publish', items: Problem[]) {
+    setOkd((prev) => new Set([...prev, ...items.map((p) => kind + ':' + p.key)]));
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function doPrint() {
+    if (menu) localStorage.setItem('siena-tueswed-print-data', JSON.stringify(menu));
+    window.open(`/tueswed-print?src=${src}${pkg}&warned=1&fitwarned=1`, '_blank');
   }
 
   if (!menu) {
@@ -362,14 +435,6 @@ export default function TuewedEditorPage() {
 
   const showAddon = menu.addon !== undefined;
   const isV3 = !!menu.special;
-  const fitProblems = fit && !fit.fits
-    ? [
-        ...(fit.problems ?? []).filter(p => p.code === 'label-overflow').map(() => 'The Tuesdays Only label is too wide for the box border — shorten it.'),
-        ...((fit.problems ?? []).some(p => p.code === 'page-overflow') || !(fit.problems ?? []).length
-          ? [`The page is too full${fit.worstSection ? ` — ${SECTION_NAMES[fit.worstSection] ?? fit.worstSection} is the biggest part` : ''}. Shorten something.`]
-          : []),
-      ]
-    : [];
 
   const saveStatusClass =
     saveStatus === 'saved'  ? 'save-status saved'  :
@@ -388,16 +453,7 @@ export default function TuewedEditorPage() {
             <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
-        {fitProblems.length > 0 && (
-          <div className="overflow-banner">
-            ⚠ {isFix
-              ? 'This menu no longer fits the page — your changes ARE saved, but shorten something before printing.'
-              : 'This menu doesn’t fit the page yet — your draft IS saved, but it can’t become the active menu until it fits.'}
-            <ul style={{ margin: '6px 0 0 18px' }}>
-              {fitProblems.map((p, i) => <li key={i}>{p}</li>)}
-            </ul>
-          </div>
-        )}
+        <ProblemPopup problems={tueswedFitProblems(fit)} request={popupReq} onConfirm={confirmed} />
 
           {isFix && (
             <div className="draft-banner fix-banner">
@@ -409,7 +465,7 @@ export default function TuewedEditorPage() {
 
           {/* Tuesdays Only (v3) */}
           {menu.special && (
-            <div className="page-group">
+            <div className="page-group" data-problem="special">
               <div className="page-group-label">Tuesdays Only box (top of the page)</div>
               <div className="dish-row">
                 <div className="dish-fields">
@@ -462,7 +518,7 @@ export default function TuewedEditorPage() {
           )}
 
           {/* Price */}
-          <div className="page-group">
+          <div className="page-group" data-problem="price">
             <div className="page-group-label">Three-course menu price</div>
             <div className="dish-row">
               <div className="dish-fields">
@@ -492,7 +548,7 @@ export default function TuewedEditorPage() {
           </div>
 
           {/* Add-on */}
-          <div className="page-group">
+          <div className="page-group" data-problem="addon">
             <div className="page-group-label">Add-on (optional)</div>
             <div className="dish-row">
               <div className="dish-fields">
@@ -558,7 +614,7 @@ export default function TuewedEditorPage() {
 
           {/* Weekly specials (v3) */}
           {menu.weekly && (
-            <div className="page-group">
+            <div className="page-group" data-problem="weekly">
               <div className="page-group-label">Weekly specials (bottom of the page)</div>
               <div className="dish-list">
                 {menu.weekly.map((w, i) => (
@@ -616,9 +672,8 @@ export default function TuewedEditorPage() {
               <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
               <button
                 className="btn-publish"
-                onClick={handlePublish}
-                disabled={publishing || (!!fit && !fit.fits)}
-                title={fit && !fit.fits ? 'The menu doesn’t fit the page yet — see the red note at the top' : undefined}
+                onClick={() => askOrGo('publish')}
+                disabled={publishing}
               >
                 {publishing ? 'Publishing…' : 'Make This the Active Menu'}
               </button>
@@ -638,11 +693,7 @@ export default function TuewedEditorPage() {
           />
           <button
             className="btn-print"
-            onClick={() => {
-              if (menu && !confirmPrintWarnings('tueswed', menu, saveStatus === 'error')) return;
-              if (menu) localStorage.setItem('siena-tueswed-print-data', JSON.stringify(menu));
-              window.open(`/tueswed-print?src=${src}${pkg}&warned=1`, '_blank');
-            }}
+            onClick={() => askOrGo('print')}
           >
             Print Menu
           </button>

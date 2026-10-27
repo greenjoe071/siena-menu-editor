@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSaveSafety } from '@/lib/use-save-safety';
 import EarlierVersions from '@/components/EarlierVersions';
+import ProblemPopup, { useReveal, type Problem, type PopupRequest } from '@/components/ProblemPopup';
+import { listChecks, duplicateChecks, untitledCheck, tooLongCheck } from '@/lib/menu-checks';
 import { publishErrorMessage } from '@/lib/publish-error';
-import { confirmPrintWarnings } from '@/lib/print-warnings';
 import {
   DragDropContext,
   Droppable,
@@ -105,6 +106,49 @@ function useDebounce<T>(value: T, ms: number): T {
 
 // Hard-capped fields only — descriptions are excluded because they are
 // governed by the auto-fit ladder (settle.js), not a hard character cap.
+// "Is this on purpose?" items (Oct 2026). Weekend has no page-fit pop-up (it
+// tightens its own spacing), so a field past its letter limit is the red
+// "won't fit" item — e.g. the 30-letter dish name of Oct 22. Nothing blocks.
+const priceOf = (p: string | undefined) => ((p ?? '').trim() === '$' ? '' : (p ?? ''));   // a new dish starts as "$"
+function weekendChecks(m: WeekendMenuData): Problem[] {
+  const out: Problem[] = [];
+  const names: { name: string; target?: string }[] = [];
+  for (const sid of ['starters', 'entrees'] as SectionId[]) {
+    const sec = m.sections[sid];
+    const label = sid === 'starters' ? 'Starters' : 'Entrees';
+    const tgt = `section-${sid}`;
+    out.push(...untitledCheck(sec.title, sec.items.some((d) => d.name.trim()), label, sid, tgt));
+    out.push(...tooLongCheck(sec.title, L.sectionTitle, `The ${label} title`, `${sid}-title`, tgt));
+    for (const d of sec.items) {
+      const t = `dish-${d.id}`, nm = d.name.trim() ? `\u201c${d.name.trim()}\u201d` : `A ${label.toLowerCase()} dish`;
+      out.push(...tooLongCheck(d.name, L.dishName, `The dish name ${nm}`, `${d.id}-name`, t));
+      out.push(...tooLongCheck(d.price, L.dishPrice, `The price of ${nm}`, `${d.id}-price`, t));
+      names.push({ name: d.name, target: t });
+    }
+    out.push(...listChecks(sec.items.map((d) => ({
+      id: d.id, name: d.name, desc: d.desc, wantDesc: true, target: `dish-${d.id}`, prices: [priceOf(d.price)],
+    })), sec.title || label, sid));
+  }
+  const ds = m.dessert;
+  if (ds) {
+    out.push(...untitledCheck(ds.title, !!ds.name.trim(), 'dessert', 'dessert', 'dessert'));
+    out.push(...tooLongCheck(ds.title, L.sectionTitle, 'The dessert title', 'dessert-title', 'dessert'));
+    out.push(...tooLongCheck(ds.name, L.dishName, 'The dessert name', 'dessert-name', 'dessert'));
+    out.push(...tooLongCheck(ds.price, L.dishPrice, 'The dessert price', 'dessert-price', 'dessert'));
+    out.push(...listChecks([{ id: 'dessert', name: ds.name, desc: ds.desc, wantDesc: true, target: 'dessert', prices: [priceOf(ds.price)] }], ds.title || 'dessert', 'dessert'));
+    names.push({ name: ds.name, target: 'dessert' });
+  }
+  m.weekly.rows.forEach((r, i) => {
+    const t = `weekly-${r.id}`, lab = `weekly special ${i + 1}`;
+    out.push(...tooLongCheck(r.day_label, L.weeklyDayLabel, `The day on ${lab}`, `${r.id}-day`, t));
+    out.push(...tooLongCheck(r.headline, L.weeklyHeadline, `The headline of ${lab}`, `${r.id}-head`, t));
+    out.push(...tooLongCheck(r.detail, L.weeklyDetail, `The details of ${lab}`, `${r.id}-detail`, t));
+  });
+  out.push(...tooLongCheck(m.policy_line, L.policyLine, 'The footer line', 'policy', 'footer'));
+  out.push(...duplicateChecks(names));
+  return out;
+}
+
 function menuHasHardLimitViolation(m: WeekendMenuData): boolean {
   if (m.policy_line.length   > L.policyLine)   return true;
   if (m.dessert) {
@@ -184,6 +228,7 @@ function DishCard({
           ref={provided.innerRef}
           {...provided.draggableProps}
           className="dish-row"
+          data-problem={`dish-${dish.id}`}
           style={{
             ...provided.draggableProps.style,
             opacity: snapshot.isDragging ? 0.85 : 1,
@@ -255,9 +300,10 @@ function SectionBlock({
   const [open, setOpen] = useState(defaultOpen);
   const canAdd    = section.items.length < 4;
   const canRemove = section.items.length > 1;
+  const revealRef = useReveal(() => setOpen(true));
 
   return (
-    <div className={`section-block section-block--${variant}`}>
+    <div className={`section-block section-block--${variant}`} ref={revealRef} data-reveal data-problem={`section-${sectionId}`}>
       <div className={`section-block-header section-block-header--${variant}`} onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">{label} — {section.title}</span>
@@ -322,6 +368,7 @@ function WeeklyRowItem({ row, index, onChange }: {
           ref={provided.innerRef}
           {...provided.draggableProps}
           className="dish-row"
+          data-problem={`weekly-${row.id}`}
           style={{
             ...provided.draggableProps.style,
             opacity: snapshot.isDragging ? 0.85 : 1,
@@ -372,8 +419,10 @@ function WeeklyBlock({ weekly, onRowChange }: {
 }) {
   const [open, setOpen] = useState(false);
 
+  const revealRef = useReveal(() => setOpen(true));
+
   return (
-    <div className="section-block">
+    <div className="section-block" ref={revealRef} data-reveal>
       <div className="section-block-header" onClick={() => setOpen(o => !o)}>
         <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>
         <span className="section-title-label">Throughout the Week</span>
@@ -423,8 +472,10 @@ function DessertBlock({ dessert, onChange }: {
     onChange({ ...dessert, [field]: value });
   }
 
+  const revealRef = useReveal(() => { if (active) setOpen(true); });
+
   return (
-    <div className="section-block">
+    <div className="section-block" ref={revealRef} data-reveal data-problem="dessert">
       <div className="section-block-header" onClick={() => active && setOpen(o => !o)} style={{ cursor: active ? 'pointer' : 'default' }}>
         {active && <span className={`section-toggle ${open ? 'open' : ''}`}>▶</span>}
         {!active && <span className="section-toggle" style={{ opacity: 0.3 }}>▶</span>}
@@ -502,6 +553,17 @@ export default function WeekendEditorPage() {
   });
   const menuRef = useRef(menu);
   menuRef.current = menu;
+  const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
+  // "Yes, on purpose" answers per action, forgotten once that problem goes away.
+  const [okd, setOkd] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!menu) return;
+    const keys = new Set(weekendChecks(menu).map((p) => p.key));
+    setOkd((prev) => {
+      const next = new Set([...prev].filter((k) => keys.has(k.slice(k.indexOf(':') + 1))));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [menu]);
   const [previewUrl, setPreviewUrl] = useState(`/weekend-preview?src=${isFix ? 'current' : 'draft'}`);
   const iframeRef    = useRef<HTMLIFrameElement>(null);
   const prevJsonRef  = useRef<string>('');
@@ -639,17 +701,8 @@ export default function WeekendEditorPage() {
   // ── Publish / discard ──────────────────────────────────────────────────
   const [publishing, setPublishing] = useState(false);
 
-  async function handlePublish() {
+  async function doPublish() {
     if (!menu) return;
-    if (menuHasHardLimitViolation(menu)) { setSaveStatus('error'); setSaveMsg('Something is too long (shown in red). Shorten it, then try again — your work is saved.'); return; }
-    const missing: string[] = [];
-    const sec: [SectionId, string][] = [['starters', menu.sections.starters.title || 'Starters'], ['entrees', menu.sections.entrees.title || 'Entrees']];
-    for (const [sid, label] of sec) menu.sections[sid].items.forEach((d, n) => {
-      const blanks = [!d.name.trim() && 'name', !d.desc.trim() && 'description', !d.price.trim() && 'price'].filter(Boolean);
-      if (blanks.length) missing.push(`${label} dish ${n + 1}: ${blanks.join(', ')}`);
-    });
-    if (menu.dessert && (!menu.dessert.name.trim() || !menu.dessert.desc.trim() || !menu.dessert.price.trim())) missing.push('Dessert: name, description, or price');
-    if (missing.length) { setSaveStatus('error'); setSaveMsg('Before making this the active menu, fill in: ' + missing.join('; ') + ' — or remove the dishes you are not using.'); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -658,6 +711,22 @@ export default function WeekendEditorPage() {
       if (!res.ok) { setPublishing(false); setSaveStatus('error'); setSaveMsg(await publishErrorMessage(res)); return; }
       window.location.href = '/weekend';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
+  }
+
+  // Print / Make Active → "Is this on purpose?" (never blocks).
+  function askOrGo(kind: 'print' | 'publish') {
+    if (!menu) return;
+    const pending = weekendChecks(menu).filter((p) => !okd.has(kind + ':' + p.key));
+    if (pending.length) { setPopupReq({ kind, n: Date.now(), items: pending }); return; }
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function confirmed(kind: 'print' | 'publish', items: Problem[]) {
+    setOkd((prev) => new Set([...prev, ...items.map((p) => kind + ':' + p.key)]));
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function doPrint() {
+    if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
+    window.open(`/weekend-print?src=${isFix ? 'current' : 'draft'}&warned=1&fitwarned=1`, '_blank');
   }
 
   if (!menu) {
@@ -677,6 +746,7 @@ export default function WeekendEditorPage() {
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="app">
       {recoveryBanner}
+      <ProblemPopup problems={[]} request={popupReq} onConfirm={confirmed} />
 
         {/* ── Editor pane ──────────────────────────────────────────── */}
         <div className="editor-pane">
@@ -729,7 +799,7 @@ export default function WeekendEditorPage() {
               />
             </div>
 
-            <div className="page-group">
+            <div className="page-group" data-problem="footer">
               <div className="page-group-label">Footer</div>
               <div className="field-group">
                 <div className="field-label-row">
@@ -750,7 +820,7 @@ export default function WeekendEditorPage() {
           {!isFix && (
             <div className="editor-footer editor-footer--publish">
               <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
-              <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
+              <button className="btn-publish" onClick={() => askOrGo('publish')} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
             </div>
           )}
           <div className="editor-footer">
@@ -767,11 +837,7 @@ export default function WeekendEditorPage() {
             />
             <button
               className="btn-print"
-              onClick={() => {
-                if (menu && !confirmPrintWarnings('weekend', menu, saveStatus === 'error')) return;
-                if (menu) localStorage.setItem('siena-weekend-print-data', JSON.stringify(menu));
-                window.open(`/weekend-print?src=${isFix ? 'current' : 'draft'}&warned=1`, '_blank');
-              }}
+              onClick={() => askOrGo('print')}
             >
               Print Menu
             </button>
