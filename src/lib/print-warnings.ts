@@ -222,14 +222,17 @@ const ONE_SHEET_CLAMP = `<script>(function(){var id='siena-one-sheet';function a
   `document.addEventListener('DOMContentLoaded',apply);window.addEventListener('load',apply);window.addEventListener('beforeprint',apply);})();</script>`;
 
 export function withPrintGuard(html: string, requestUrl: string, warnings: string[]): string {
-  const warned = new URL(requestUrl).searchParams.get('warned') === '1';
+  const params = new URL(requestUrl).searchParams;
+  const warned = params.get('warned') === '1';
+  // &fitwarned=1: the editor's pop-up already asked about fit (Generic, Oct 2026).
+  const fitWarned = params.get('fitwarned') === '1';
   const data = JSON.stringify(warned ? [] : warnings).replace(/<\/script/gi, '<\\/script');
   const fit = JSON.stringify(FIT_WARNING);
   const guard = `<script>(function(){if(window.top!==window)return;var p=window.print.bind(window),ok=null,W=${data};` +
     `function overflows(){var ps=document.querySelectorAll('.page,.menu-page');for(var i=0;i<ps.length;i++){var pg=ps[i];` +
     `if(!pg.getClientRects().length)continue;var pr=pg.getBoundingClientRect(),els=pg.querySelectorAll('*');` +
     `for(var j=0;j<els.length;j++){var r=els[j].getBoundingClientRect();if(r.height&&r.width&&r.bottom>pr.bottom+1)return true;}}return false;}` +
-    `window.print=function(){if(ok===null){var w=W.slice();try{if(overflows())w.unshift(${fit});}catch(_){}` +
+    `window.print=function(){if(ok===null){var w=W.slice();try{if(${fitWarned ? 'false' : 'overflows()'})w.unshift(${fit});}catch(_){}` +
     `ok=!w.length||window.confirm('Heads up before printing:\\n\\n\\u2022 '+w.join('\\n\\u2022 ')+'\\n\\nPrint anyway?');}if(ok)p();};})();</script>`;
   return html.replace(/<body[^>]*>/i, (m) => m + ONE_SHEET_CLAMP + guard);
 }

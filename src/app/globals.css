@@ -2031,3 +2031,5 @@ a.dd-chooser-card:hover {
 .pp-note { margin-top: 10px; background: #fdecea; color: #7a1712; border: 2px solid #c0392b; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-weight: 600; line-height: 1.4; }
 @keyframes pp-flash-kf { 0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0); } 25%, 75% { box-shadow: 0 0 0 8px rgba(192,57,43,.55); } }
 .pp-flash { animation: pp-flash-kf 1.6s ease-in-out 1; border-radius: 8px; }
+.pp-list li.pp-serious { color: #b3261e; }
+.pp-list li.pp-serious::marker { color: #b3261e; }

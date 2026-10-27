@@ -7,7 +7,6 @@ import { useSaveSafety } from '@/lib/use-save-safety';
 import EarlierVersions from '@/components/EarlierVersions';
 import ProblemPopup, { ProblemNote, type Problem, type PopupRequest } from '@/components/ProblemPopup';
 import { publishErrorMessage } from '@/lib/publish-error';
-import { confirmPrintWarnings } from '@/lib/print-warnings';
 
 // Generic 2–4 course menu editor (handoff-coursemenu). Same flow as Tue–Wed:
 // /coursemenu/edit edits the draft, /coursemenu/fix (same component) edits the
@@ -129,6 +128,32 @@ function plainProblems(issues: ValidateIssue[]): Problem[] {
   });
 }
 
+// Things worth a second look at Print / Make Active (Oct 2026). Nothing is
+// ever blocked — the pop-up asks "Is this on purpose?". serious = red.
+function menuChecks(m: CourseMenuData): Problem[] {
+  const out: Problem[] = [];
+  const has = (v: string) => v.trim() !== '';
+  if (!has(m.header)) out.push({ key: 'no-header', target: 'hero', serious: true,
+    title: 'The menu has no name at the top.', body: 'The top of the menu will be blank.' });
+  m.courses.forEach((c, i) => {
+    const n = ROMAN[i];
+    if (!has(c.title) && !has(c.desc)) out.push({ key: `${c.id}-empty`, target: c.id, serious: true,
+      title: `Course ${n} is empty.`, body: `It will print as a lonely “${n}” with nothing under it.` });
+    else if (!has(c.title)) out.push({ key: `${c.id}-no-name`, target: c.id, serious: true,
+      title: `Course ${n} has a description but no dish name.`, body: 'The description will print with no name above it.' });
+    else if (!has(c.desc)) out.push({ key: `${c.id}-no-desc`, target: c.id,
+      title: `Course ${n} (${c.title.trim()}) has no description.`, body: 'Only the dish name will print.' });
+  });
+  if (!has(m.price)) out.push({ key: 'no-price', target: 'price',
+    title: 'There\u2019s no price on this menu.', body: 'No price will print at the top.' });
+  const a = m.addon;
+  if (has(a.title) && !has(a.price)) out.push({ key: 'addon-no-price', target: 'addon',
+    title: `The add-on \u201c${a.title.trim()}\u201d has no price.`, body: 'It will print without one.' });
+  if (!has(a.title) && (has(a.price) || has(a.desc))) out.push({ key: 'addon-no-name', target: 'addon',
+    title: 'The add-on has no name.', body: 'Without a name, the add-on won\u2019t print at all.' });
+  return out;
+}
+
 function CourseCard({ course, index, count, flagged, problem, onChange, onMove }: {
   course: Course;
   index: number;
@@ -207,6 +232,8 @@ export default function CourseMenuEditorPage() {
   // Page-fit problem shown in the footer — a warning only; saving never waits on it.
   const [fitMsg, setFitMsg] = useState('');
   const [popupReq, setPopupReq] = useState<PopupRequest | null>(null);
+  // Things Chef already answered "yes, on purpose" — not asked again until they change.
+  const [okd, setOkd] = useState<Set<string>>(new Set());
   const { confirmSaved, banner: recoveryBanner } = useSaveSafety({
     storageKey: 'coursemenu:' + (isFix ? 'fix' : 'draft'), url: apiPath, payload: menu, loadedJson,
     setSaveStatus, setSaveMsg, onRestore: setMenu,
@@ -355,19 +382,8 @@ export default function CourseMenuEditorPage() {
   // ── Publish / discard ──────────────────────────────────────────────────
   const [publishing, setPublishing] = useState(false);
 
-  function missingRequired(m: CourseMenuData): string[] {
-    const missing: string[] = [];
-    if (!m.header.trim()) missing.push('the header');
-    if (!m.price.trim()) missing.push('the price');
-    m.courses.forEach((c, i) => { if (!c.title.trim()) missing.push(`the course ${ROMAN[i]} dish name`); });
-    return missing;
-  }
-
-  async function handlePublish() {
+  async function doPublish() {
     if (!menu) return;
-    const missing = missingRequired(menu);
-    if (missing.length) { setSaveStatus('error'); setSaveMsg(`Before publishing, fill in ${missing.join(', ')}.`); return; }
-    if (report && !report.fits) { setPopupReq({ kind: 'publish', n: Date.now() }); return; }
     setPublishing(true);
     setSaveMsg('Publishing…');
     try {
@@ -377,6 +393,18 @@ export default function CourseMenuEditorPage() {
       window.location.href = '/coursemenu';
     } catch { setPublishing(false); setSaveStatus('error'); setSaveMsg('Network error while publishing'); }
   }
+
+  // An "on purpose" answer lasts only while that problem is still there:
+  // once it's fixed, it's forgotten, so if it comes back Chef is asked again.
+  useEffect(() => {
+    if (!menu) return;
+    const fit = report && !report.fits ? (report.issues ?? []).map(i => 'fit-' + i.code) : [];
+    const keys = new Set([...fit, ...menuChecks(menu).map(p => p.key)]);
+    setOkd(prev => {
+      const next = new Set([...prev].filter(k => keys.has(k.slice(k.indexOf(':') + 1))));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [menu, report]);
 
   if (!menu) {
     return (
@@ -390,6 +418,23 @@ export default function CourseMenuEditorPage() {
   const flagged = new Set(issues.map(i => i.section));
   const problems = plainProblems(issues);
   const problemFor = (target: string) => problems.find(p => p.target === target);
+  // Everything worth asking about at Print / Make Active.
+  const askItems: Problem[] = [
+    ...problems.map(p => ({ ...p, key: 'fit-' + p.key, serious: true })),
+    ...menuChecks(menu),
+  ];
+  const askKeys = askItems.map(p => p.key).join('|');
+
+  function askOrGo(kind: 'print' | 'publish') {
+    // Answers are per action: "yes" for Print doesn't count for Make Active.
+    const pending = askItems.filter(p => !okd.has(kind + ':' + p.key));
+    if (pending.length) { setPopupReq({ kind, n: Date.now(), items: pending }); return; }
+    if (kind === 'print') doPrint(); else doPublish();
+  }
+  function confirmed(kind: 'print' | 'publish', items: Problem[]) {
+    setOkd(prev => new Set([...prev, ...items.map(p => kind + ':' + p.key)]));
+    if (kind === 'print') doPrint(); else doPublish();
+  }
   const showAddon = menu.addon.title !== '' || addonOpen;
   const n = menu.courses.length;
 
@@ -402,9 +447,10 @@ export default function CourseMenuEditorPage() {
     flagged.has(section) ? { outline: '3px solid #c0392b', outlineOffset: '2px' } : undefined;
 
   function doPrint() {
-    if (menu && !confirmPrintWarnings('coursemenu', menu, saveStatus === 'error')) return;
     localStorage.setItem('siena-coursemenu-print-data', JSON.stringify(menu));
-    window.open(`/coursemenu-print?src=${src}&warned=1`, '_blank');
+    // The pop-up already asked about everything (fit included), so the print
+    // page shouldn't ask again.
+    window.open(`/coursemenu-print?src=${src}&warned=1&fitwarned=1`, '_blank');
   }
 
   return (
@@ -419,7 +465,7 @@ export default function CourseMenuEditorPage() {
           <Link href="/" className="btn-home">🏠 Home</Link>
         </div>
 
-        <ProblemPopup problems={problems} request={popupReq} onPrintAnyway={doPrint} />
+        <ProblemPopup problems={problems} request={popupReq} onConfirm={confirmed} />
 
         {isFix && (
           <div className="draft-banner fix-banner">
@@ -466,7 +512,7 @@ export default function CourseMenuEditorPage() {
                       placeholder={headerFor(n)}
                     />
                   </div>
-                  <div className="field-group" style={{ width: '100px', flexShrink: 0, marginBottom: 0 }}>
+                  <div className="field-group" data-problem="price" style={{ width: '100px', flexShrink: 0, marginBottom: 0 }}>
                     <div className="field-label-row">
                       <label>Price</label>
                     </div>
@@ -517,7 +563,7 @@ export default function CourseMenuEditorPage() {
           {/* Add-on */}
           <div className="page-group">
             <div className="page-group-label">Add-on (optional)</div>
-            <div className="dish-row" style={flagStyle('addon')}>
+            <div className="dish-row" data-problem="addon" style={flagStyle('addon')}>
               <div className="dish-fields">
                 <div style={{ marginBottom: showAddon ? '12px' : 0 }}>
                   <label style={toggleLabelStyle}>
@@ -621,7 +667,7 @@ export default function CourseMenuEditorPage() {
         {!isFix && (
           <div className="editor-footer editor-footer--publish">
             <span className="publish-hint">You&rsquo;re editing a draft — the active menu is unchanged until you publish.</span>
-            <button className="btn-publish" onClick={handlePublish} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
+            <button className="btn-publish" onClick={() => askOrGo('publish')} disabled={publishing}>{publishing ? 'Publishing…' : 'Make This the Active Menu'}</button>
           </div>
         )}
         <div className="editor-footer">
@@ -639,10 +685,7 @@ export default function CourseMenuEditorPage() {
           />
           <button
             className="btn-print"
-            onClick={() => {
-              if (problems.length) { setPopupReq({ kind: 'print', n: Date.now() }); return; }
-              doPrint();
-            }}
+            onClick={() => askOrGo('print')}
           >
             Print Menu
           </button>
